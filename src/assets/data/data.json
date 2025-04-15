@@ -1,0 +1,163 @@
+{
+    "paises": [
+        {
+            "id": 1,
+            "name": "España",
+            "ciudades": {
+                "Granada": {
+                    "lugares": [
+                        {
+                            "rutaImagen": [
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731884455/Travelle/espana/alhambra/img1.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731884454/Travelle/espana/alhambra/img2.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731884454/Travelle/espana/alhambra/img3.jpg"
+                            ],
+                            "nombre": "La Alhambra",
+                            "ubicacion_url": "https://maps.app.goo.gl/ExrigJKHsjmLNbeb8",
+                            "tipo": "historia",
+                            "precio": 14.0,
+                            "valoracion": 4.8
+                        },
+                        {
+                            "rutaImagen": [
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407392/Travelle/espana/generalife/echuabdug8vzzqdqz5eb.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407392/Travelle/espana/generalife/pbohksex3hekccvtb0tx.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407391/Travelle/espana/generalife/rtjbcxll1qmgivevwo3i.jpg"
+                            ],
+                            "nombre": "Generalife",
+                            "ubicacion_url": "https://maps.app.goo.gl/Jk1HZijtVztC1VBG9",
+                            "tipo": "naturaleza",
+                            "precio": 7.0,
+                            "valoracion": 4.6
+                        }
+                    ]
+                },
+                "Barcelona": {
+                    "lugares": [
+                        {
+                            "rutaImagen": [
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731940950/Travelle/espana/sagradaFamilia/img1.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731940950/Travelle/espana/sagradaFamilia/img2.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731940950/Travelle/espana/sagradaFamilia/img3.jpg"
+                            ],
+                            "nombre": "Basílica de la Sagrada Família",
+                            "ubicacion_url": "https://maps.app.goo.gl/D429cgX5kdUVqcdZ6",
+                            "tipo": "arte",
+                            "precio": 26.0,
+                            "valoracion": 4.8
+                        },
+                        {
+                            "rutaImagen": [
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731886605/Travelle/espana/guell/img1.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731886605/Travelle/espana/guell/img2.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731886605/Travelle/espana/guell/img3.jpg"
+                            ],
+                            "nombre": "Parque Güell",
+                            "ubicacion_url": "https://maps.app.goo.gl/5CRPFxagmEgxUKZR7",
+                            "tipo": "naturaleza",
+                            "precio": 10.0,
+                            "valoracion": 4.6
+                        },
+                        {
+                            "rutaImagen": [
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731885051/Travelle/espana/casaBatllo/img3.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731885051/Travelle/espana/casaBatllo/img1.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731885051/Travelle/espana/casaBatllo/img2.jpg"
+                            ],
+                            "nombre": "Casa Batlló",
+                            "ubicacion_url": "https://maps.app.goo.gl/DBQCigY1D4v5zzZo7",
+                            "tipo": "arte",
+                            "precio": 35.0,
+                            "valoracion": 4.7
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "id": 2,
+            "name": "Italia",
+            "ciudades": {
+                "Roma": {
+                    "lugares": [
+                        {
+                            "rutaImagen": [
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731941637/Travelle/italia/coliseoRomano/img1.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731941636/Travelle/italia/coliseoRomano/img2.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1731941636/Travelle/italia/coliseoRomano/img3.jpg"
+                            ],
+                            "nombre": "Coliseo de Roma",
+                            "ubicacion_url": "https://maps.app.goo.gl/1EecwErP9w2DGHBg6",
+                            "tipo": "historia",
+                            "precio": 18.0,
+                            "valoracion": 4.7
+                        },
+                        {
+                            "rutaImagen": [
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407782/Travelle/italia/Bas%C3%ADlica%20de%20San%20Pedro/pv5z3hgvcbgqi2fratjk.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407782/Travelle/italia/Bas%C3%ADlica%20de%20San%20Pedro/p2ovkabijlcck3yrho8l.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407781/Travelle/italia/Bas%C3%ADlica%20de%20San%20Pedro/hrfgwhmlejflzmqvmgs2.jpg"
+                            ],
+                            "nombre": "Basílica de San Pedro",
+                            "ubicacion_url": "https://maps.app.goo.gl/sEkCd3a7qSYD94mFA",
+                            "tipo": "religión",
+                            "precio": 0.0,
+                            "valoracion": 4.9
+                        }
+                    ]
+                },
+                "Florencia": {
+                    "lugares": [
+                        {
+                            "rutaImagen": [
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407982/Travelle/italia/catedralFlorencia/yvefvcx9evwbnde61snu.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407981/Travelle/italia/catedralFlorencia/tsu8vwalo62gphqltaeb.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407981/Travelle/italia/catedralFlorencia/f6mtmfrluxnefxebejjl.jpg"
+                            ],
+                            "nombre": "Catedral de Florencia",
+                            "ubicacion_url": "https://maps.app.goo.gl/qyNw5hvxGEvt1rhK8",
+                            "tipo": "arte",
+                            "precio": 0.0,
+                            "valoracion": 4.8
+                        },
+                        {
+                            "rutaImagen": [
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408135/Travelle/italia/ponte/plioqsxvzfctchbwjh1j.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408135/Travelle/italia/ponte/zrq3tmlkftgvdxs26psi.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408135/Travelle/italia/ponte/tuvrls9fbultcxixd5mw.jpg"
+                            ],
+                            "nombre": "Ponte Vecchio",
+                            "ubicacion_url": "https://maps.app.goo.gl/n7WnVQzpZiqcCTtw5",
+                            "tipo": "historia",
+                            "precio": 0.0,
+                            "valoracion": 4.7
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "id": 3,
+            "name": "Alemania",
+            "ciudades": {
+                "Berlín": {
+                    "lugares": [
+                        {
+                            "rutaImagen": [
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408385/Travelle/alemania/puertaBrandeburgo/sbxsc6inxabvfyevzusj.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408385/Travelle/alemania/puertaBrandeburgo/sbxsc6inxabvfyevzusj.jpg",
+                                "https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408385/Travelle/alemania/puertaBrandeburgo/ug8ovkjczzbeh8cwscna.jpg"
+                            ],
+                            "nombre": "Puerta de Brandeburgo",
+                            "ubicacion_url": "https://maps.app.goo.gl/S4JXV8ueJAHoFM356",
+                            "tipo": "historia",
+                            "precio": 0.0,
+                            "valoracion": 4.8
+                        }
+                    ]
+                }
+
+            }
+        }
+    ]
+}
