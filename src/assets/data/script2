@@ -1,0 +1,285 @@
+-- Tabla de Usuarios
+CREATE TABLE IF NOT EXISTS Usuarios (
+  id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre_usuario TEXT NOT NULL UNIQUE,
+  nombre TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL,
+  foto_perfil TEXT,
+  fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_usuarios_email ON Usuarios(email);
+CREATE INDEX IF NOT EXISTS idx_usuarios_nombre_usuario ON Usuarios(nombre_usuario);
+
+-- Tabla para tokens de recuperación de contraseña
+CREATE TABLE IF NOT EXISTS RecuperacionContrasena (
+  id_recuperacion INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_usuario INTEGER NOT NULL,
+  token TEXT NOT NULL,
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_expiracion TIMESTAMP NOT NULL,
+  usado NUMERIC DEFAULT '0',
+  FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_recuperacion_token ON RecuperacionContrasena(token);
+
+-- Tabla de Países
+CREATE TABLE IF NOT EXISTS Paises (
+  id_pais INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL UNIQUE
+);
+
+CREATE INDEX IF NOT EXISTS idx_paises_nombre ON Paises(nombre);
+
+-- Tabla de Ciudades
+CREATE TABLE IF NOT EXISTS Ciudades (
+  id_ciudad INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  id_pais INTEGER NOT NULL,
+  FOREIGN KEY (id_pais) REFERENCES Paises(id_pais) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_ciudades_pais ON Ciudades(id_pais, nombre);
+
+-- Tabla de Lugares (atracciones turísticas, restaurantes, etc.)
+CREATE TABLE IF NOT EXISTS Lugares (
+  id_lugar INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  descripcion TEXT,
+  precio REAL DEFAULT '0',
+  valoracion REAL DEFAULT '0',
+  latitud REAL NOT NULL,
+  longitud REAL NOT NULL,
+  imagen1 TEXT,
+  imagen2 TEXT,
+  imagen3 TEXT,
+  id_ciudad INTEGER NOT NULL,
+  FOREIGN KEY (id_ciudad) REFERENCES Ciudades(id_ciudad) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_lugares_geo ON Lugares(latitud, longitud);
+CREATE INDEX IF NOT EXISTS idx_lugares_valoracion ON Lugares(valoracion);
+CREATE INDEX IF NOT EXISTS idx_lugares_precio ON Lugares(precio);
+CREATE INDEX IF NOT EXISTS idx_lugares_ciudad ON Lugares(id_ciudad);
+CREATE INDEX IF NOT EXISTS idx_lugares_nombre ON Lugares(nombre);
+
+-- Tabla de Categorías
+CREATE TABLE IF NOT EXISTS Categorias (
+  id_categoria INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT UNIQUE NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_categorias_nombre ON Categorias(nombre);
+
+-- Tabla de relación Lugares-Categorías
+CREATE TABLE IF NOT EXISTS Lugares_Categorias (
+  id_lugar INTEGER,
+  id_categoria INTEGER,
+  PRIMARY KEY (id_lugar, id_categoria),
+  FOREIGN KEY (id_lugar) REFERENCES Lugares(id_lugar) ON DELETE CASCADE,
+  FOREIGN KEY (id_categoria) REFERENCES Categorias(id_categoria) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_lugares_cat_categoria ON Lugares_Categorias(id_categoria);
+
+-- Tabla de Estados de Viaje
+CREATE TABLE IF NOT EXISTS Estados_Viaje (
+  id_estado INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT UNIQUE NOT NULL
+);
+
+-- Tabla de Favoritos
+CREATE TABLE IF NOT EXISTS Favoritos (
+  id_usuario INTEGER,
+  id_lugar INTEGER,
+  fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id_usuario, id_lugar),
+  FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+  FOREIGN KEY (id_lugar) REFERENCES Lugares(id_lugar) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_favoritos_fecha ON Favoritos(fecha_agregado);
+CREATE INDEX IF NOT EXISTS idx_favoritos_lugar ON Favoritos(id_lugar);
+
+-- Tabla de Reseñas
+CREATE TABLE IF NOT EXISTS Resenas (
+  id_resena INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_usuario INTEGER NOT NULL,
+  id_lugar INTEGER NOT NULL,
+  calificacion INTEGER NOT NULL CHECK(calificacion BETWEEN 1 AND 5),
+  comentario TEXT,
+  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+  FOREIGN KEY (id_lugar) REFERENCES Lugares(id_lugar) ON DELETE CASCADE,
+  UNIQUE(id_usuario, id_lugar)
+);
+
+CREATE INDEX IF NOT EXISTS idx_resenas_usuario ON Resenas(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_resenas_lugar ON Resenas(id_lugar);
+CREATE INDEX IF NOT EXISTS idx_resenas_calificacion ON Resenas(calificacion);
+
+-- Tabla de Viajes
+CREATE TABLE IF NOT EXISTS Viajes (
+  id_viaje INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_usuario INTEGER NOT NULL,
+  titulo TEXT NOT NULL,
+  descripcion TEXT,
+  fecha_inicio DATE,
+  fecha_fin DATE,
+  id_estado INTEGER DEFAULT 1,
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+  FOREIGN KEY (id_estado) REFERENCES Estados_Viaje(id_estado) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_viajes_usuario ON Viajes(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_viajes_estado ON Viajes(id_estado);
+CREATE INDEX IF NOT EXISTS idx_viajes_fechas ON Viajes(fecha_inicio, fecha_fin);
+
+-- Tabla de relación Viajes-Lugares
+CREATE TABLE IF NOT EXISTS Viajes_Lugares (
+  id_viaje INTEGER NOT NULL,
+  id_lugar INTEGER NOT NULL,
+  visitado NUMERIC DEFAULT '0',
+  PRIMARY KEY (id_viaje, id_lugar),
+  FOREIGN KEY (id_viaje) REFERENCES Viajes(id_viaje) ON DELETE CASCADE,
+  FOREIGN KEY (id_lugar) REFERENCES Lugares(id_lugar) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_viajes_lugares_lugar ON Viajes_Lugares(id_lugar);
+CREATE INDEX IF NOT EXISTS idx_viajes_lugares_visitado ON Viajes_Lugares(visitado);
+
+-- Tabla de Tareas
+CREATE TABLE IF NOT EXISTS Tareas (
+  id_tarea INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_viaje INTEGER NOT NULL,
+  descripcion TEXT NOT NULL,
+  completada NUMERIC DEFAULT '0',
+  prioridad TEXT CHECK(prioridad IN ('baja', 'media', 'alta')) DEFAULT 'media',
+  FOREIGN KEY (id_viaje) REFERENCES Viajes(id_viaje) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_tareas_viaje ON Tareas(id_viaje);
+CREATE INDEX IF NOT EXISTS idx_tareas_completada ON Tareas(completada);
+
+-- Tabla de Visitas Manuales
+CREATE TABLE IF NOT EXISTS Visitas_Manual (
+  id_visita INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_usuario INTEGER NOT NULL,
+  id_lugar INTEGER NOT NULL,
+  fecha_visita DATE NOT NULL,
+  notas TEXT,
+  FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+  FOREIGN KEY (id_lugar) REFERENCES Lugares(id_lugar) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_visitas_manual_usuario ON Visitas_Manual(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_visitas_manual_lugar ON Visitas_Manual(id_lugar);
+CREATE INDEX IF NOT EXISTS idx_visitas_manual_fecha ON Visitas_Manual(fecha_visita);
+
+-- ==========================================
+-- INSERCIÓN DE DATOS INICIALES
+-- ==========================================
+
+-- Estados de Viaje
+INSERT INTO Estados_Viaje (nombre) VALUES 
+('Planeado'), ('En Progreso'), ('Completado'), ('Cancelado');
+
+-- Categorías
+INSERT INTO Categorias (nombre) VALUES 
+('Playa'), ('Montaña'), ('Ciudad'), ('Museo'),
+('Parque Natural'), ('Monumento Histórico'), ('Gastronomía'),
+('Historia'), ('Naturaleza'), ('Arte'), ('Religión');
+
+-- Países
+INSERT INTO Paises (nombre) VALUES 
+('España'), ('Italia'), ('Francia'), ('Alemania'), ('Reino Unido');
+
+-- Ciudades
+INSERT INTO Ciudades (nombre, id_pais) VALUES 
+('Madrid', 1),
+('Barcelona', 1),
+('Granada', 1),
+('Roma', 2),
+('Florencia', 2),
+('París', 3),
+('Berlín', 4),
+('Londres', 5);
+
+-- Lugares
+INSERT INTO Lugares (nombre, descripcion, precio, valoracion, latitud, longitud, imagen1, imagen2, imagen3, id_ciudad) VALUES
+('La Alhambra', 'Impresionante complejo palaciego y fortaleza de la época musulmana.', 14.0, 4.8, 37.1760783, -3.5881413,
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731884455/Travelle/espana/alhambra/img1.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731884454/Travelle/espana/alhambra/img2.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731884454/Travelle/espana/alhambra/img3.jpg', 3),
+
+('Generalife', 'Hermosos jardines y palacio de verano de los sultanes nazaríes.', 7.0, 4.6, 37.1775, -3.5883,
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407392/Travelle/espana/generalife/echuabdug8vzzqdqz5eb.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407392/Travelle/espana/generalife/pbohksex3hekccvtb0tx.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407391/Travelle/espana/generalife/rtjbcxll1qmgivevwo3i.jpg', 3),
+
+('Sagrada Família', 'Obra maestra inacabada de Antoni Gaudí y símbolo de Barcelona.', 26.0, 4.8, 41.4036299, 2.1743558,
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731940950/Travelle/espana/sagradaFamilia/img1.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731940950/Travelle/espana/sagradaFamilia/img2.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731940950/Travelle/espana/sagradaFamilia/img3.jpg', 2),
+
+('Park Güell', 'Parque público con elementos arquitectónicos diseñados por Antoni Gaudí.', 10.0, 4.6, 41.4144948, 2.1526945,
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731886605/Travelle/espana/guell/img1.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731886605/Travelle/espana/guell/img2.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731886605/Travelle/espana/guell/img3.jpg', 2),
+
+('Casa Batlló', 'Edificio modernista diseñado por Antoni Gaudí, conocido por su fachada orgánica.', 35.0, 4.7, 41.3917, 2.1649,
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731885051/Travelle/espana/casaBatllo/img3.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731885051/Travelle/espana/casaBatllo/img1.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731885051/Travelle/espana/casaBatllo/img2.jpg', 2),
+
+('Coliseo Romano', 'El anfiteatro más grande jamás construido durante el Imperio Romano.', 18.0, 4.7, 41.8902102, 12.4922309,
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731941637/Travelle/italia/coliseoRomano/img1.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731941636/Travelle/italia/coliseoRomano/img2.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731941636/Travelle/italia/coliseoRomano/img3.jpg', 4),
+
+('Basílica de San Pedro', 'La iglesia más grande del mundo y centro del catolicismo.', 0.0, 4.9, 41.9021667, 12.4539367,
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407782/Travelle/italia/Bas%C3%ADlica%20de%20San%20Pedro/pv5z3hgvcbgqi2fratjk.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407782/Travelle/italia/Bas%C3%ADlica%20de%20San%20Pedro/p2ovkabijlcck3yrho8l.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407781/Travelle/italia/Bas%C3%ADlica%20de%20San%20Pedro/hrfgwhmlejflzmqvmgs2.jpg', 4),
+
+('Catedral de Florencia', 'Impresionante catedral con su característica cúpula roja, obra de Brunelleschi.', 0.0, 4.8, 43.7731, 11.2560,
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407982/Travelle/italia/catedralFlorencia/yvefvcx9evwbnde61snu.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407981/Travelle/italia/catedralFlorencia/tsu8vwalo62gphqltaeb.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740407981/Travelle/italia/catedralFlorencia/f6mtmfrluxnefxebejjl.jpg', 5),
+
+('Ponte Vecchio', 'Famoso puente medieval sobre el río Arno con tiendas de joyería.', 0.0, 4.7, 43.7680, 11.2531,
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408135/Travelle/italia/ponte/plioqsxvzfctchbwjh1j.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408135/Travelle/italia/ponte/zrq3tmlkftgvdxs26psi.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408135/Travelle/italia/ponte/tuvrls9fbultcxixd5mw.jpg', 5),
+
+('Puerta de Brandeburgo', 'Monumento neoclásico y símbolo de la reunificación alemana.', 0.0, 4.8, 52.5163, 13.3777,
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408385/Travelle/alemania/puertaBrandeburgo/sbxsc6inxabvfyevzusj.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408385/Travelle/alemania/puertaBrandeburgo/sbxsc6inxabvfyevzusj.jpg',
+ 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408385/Travelle/alemania/puertaBrandeburgo/ug8ovkjczzbeh8cwscna.jpg', 7);
+
+-- Relaciones Lugares-Categorías
+INSERT INTO Lugares_Categorias (id_lugar, id_categoria) VALUES
+(1, 6), -- Alhambra - Monumento Histórico
+(1, 8), -- Alhambra - Historia
+(2, 9), -- Generalife - Naturaleza
+(3, 6), -- Sagrada Familia - Monumento Histórico
+(3, 10), -- Sagrada Familia - Arte
+(3, 11), -- Sagrada Familia - Religión
+(4, 5), -- Park Güell - Parque Natural
+(4, 10), -- Park Güell - Arte
+(5, 6), -- Casa Batlló - Monumento Histórico
+(5, 10), -- Casa Batlló - Arte
+(6, 6), -- Coliseo Romano - Monumento Histórico
+(6, 8), -- Coliseo Romano - Historia
+(7, 6), -- Basílica de San Pedro - Monumento Histórico
+(7, 11), -- Basílica de San Pedro - Religión
+(8, 6), -- Catedral de Florencia - Monumento Histórico
+(8, 10), -- Catedral de Florencia - Arte
+(8, 11), -- Catedral de Florencia - Religión
+(9, 6), -- Ponte Vecchio - Monumento Histórico
+(9, 8), -- Ponte Vecchio - Historia
+(10, 6), -- Puerta de Brandeburgo - Monumento Histórico
+(10, 8); -- Puerta de Brandeburgo - Historia

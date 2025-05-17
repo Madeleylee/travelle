@@ -1,46 +1,82 @@
 <script setup>
-// Importaciones necesarias de Vue y Vue Router
-import { ref, computed, watch, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-// Importación del componente DestinosPorCiudad
-import DestinosPorCiudad from "../components/DestinosPorCiudad.vue";
-import data from "../assets/data/data.json"; // Importación del json
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import DestinosPorCiudad from '@/components/DestinosPorCiudad.vue';
+import { getPaisesConCiudades, getLugaresPorCiudad } from '@/composables/useDatabase';
 
-// Obtener la ruta actual y el router para navegación
 const route = useRoute();
 const router = useRouter();
 
-// Propiedad computada para obtener el nombre del pais 
 const nombrePais = computed(() => route.params.nombrePais);
-
-// Variables reactivas para almacenar la ciudad y el lugar seleccionados
+const pais = ref(null);
 const ciudadSeleccionada = ref(null);
 const lugarSeleccionado = ref(null);
+const ciudadesConLugares = ref([]);
+const loading = ref(true);
+const error = ref(null);
 
+// Cargar todas las ciudades y sus lugares
+async function cargarCiudadesConLugares(paisActual) {
+    try {
+        loading.value = true;
+        error.value = null;
+        ciudadesConLugares.value = [];
 
-// Propiedad computada para encontrar el país en los datos importados
-const pais = computed(() =>
-    data.paises.find((p) => p.name === nombrePais.value)
-);
+        console.log('Cargando ciudades para país:', paisActual);
 
-// Propiedad computada para filtrar los lugares basados en la ciudad y lugar seleccionados
-const lugaresFiltered = computed(() => {
-    if (!pais.value || !ciudadSeleccionada.value) return [];
-    let lugares = pais.value.ciudades[ciudadSeleccionada.value].lugares;
+        if (!paisActual.ciudades || !Array.isArray(paisActual.ciudades)) {
+            console.error('El país no tiene ciudades o no es un array:', paisActual);
+            error.value = 'No se encontraron ciudades para este país';
+            return;
+        }
+
+        for (const ciudad of paisActual.ciudades) {
+            console.log('Procesando ciudad:', ciudad);
+
+            // Usar id_ciudad que es el nombre correcto del campo
+            const ciudadId = ciudad.id_ciudad;
+
+            if (!ciudadId) {
+                console.error('Ciudad sin ID:', ciudad);
+                continue;
+            }
+
+            console.log(`Obteniendo lugares para ciudad ID: ${ciudadId}`);
+            const lugares = await getLugaresPorCiudad(ciudadId);
+            console.log(`Lugares obtenidos para ${ciudad.nombre}:`, lugares);
+
+            ciudadesConLugares.value.push({
+                nombre: ciudad.nombre,
+                lugares: lugares || []
+            });
+        }
+
+        console.log('Ciudades con lugares cargadas:', ciudadesConLugares.value);
+    } catch (err) {
+        console.error('Error al cargar ciudades con lugares:', err);
+        error.value = 'Error al cargar los destinos';
+    } finally {
+        loading.value = false;
+    }
+}
+
+const lugaresFiltrados = computed(() => {
+    if (!ciudadSeleccionada.value) return [];
+    const ciudad = ciudadesConLugares.value.find(c => c.nombre === ciudadSeleccionada.value);
+    if (!ciudad) return [];
+    let lugares = ciudad.lugares || [];
     if (lugarSeleccionado.value) {
         lugares = lugares.filter(lugar => lugar.nombre === lugarSeleccionado.value);
     }
     return lugares;
 });
 
-// Función para seleccionar una ciudad y actualizar la ruta
 function selectCiudad(ciudad) {
     ciudadSeleccionada.value = ciudad;
     lugarSeleccionado.value = null;
     updateRouteQuery();
 }
 
-// Función para actualizar la ruta con los parámetros de consulta basados en la ciudad y lugar seleccionados
 function updateRouteQuery() {
     router.replace({
         query: {
@@ -50,76 +86,129 @@ function updateRouteQuery() {
     });
 }
 
-// Hook del ciclo de vida que se ejecuta al montar el componente
-onMounted(() => {
-    ciudadSeleccionada.value = route.query.ciudad || null;
-    lugarSeleccionado.value = route.query.lugar || null;
+onMounted(async () => {
+    try {
+        const paises = await getPaisesConCiudades();
+        console.log('Países obtenidos:', paises);
+
+        pais.value = paises.find(p => p.nombre === nombrePais.value);
+        console.log('País seleccionado:', pais.value);
+
+        if (pais.value) {
+            await cargarCiudadesConLugares(pais.value);
+            ciudadSeleccionada.value = route.query.ciudad || null;
+            lugarSeleccionado.value = route.query.lugar || null;
+        } else {
+            error.value = 'País no encontrado';
+        }
+    } catch (err) {
+        console.error('Error al cargar datos iniciales:', err);
+        error.value = 'Error al cargar los datos';
+    } finally {
+        loading.value = false;
+    }
 });
 
-// Observador que reacciona a cambios en el parámetro nombrePais de la ruta
-watch(() => route.params.nombrePais, () => {
-    ciudadSeleccionada.value = route.query.ciudad || null;
-    lugarSeleccionado.value = route.query.lugar || null;
+watch(() => route.params.nombrePais, async () => {
+    try {
+        loading.value = true;
+        const paises = await getPaisesConCiudades();
+        pais.value = paises.find(p => p.nombre === nombrePais.value);
+
+        if (pais.value) {
+            await cargarCiudadesConLugares(pais.value);
+            ciudadSeleccionada.value = route.query.ciudad || null;
+            lugarSeleccionado.value = route.query.lugar || null;
+        } else {
+            error.value = 'País no encontrado';
+            ciudadesConLugares.value = [];
+        }
+    } catch (err) {
+        console.error('Error al cambiar de país:', err);
+        error.value = 'Error al cargar los datos';
+        ciudadesConLugares.value = [];
+    } finally {
+        loading.value = false;
+    }
 });
 </script>
 
 <template>
-    <div class="pais-view" v-if="pais">
-        <!-- Título con el nombre del país -->
-        <h1>Destinos en {{ nombrePais }}</h1>
-        <!-- Navegación de ciudades -->
-        <div class="ciudades-nav">
-            <!-- Botón para mostrar todos los destinos -->
-            <button @click="selectCiudad(null)" :class="{ active: !ciudadSeleccionada }" class="btn-ciudad">
-                Todos
-            </button>
-            <!-- Botones para seleccionar una ciudad específica -->
-            <button v-for="(_, ciudad) in pais.ciudades" :key="ciudad" @click="selectCiudad(ciudad)"
-                :class="{ active: ciudadSeleccionada === ciudad }" class="btn-ciudad">
-                {{ ciudad }}
-            </button>
+    <div class="pais-view">
+        <div v-if="loading" class="loading-container">
+            <div class="spinner"></div>
+            <p>Cargando destinos...</p>
         </div>
-        <!-- Componente para mostrar destinos por ciudad si una ciudad está seleccionada -->
-        <DestinosPorCiudad v-if="ciudadSeleccionada" :nombrePais="nombrePais" :nombreCiudad="ciudadSeleccionada"
-            :lugares="lugaresFiltered" />
-        <!-- Si no hay ciudad seleccionada, muestra todos los destinos por ciudad -->
-        <template v-else>
-            <div v-for="(lugares, ciudad) in pais.ciudades" :key="ciudad" class="ciudad-section">
-                <h2 class="ciudad-titulo">{{ ciudad }}</h2>
-                <DestinosPorCiudad :nombrePais="nombrePais" :nombreCiudad="ciudad" :lugares="lugares.lugares" />
+
+        <div v-else-if="error" class="error-container">
+            <p>{{ error }}</p>
+            <button @click="$router.go(0)" class="retry-button">Reintentar</button>
+        </div>
+
+        <template v-else-if="pais">
+            <h1>Destinos en {{ nombrePais }}</h1>
+
+            <div class="ciudades-nav">
+                <button @click="selectCiudad(null)" :class="{ active: !ciudadSeleccionada }" class="btn-ciudad">
+                    Todos
+                </button>
+                <button v-for="ciudad in ciudadesConLugares" :key="ciudad.nombre" @click="selectCiudad(ciudad.nombre)"
+                    :class="{ active: ciudadSeleccionada === ciudad.nombre }" class="btn-ciudad">
+                    {{ ciudad.nombre }}
+                </button>
             </div>
+
+            <div v-if="ciudadesConLugares.length === 0" class="no-data">
+                No se encontraron ciudades para este país.
+            </div>
+
+            <template v-else>
+                <DestinosPorCiudad v-if="ciudadSeleccionada" :nombrePais="nombrePais" :nombreCiudad="ciudadSeleccionada"
+                    :lugares="lugaresFiltrados" />
+
+                <template v-else>
+                    <div v-for="ciudad in ciudadesConLugares" :key="ciudad.nombre" class="ciudad-section">
+                        <h2 class="ciudad-titulo">{{ ciudad.nombre }}</h2>
+                        <div v-if="ciudad.lugares && ciudad.lugares.length > 0">
+                            <DestinosPorCiudad :nombrePais="nombrePais" :nombreCiudad="ciudad.nombre"
+                                :lugares="ciudad.lugares" />
+                        </div>
+                        <div v-else class="no-data">
+                            No hay lugares disponibles para esta ciudad.
+                        </div>
+                    </div>
+                </template>
+            </template>
         </template>
+
+        <div v-else class="error-container">
+            <p>País no encontrado</p>
+            <button @click="$router.push('/')" class="retry-button">Volver al inicio</button>
+        </div>
     </div>
 </template>
 
 <style scoped>
-/* Estilo para el contenedor principal */
 .pais-view {
     padding: 2rem;
     padding-top: 5rem;
 }
 
-/* Estilo para el título principal */
 h1 {
     color: var(--color-primary);
-    /* Color principal definido en variables CSS */
     font-size: 2.5rem;
     margin-bottom: 2rem;
     text-align: center;
 }
 
-/* Contenedor de navegación de ciudades */
 .ciudades-nav {
     display: flex;
     gap: 1rem;
-    /* Espacio entre botones */
     flex-wrap: wrap;
-    /* Permite que los botones se envuelvan en varias líneas */
     justify-content: center;
     margin-bottom: 2rem;
 }
 
-/* Estilo para los botones de ciudad */
 .btn-ciudad {
     padding: 0.5rem 1rem;
     border: none;
@@ -127,60 +216,70 @@ h1 {
     cursor: pointer;
     font-size: 1rem;
     color: var(--color-text);
-    /* Color de texto definido en variables CSS */
     border-bottom: 2px solid transparent;
-    /* Borde inferior transparente por defecto */
     transition: all 0.3s ease;
-    /* Transición suave para cambios de estilo */
 }
 
-/* Estilo para botones activos */
 .btn-ciudad.active {
     color: var(--color-primary);
-    /* Cambia el color del texto cuando está activo */
     border-bottom-color: var(--color-primary);
-    /* Cambia el color del borde inferior */
 }
 
-/* Estilo para la cuadrícula de destinos */
-.destinos-grid {
-    display: grid;
-    gap: 2rem;
-    /* Espacio entre elementos de la cuadrícula */
-}
-
-/* Sección de cada ciudad */
 .ciudad-section {
     margin-bottom: 3rem;
 }
 
-/* Título de cada ciudad */
 .ciudad-titulo {
     color: var(--color-text);
     margin-bottom: 1rem;
     font-size: 1.5rem;
 }
 
-/* Cuadrícula de lugares dentro de cada ciudad */
-.ciudad-lugares {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    /* Tres columnas iguales */
-    gap: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
 }
 
-/* Media queries para ajustar el diseño en pantallas más pequeñas */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--color-primary);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.error-container,
+.no-data {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+.retry-button {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
 @media (max-width: 1024px) {
     .pais-view {
         padding: 2rem;
         padding-top: 4rem;
-    }
-
-    .ciudad-lugares {
-        grid-template-columns: repeat(2, 1fr);
-        /* Dos columnas en pantallas medianas */
     }
 }
 
@@ -190,22 +289,12 @@ h1 {
         padding-top: 4rem;
     }
 
-
     .ciudades-nav {
         gap: 0.5rem;
-        /* Menos espacio entre botones en pantallas pequeñas */
     }
 
     .btn-ciudad {
         font-size: 0.9rem;
-        /* Texto más pequeño en botones */
-    }
-
-    .ciudad-lugares {
-        grid-template-columns: 1fr;
-        /* Una columna en pantallas pequeñas */
-        max-width: 400px;
-        margin: 0 auto;
     }
 }
 </style>

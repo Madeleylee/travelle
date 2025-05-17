@@ -1,129 +1,110 @@
 <script setup>
-// Importaciones necesarias de Vue y Vue Router
-import { ref, computed } from "vue";
+// Importaciones
+import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { getLugarPorNombreCiudadPais } from "@/composables/useDatabase"; // Función que haremos ahora
+import { safeGoBack } from '@/utils/navegation';
 
-// Importación de datos de países, ciudades y lugares
-import data from "../assets/data/data.json";
+// Iconos
+import ArrowIcon from "@/components/icons/ArrowIcon.vue";
+import MapIcon from "@/components/icons/MapIcon.vue";
 
-// Importación de componentes de iconos
-import ArrowIcon from "../components/icons/ArrowIcon.vue";
-import MapIcon from "../components/icons/MapIcon.vue";
-
-// Obtener la ruta actual y el router para navegación
+// Router
 const route = useRoute();
 const router = useRouter();
 
-// Propiedades computadas para obtener el nombre del país, ciudad y destino desde la ruta
+// Parámetros de la URL
 const nombrePais = computed(() => route.params.nombrePais);
 const nombreCiudad = computed(() => route.params.nombreCiudad);
 const nombreDestino = computed(() => route.params.nombreDestino);
 
-// Propiedad computada para encontrar el destino en los datos importados
-const destino = computed(() => {
-  const pais = data.paises.find(p => p.name === nombrePais.value);
-  if (pais) {
-    const ciudad = pais.ciudades[nombreCiudad.value];
-    if (ciudad) {
-      return ciudad.lugares.find(lugar => lugar.nombre === nombreDestino.value);
-    }
-  }
-  return null;
-});
-
-// Variable reactiva para almacenar el índice de la imagen seleccionada
+// Variables reactivas
+const destino = ref(null);
 const imagenSeleccionada = ref(null);
 
-// Función para abrir una imagen en el modal
+// Funciones de galería
 function abrirImagen(index) {
   imagenSeleccionada.value = index;
 }
 
-// Función para cerrar el modal de la imagen
 function cerrarImagen() {
   imagenSeleccionada.value = null;
 }
 
-// Función para navegar a la imagen anterior
 function imagenAnterior() {
   if (imagenSeleccionada.value > 0) {
     imagenSeleccionada.value--;
   }
 }
 
-// Función para navegar a la imagen siguiente
 function imagenSiguiente() {
-  if (imagenSeleccionada.value < destino.value.rutaImagen.length - 1) {
+  if (destino.value && imagenSeleccionada.value < destino.value.imagenes.length - 1) {
     imagenSeleccionada.value++;
   }
 }
 
-// Función para volver a la página anterior
+// Volver atrás
 function volverAtras() {
-  //go(-1) se usa para navegar hacia atrás en el historial de navegación
-  router.go(-1);
+  safeGoBack(router);
 }
 
-// Redirigir a la página principal si el destino no existe
-if (!destino.value) {
-  router.push({ name: 'Home' });
-}
+// Cargar destino al montar
+onMounted(async () => {
+  destino.value = await getLugarPorNombreCiudadPais(nombreDestino.value, nombreCiudad.value, nombrePais.value);
+
+  // Si no existe, redirigimos a home
+  if (!destino.value) {
+    router.push({ name: "Home" });
+  }
+});
 </script>
 
 <template>
   <div class="destino-view" v-if="destino">
-    <!-- Contenedor del encabezado con botón de volver y título -->
     <div class="header-container">
       <button @click="volverAtras" class="btn-volver">
-        <!-- Icono de flecha para volver atrás -->
         <ArrowIcon :width="20" :height="20" />
         Volver
       </button>
       <h1>{{ destino.nombre }}</h1>
     </div>
-    <!-- Contenedor del contenido del destino -->
+
     <div class="destino-content">
-      <!-- Galería de imágenes -->
       <div class="galeria-container">
         <div class="galeria">
-          <!-- Iterar sobre las imágenes y mostrarlas en la galería -->
-          <img v-for="(imagen, index) in destino.rutaImagen" :key="index" :src="imagen"
+          <img v-for="(imagen, index) in destino.imagenes" :key="index" :src="imagen"
             :alt="`${destino.nombre} - Imagen ${index + 1}`" class="galeria-imagen" @click="abrirImagen(index)" />
         </div>
       </div>
-      <!-- Información del destino -->
+
       <div class="destino-info">
         <div class="info-section">
           <h2>Información</h2>
           <p><strong>Ciudad:</strong> {{ nombreCiudad }}</p>
           <p><strong>País:</strong> {{ nombrePais }}</p>
-          <p><strong>Tipo:</strong> {{ destino.tipo }}</p>
-          <p><strong>Precio:</strong> {{ destino.precio === 0 ? "Gratis" : destino.precio + ' €' }}</p>
+          <p><strong>Precio:</strong> {{ destino.precio === 0 ? 'Gratis' : `${destino.precio} €` }}</p>
           <p><strong>Valoración:</strong> {{ destino.valoracion }} ⭐</p>
         </div>
-        <!-- Enlace a la ubicación en Google Maps -->
-        <a :href="destino.ubicacion_url" target="_blank" rel="noopener noreferrer" class="btn-ubicacion">
+
+        <a :href="`https://www.google.com/maps/search/?api=1&query=${destino.latitud},${destino.longitud}`"
+          target="_blank" rel="noopener noreferrer" class="btn-ubicacion">
           <MapIcon :width="20" :height="20" />
           Ver ubicación en Google Maps
         </a>
       </div>
     </div>
 
-    <!-- Modal para ver imágenes en grande -->
+    <!-- Modal de imagen -->
     <div v-if="imagenSeleccionada !== null" class="modal" @click="cerrarImagen">
       <div class="modal-content">
         <button class="modal-close" @click="cerrarImagen">&times;</button>
-        <img :src="destino.rutaImagen[imagenSeleccionada]" :alt="`${destino.nombre} - Imagen ${imagenSeleccionada + 1}`"
+        <img :src="destino.imagenes[imagenSeleccionada]" :alt="`${destino.nombre} - Imagen ${imagenSeleccionada + 1}`"
           class="modal-imagen" />
         <div class="modal-nav">
-          <button @click.stop="imagenAnterior" :disabled="imagenSeleccionada === 0" class="nav-button">
-            &#8592;
-          </button>
-          <span>{{ imagenSeleccionada + 1 }} / {{ destino.rutaImagen.length }}</span>
-          <button @click.stop="imagenSiguiente" :disabled="imagenSeleccionada === destino.rutaImagen.length - 1"
-            class="nav-button">
-            &#8594;
-          </button>
+          <button @click.stop="imagenAnterior" :disabled="imagenSeleccionada === 0" class="nav-button">&#8592;</button>
+          <span>{{ imagenSeleccionada + 1 }} / {{ destino.imagenes.length }}</span>
+          <button @click.stop="imagenSiguiente" :disabled="imagenSeleccionada === destino.imagenes.length - 1"
+            class="nav-button">&#8594;</button>
         </div>
       </div>
     </div>
