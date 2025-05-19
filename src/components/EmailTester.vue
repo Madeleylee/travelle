@@ -18,7 +18,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { enviarCorreoNotificacion } from '@/services/emailService';
+import { enviarCorreoNotificacion } from '@/services/emailServices';
 
 const testEmail = ref('');
 const loading = ref(false);
