@@ -2,7 +2,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getPaisesConCiudades } from '@/composables/useDatabase';
-import EmailTester from './EmailTester.vue';
 
 const router = useRouter();
 const paises = ref([]);
@@ -158,8 +157,6 @@ onMounted(async () => {
 
 <template>
     <footer class="footer-section">
-
-        <EmailTester/>
         <!-- Main footer section -->
         <div class="container py-5">
             <div class="row">

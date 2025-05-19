@@ -65,6 +65,11 @@ const routes = [
     name: "Paises",
     component: Paises,
   },
+  {
+    path: '/test-email',
+    name: 'TestEmail',
+    component: () => import('@/views/TestEmailView.vue')
+  },
   // Rutas protegidas
   {
     path: "/favoritos",
