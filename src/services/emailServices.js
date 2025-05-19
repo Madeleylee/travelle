@@ -1,6 +1,17 @@
 /**
- * Email service using API endpoint
+ * Email service using SMTP.js with Gmail
+ * This service handles sending emails for password recovery and notifications
  */
+
+// Configuración de SMTP para Gmail
+const SMTP_CONFIG = {
+  Host: import.meta.env.VITE_SMTP_HOST || "smtp.gmail.com",
+  Username: import.meta.env.VITE_SMTP_USERNAME || "",
+  Password: import.meta.env.VITE_SMTP_PASSWORD || "",
+  Port: import.meta.env.VITE_SMTP_PORT || 587,
+  From: import.meta.env.VITE_SMTP_FROM || "",
+  FromName: "Travelle",
+}
 
 /**
  * Sends a password recovery email
@@ -11,112 +22,218 @@
  */
 export async function enviarCorreoRecuperacion(email, token, baseUrl = window.location.origin) {
   // Recovery URL with token
-  const resetUrl = `${baseUrl}/reset-password/${token}`;
+  const resetUrl = `${baseUrl}/reset-password/${token}`
 
   try {
-    // Verificar si estamos en desarrollo o producción
-    if (import.meta.env.DEV) {
-      console.log("=== DEVELOPMENT MODE: EMAIL DETAILS ===");
-      console.log(`To: ${email}`);
-      console.log(`Subject: Password Recovery - Travelle`);
-      console.log(`Recovery link: ${resetUrl}`);
-      console.log("=======================================");
+    console.log(`Sending recovery email to ${email} with reset URL: ${resetUrl}`)
 
-      // Mostrar una notificación al usuario con el enlace
-      if (typeof window !== "undefined") {
-        const notification = document.createElement("div");
-        notification.style.position = "fixed";
-        notification.style.top = "20px";
-        notification.style.right = "20px";
-        notification.style.backgroundColor = "#1e3a8a";
-        notification.style.color = "white";
-        notification.style.padding = "15px";
-        notification.style.borderRadius = "5px";
-        notification.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)";
-        notification.style.zIndex = "10000";
-        notification.style.maxWidth = "400px";
-        notification.style.fontFamily = "Arial, sans-serif";
+    // Verificar si Email está disponible (SMTP.js)
+    if (typeof Email === "undefined") {
+      console.error("SMTP.js not loaded. Make sure to include the script in your HTML.")
+      return { success: false, error: "SMTP.js not loaded" }
+    }
 
-        notification.innerHTML = `
-          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <strong>Correo de recuperación simulado</strong>
-            <span style="cursor: pointer;" onclick="this.parentNode.parentNode.remove()">✕</span>
+    // Verificar si tenemos las credenciales necesarias
+    if (!SMTP_CONFIG.Username || !SMTP_CONFIG.Password) {
+      console.error("SMTP credentials not found. Please check your .env file.")
+
+      // Mostrar una notificación de error
+      const notification = document.createElement("div")
+      notification.style.position = "fixed"
+      notification.style.top = "20px"
+      notification.style.right = "20px"
+      notification.style.backgroundColor = "#f44336"
+      notification.style.color = "white"
+      notification.style.padding = "15px"
+      notification.style.borderRadius = "5px"
+      notification.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)"
+      notification.style.zIndex = "10000"
+      notification.style.maxWidth = "400px"
+      notification.style.fontFamily = "Arial, sans-serif"
+
+      notification.innerHTML = `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <strong>Error de configuración SMTP</strong>
+          <span style="cursor: pointer;" onclick="this.parentNode.parentNode.remove()">✕</span>
+        </div>
+        <p style="margin: 0;">No se encontraron las credenciales SMTP. Por favor, verifica tu archivo .env</p>
+      `
+
+      document.body.appendChild(notification)
+
+      // Eliminar la notificación después de 10 segundos
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          notification.remove()
+        }
+      }, 10000)
+
+      return { success: false, error: "SMTP credentials not found" }
+    }
+
+    // Configurar el correo
+    const emailConfig = {
+      Host: SMTP_CONFIG.Host,
+      Username: SMTP_CONFIG.Username,
+      Password: SMTP_CONFIG.Password,
+      Port: SMTP_CONFIG.Port,
+      To: email,
+      From: SMTP_CONFIG.From,
+      FromName: SMTP_CONFIG.FromName,
+      Subject: "Password Recovery - Travelle",
+      Body: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #1e3a8a;">Travelle</h1>
           </div>
-          <p style="margin: 0 0 10px 0;">Se ha generado un enlace de recuperación para: ${email}</p>
-          <a href="${resetUrl}" style="color: white; text-decoration: underline; word-break: break-all;">${resetUrl}</a>
-        `;
-
-        document.body.appendChild(notification);
-
-        // Eliminar la notificación después de 30 segundos
-        setTimeout(() => {
-          if (document.body.contains(notification)) {
-            notification.remove();
-          }
-        }, 30000);
-      }
-
-      return { success: true, dev: true };
+          
+          <h2 style="color: #1e3a8a; text-align: center;">Password Recovery</h2>
+          
+          <p>Hello,</p>
+          
+          <p>You requested to reset your password on Travelle. Click the button below to create a new password:</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #1e3a8a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              Reset Password
+            </a>
+          </div>
+          
+          <p>Or copy and paste the following link in your browser:</p>
+          <p style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; word-break: break-all;">
+            ${resetUrl}
+          </p>
+          
+          <p>This link will expire in 1 hour for security reasons.</p>
+          
+          <p>If you didn't request this change, you can ignore this email and your password will remain unchanged.</p>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
+            <p>This is an automated email, please do not reply to this message.</p>
+            <p>&copy; ${new Date().getFullYear()} Travelle. All rights reserved.</p>
+          </div>
+        </div>
+      `,
     }
 
-    // Crear el cuerpo del correo HTML
-    const emailBody = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="color: #1e3a8a;">Travelle</h1>
-        </div>
-        
-        <h2 style="color: #1e3a8a; text-align: center;">Recuperación de Contraseña</h2>
-        
-        <p>Hola,</p>
-        
-        <p>Has solicitado restablecer tu contraseña en Travelle. Haz clic en el botón de abajo para crear una nueva contraseña:</p>
-        
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${resetUrl}" style="background-color: #1e3a8a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-            Restablecer Contraseña
-          </a>
-        </div>
-        
-        <p>O copia y pega el siguiente enlace en tu navegador:</p>
-        <p style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; word-break: break-all;">
-          ${resetUrl}
-        </p>
-        
-        <p>Este enlace caducará en 1 hora por razones de seguridad.</p>
-        
-        <p>Si no solicitaste este cambio, puedes ignorar este correo y tu contraseña permanecerá sin cambios.</p>
-        
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
-          <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-          <p>&copy; ${new Date().getFullYear()} Travelle. Todos los derechos reservados.</p>
-        </div>
+    // Mostrar notificación de envío
+    const sendingNotification = document.createElement("div")
+    sendingNotification.style.position = "fixed"
+    sendingNotification.style.top = "20px"
+    sendingNotification.style.right = "20px"
+    sendingNotification.style.backgroundColor = "#2196F3"
+    sendingNotification.style.color = "white"
+    sendingNotification.style.padding = "15px"
+    sendingNotification.style.borderRadius = "5px"
+    sendingNotification.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)"
+    sendingNotification.style.zIndex = "10000"
+    sendingNotification.style.maxWidth = "400px"
+    sendingNotification.style.fontFamily = "Arial, sans-serif"
+
+    sendingNotification.innerHTML = `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <strong>Enviando correo</strong>
+        <span style="cursor: pointer;" onclick="this.parentNode.parentNode.remove()">✕</span>
       </div>
-    `;
+      <p style="margin: 0;">Enviando correo de recuperación a ${email}...</p>
+    `
 
-    // Usar la API para enviar el correo
-    const response = await fetch('/api/send-email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: email,
-        subject: "Recuperación de contraseña - Travelle",
-        html: emailBody,
-      }),
-    });
+    document.body.appendChild(sendingNotification)
 
-    const result = await response.json();
+    // Enviar el correo
+    return new Promise((resolve, reject) => {
+      if (typeof Email === "undefined") {
+        reject({ success: false, error: "SMTP.js not loaded" })
+        return
+      }
+      Email.send(emailConfig).then(
+        (message) => {
+          console.log("Email sent successfully:", message)
 
-    if (!response.ok) {
-      throw new Error(result.error || 'Error al enviar correo');
-    }
+          // Eliminar notificación de envío
+          if (document.body.contains(sendingNotification)) {
+            sendingNotification.remove()
+          }
 
-    return { success: true };
+          // Mostrar notificación de éxito
+          const successNotification = document.createElement("div")
+          successNotification.style.position = "fixed"
+          successNotification.style.top = "20px"
+          successNotification.style.right = "20px"
+          successNotification.style.backgroundColor = "#4CAF50"
+          successNotification.style.color = "white"
+          successNotification.style.padding = "15px"
+          successNotification.style.borderRadius = "5px"
+          successNotification.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)"
+          successNotification.style.zIndex = "10000"
+          successNotification.style.maxWidth = "400px"
+          successNotification.style.fontFamily = "Arial, sans-serif"
+
+          successNotification.innerHTML = `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+              <strong>Correo enviado</strong>
+              <span style="cursor: pointer;" onclick="this.parentNode.parentNode.remove()">✕</span>
+            </div>
+            <p style="margin: 0;">Se ha enviado un correo de recuperación a ${email}</p>
+          `
+
+          document.body.appendChild(successNotification)
+
+          // Eliminar la notificación después de 5 segundos
+          setTimeout(() => {
+            if (document.body.contains(successNotification)) {
+              successNotification.remove()
+            }
+          }, 5000)
+
+          resolve({ success: true, data: message })
+        },
+        (error) => {
+          console.error("Error sending recovery email:", error)
+
+          // Eliminar notificación de envío
+          if (document.body.contains(sendingNotification)) {
+            sendingNotification.remove()
+          }
+
+          // Mostrar notificación de error
+          const errorNotification = document.createElement("div")
+          errorNotification.style.position = "fixed"
+          errorNotification.style.top = "20px"
+          errorNotification.style.right = "20px"
+          errorNotification.style.backgroundColor = "#f44336"
+          errorNotification.style.color = "white"
+          errorNotification.style.padding = "15px"
+          errorNotification.style.borderRadius = "5px"
+          errorNotification.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)"
+          errorNotification.style.zIndex = "10000"
+          errorNotification.style.maxWidth = "400px"
+          errorNotification.style.fontFamily = "Arial, sans-serif"
+
+          errorNotification.innerHTML = `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+              <strong>Error al enviar correo</strong>
+              <span style="cursor: pointer;" onclick="this.parentNode.parentNode.remove()">✕</span>
+            </div>
+            <p style="margin: 0;">Error: ${error}</p>
+          `
+
+          document.body.appendChild(errorNotification)
+
+          // Eliminar la notificación después de 10 segundos
+          setTimeout(() => {
+            if (document.body.contains(errorNotification)) {
+              errorNotification.remove()
+            }
+          }, 10000)
+
+          reject({ success: false, error })
+        },
+      )
+    })
   } catch (error) {
-    console.error("Error al enviar correo de recuperación:", error);
-    return { success: false, error: error.message };
+    console.error("Error sending recovery email:", error)
+    return { success: false, error }
   }
 }
 
@@ -129,123 +246,67 @@ export async function enviarCorreoRecuperacion(email, token, baseUrl = window.lo
  */
 export async function enviarCorreoNotificacion(email, subject, message) {
   try {
-    // Verificar si estamos en desarrollo o producción
-    if (import.meta.env.DEV) {
-      console.log("=== DEVELOPMENT MODE: EMAIL DETAILS ===");
-      console.log(`To: ${email}`);
-      console.log(`Subject: ${subject}`);
-      console.log(`Message: ${message}`);
-      console.log("=======================================");
+    console.log(`Sending notification email to ${email}`)
 
-      // Mostrar una notificación al usuario
-      if (typeof window !== "undefined") {
-        const notification = document.createElement("div");
-        notification.style.position = "fixed";
-        notification.style.top = "20px";
-        notification.style.right = "20px";
-        notification.style.backgroundColor = "#4caf50";
-        notification.style.color = "white";
-        notification.style.padding = "15px";
-        notification.style.borderRadius = "5px";
-        notification.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)";
-        notification.style.zIndex = "10000";
-        notification.style.maxWidth = "400px";
-        notification.style.fontFamily = "Arial, sans-serif";
+    // Verificar si Email está disponible (SMTP.js)
+    if (typeof Email === "undefined") {
+      console.error("SMTP.js not loaded. Make sure to include the script in your HTML.")
+      return { success: false, error: "SMTP.js not loaded" }
+    }
 
-        notification.innerHTML = `
-          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <strong>Notificación simulada: ${subject}</strong>
-            <span style="cursor: pointer;" onclick="this.parentNode.parentNode.remove()">✕</span>
+    // Verificar si tenemos las credenciales necesarias
+    if (!SMTP_CONFIG.Username || !SMTP_CONFIG.Password) {
+      console.error("SMTP credentials not found. Please check your .env file.")
+      return { success: false, error: "SMTP credentials not found" }
+    }
+
+    // Configurar el correo
+    const emailConfig = {
+      Host: SMTP_CONFIG.Host,
+      Username: SMTP_CONFIG.Username,
+      Password: SMTP_CONFIG.Password,
+      Port: SMTP_CONFIG.Port,
+      To: email,
+      From: SMTP_CONFIG.From,
+      FromName: SMTP_CONFIG.FromName,
+      Subject: subject,
+      Body: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #1e3a8a;">Travelle</h1>
           </div>
-          <p style="margin: 0;">Destinatario: ${email}</p>
-          <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.3);">
+          
+          <div style="margin-bottom: 20px;">
             ${message}
           </div>
-        `;
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
+            <p>This is an automated email, please do not reply to this message.</p>
+            <p>&copy; ${new Date().getFullYear()} Travelle. All rights reserved.</p>
+          </div>
+        </div>
+      `,
+    }
 
-        document.body.appendChild(notification);
-
-        // Eliminar la notificación después de 10 segundos
-        setTimeout(() => {
-          if (document.body.contains(notification)) {
-            notification.remove();
-          }
-        }, 10000);
+    // Enviar el correo
+    return new Promise((resolve, reject) => {
+      if (typeof Email === "undefined") {
+        reject({ success: false, error: "SMTP.js not loaded" })
+        return
       }
-
-      return { success: true, dev: true };
-    }
-
-    // Crear el cuerpo del correo HTML
-    const emailBody = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="color: #1e3a8a;">Travelle</h1>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          ${message}
-        </div>
-        
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
-          <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-          <p>&copy; ${new Date().getFullYear()} Travelle. Todos los derechos reservados.</p>
-        </div>
-      </div>
-    `;
-
-    // Usar la API para enviar el correo
-    const response = await fetch('/api/send-email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: email,
-        subject: subject,
-        html: emailBody,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Error al enviar correo');
-    }
-
-    return { success: true };
+      Email.send(emailConfig).then(
+        (message) => {
+          console.log("Email sent successfully:", message)
+          resolve({ success: true, data: message })
+        },
+        (error) => {
+          console.error("Error sending notification email:", error)
+          reject({ success: false, error })
+        },
+      )
+    })
   } catch (error) {
-    console.error("Error al enviar correo de notificación:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Utility function to test email sending
- * @returns {Promise<Object>} - Result of the test
- */
-export async function testEmailService() {
-  try {
-    const testEmail = prompt("Ingresa un correo para la prueba:", "");
-
-    if (!testEmail) {
-      return { success: false, error: "No se proporcionó un correo de prueba" };
-    }
-
-    console.log("Iniciando prueba de envío de correo a:", testEmail);
-
-    const result = await enviarCorreoNotificacion(
-      testEmail,
-      "Prueba de servicio de correo",
-      `<h2>¡Prueba exitosa!</h2>
-       <p>Si estás viendo este correo, el servicio de correo de Travelle está funcionando correctamente.</p>
-       <p>Fecha y hora de la prueba: ${new Date().toLocaleString()}</p>`
-    );
-
-    console.log("Resultado de la prueba:", result);
-    return result;
-  } catch (error) {
-    console.error("Error en la prueba del servicio de correo:", error);
-    return { success: false, error: error.message };
+    console.error("Error sending notification email:", error)
+    return { success: false, error }
   }
 }
