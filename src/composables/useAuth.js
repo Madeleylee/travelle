@@ -213,7 +213,7 @@ export function useAuth() {
 
             // Importar el servicio de correo y enviar el correo de recuperación
             try {
-                const { enviarCorreoRecuperacion } = await import("@/services/emailService");
+                const { enviarCorreoRecuperacion } = await import("@/services/emailServices");
                 const result = await enviarCorreoRecuperacion(email, token);
 
                 if (result.dev) {
@@ -261,7 +261,7 @@ export function useAuth() {
             if (intentos >= maxIntentos) {
                 // Importar el servicio de email y enviar notificación
                 try {
-                    const { enviarCorreoNotificacion } = await import("@/services/emailService")
+                    const { enviarCorreoNotificacion } = await import("@/services/emailServices")
                     await enviarCorreoNotificacion(
                         email,
                         "Security Alert - Password Reset Attempts Exceeded",
@@ -327,7 +327,7 @@ export function useAuth() {
 
             // Enviar notificación de cambio de contraseña exitoso
             try {
-                const { enviarCorreoNotificacion } = await import("@/services/emailService")
+                const { enviarCorreoNotificacion } = await import("@/services/emailServices")
                 await enviarCorreoNotificacion(
                     tokenCheck.email,
                     "Password Reset Successful",
