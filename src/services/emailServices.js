@@ -1,6 +1,5 @@
 /**
- * Email service with fallback for development environment
- * This service handles sending emails for password recovery and notifications
+ * Email service with improved error handling and environment detection
  */
 
 /**
@@ -98,12 +97,27 @@ export async function enviarCorreoRecuperacion(email, token) {
       sendingNotification.remove()
     }
 
+    // Check if response is ok
     if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || "Failed to send email")
+      // Try to parse error response as JSON
+      let errorMessage
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.error || `Server error: ${response.status} ${response.statusText}`
+      } catch (jsonError) {
+        // If JSON parsing fails, use status text
+        errorMessage = `Server error: ${response.status} ${response.statusText}`
+      }
+      throw new Error(errorMessage)
     }
 
-    const result = await response.json()
+    // Parse response as JSON
+    let result
+    try {
+      result = await response.json()
+    } catch (jsonError) {
+      throw new Error("Invalid response from server: " + jsonError.message)
+    }
 
     // Show success notification
     showNotification("Email sent", `A recovery email has been sent to ${email}`, "success", 5000)
@@ -173,12 +187,28 @@ export async function enviarCorreoNotificacion(email, subject, message) {
       }),
     })
 
+    // Check if response is ok
     if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || "Failed to send email")
+      // Try to parse error response as JSON
+      let errorMessage
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.error || `Server error: ${response.status} ${response.statusText}`
+      } catch (jsonError) {
+        // If JSON parsing fails, use status text
+        errorMessage = `Server error: ${response.status} ${response.statusText}`
+      }
+      throw new Error(errorMessage)
     }
 
-    const result = await response.json()
+    // Parse response as JSON
+    let result
+    try {
+      result = await response.json()
+    } catch (jsonError) {
+      throw new Error("Invalid response from server: " + jsonError.message)
+    }
+
     return { success: true, data: result }
   } catch (error) {
     console.error("Error sending notification email:", error)
