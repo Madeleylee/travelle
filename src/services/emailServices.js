@@ -1,10 +1,7 @@
 /**
- * Email service using server API endpoints
+ * Email service with fallback for development environment
  * This service handles sending emails for password recovery and notifications
  */
-
-// Base URL for API calls
-const API_BASE_URL = import.meta.env.VITE_API_URL || ""
 
 /**
  * Sends a password recovery email
@@ -20,8 +17,39 @@ export async function enviarCorreoRecuperacion(email, token) {
     // Show sending notification
     const sendingNotification = showNotification("Sending email", `Sending recovery email to ${email}...`, "info")
 
-    // Call the API endpoint
-    const response = await fetch(`${API_BASE_URL}/api/send-email`, {
+    // In development, create a mock response instead of making an API call
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      console.log("Development environment detected - using mock email service")
+      console.log("Would send email to:", email)
+      console.log("With reset URL:", resetUrl)
+
+      // Remove sending notification after a delay to simulate network request
+      setTimeout(() => {
+        if (document.body.contains(sendingNotification)) {
+          sendingNotification.remove()
+        }
+
+        // Show success notification
+        showNotification(
+          "Email sent (DEV MODE)",
+          `In production, a recovery email would be sent to ${email}`,
+          "success",
+          5000,
+        )
+      }, 1500)
+
+      // Return mock success response
+      return {
+        success: true,
+        data: {
+          messageId: "mock-message-id-" + Date.now(),
+          development: true,
+        },
+      }
+    }
+
+    // For production, make the actual API call
+    const response = await fetch("/api/send-email", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -100,7 +128,25 @@ export async function enviarCorreoRecuperacion(email, token) {
  */
 export async function enviarCorreoNotificacion(email, subject, message) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/send-email`, {
+    // In development, create a mock response instead of making an API call
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      console.log("Development environment detected - using mock email service")
+      console.log("Would send email to:", email)
+      console.log("With subject:", subject)
+      console.log("With message:", message)
+
+      // Return mock success response
+      return {
+        success: true,
+        data: {
+          messageId: "mock-message-id-" + Date.now(),
+          development: true,
+        },
+      }
+    }
+
+    // For production, make the actual API call
+    const response = await fetch("/api/send-email", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
