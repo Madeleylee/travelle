@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import './assets/main.css'
 
+
 // Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -21,6 +22,9 @@ import {
 
 } from '@fortawesome/free-solid-svg-icons'
 
+
+//Css Leaflet
+import 'leaflet/dist/leaflet.css';
 
 //Bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css'

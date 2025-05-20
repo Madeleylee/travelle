@@ -10,6 +10,8 @@ import Perfil from "../views/PerfilView.vue"
 import Lista from "../views/TodoListView.vue"
 import NotFound from "../views/NotFoundView.vue"
 
+
+
 /*Componentes de registro */
 import LoginForm from "../components/LoginForm.vue"
 import RegistroForm from "../components/RegistroForm.vue"

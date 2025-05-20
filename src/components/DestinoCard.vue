@@ -3,6 +3,9 @@ import { defineProps, onMounted, ref } from 'vue';
 import { getCiudadPorLugarId } from '@/composables/useDatabase';
 import FavoriteButton from '@/components/FavoriteButton.vue';
 import AuthModal from '@/components/AuthModal.vue';
+// Actualizar las importaciones para incluir el botón de visitado y el modal de detalles
+import VisitedButton from '@/components/VisitedButton.vue';
+import VisitDetailsModal from '@/components/VisitDetailsModal.vue';
 
 const props = defineProps({
     destino: {
@@ -21,6 +24,8 @@ const props = defineProps({
 
 const nombreCiudad = ref('');
 const showModal = ref(false);
+// Añadir nuevas variables reactivas para el modal de detalles de visita
+const showVisitDetailsModal = ref(false);
 
 // When mounted, get the city name from the database
 onMounted(async () => {
@@ -87,6 +92,24 @@ const showNotification = (message) => {
         }, 300);
     }, 3000);
 };
+
+// Añadir función para mostrar el modal de detalles de visita
+const showVisitDetails = () => {
+    showVisitDetailsModal.value = true;
+};
+
+// Añadir función para manejar cuando se guarda una visita
+const handleVisitSaved = (data) => {
+    showVisitDetailsModal.value = false;
+    showNotification(`${props.destino.nombre} marked as visited on ${new Date(data.fecha).toLocaleDateString()}`);
+};
+
+// Añadir la función handleVisitToggle en el script
+// Handle visit toggle
+const handleVisitToggle = (isVisited) => {
+    const action = isVisited ? 'marked as visited' : 'removed from visited places';
+    showNotification(`${props.destino.nombre} ${action}`);
+};
 </script>
 
 <template>
@@ -99,6 +122,10 @@ const showNotification = (message) => {
             <!-- Favorite button -->
             <FavoriteButton :lugar-id="destino.id_lugar" :lugar-info="lugarInfo" @toggle="handleFavoriteToggle"
                 @login-required="showLoginModal" />
+
+            <!-- Visited button -->
+            <VisitedButton :lugar-id="destino.id_lugar" :lugar-info="lugarInfo" @toggle="handleVisitToggle"
+                @login-required="showLoginModal" @show-details="showVisitDetails" />
 
             <!-- Price tag -->
             <div class="price-tag">
@@ -141,6 +168,10 @@ const showNotification = (message) => {
 
     <!-- Login Modal -->
     <AuthModal :visible="showModal" @close="showModal = false" @login-success="handleLoginSuccess" />
+
+    <!-- Visit details modal -->
+    <VisitDetailsModal :visible="showVisitDetailsModal" :lugar-id="destino.id_lugar" :existing-data="{}"
+        @close="showVisitDetailsModal = false" @saved="handleVisitSaved" @login-required="showLoginModal" />
 </template>
 
 <style scoped>

@@ -1,7 +1,25 @@
 <script setup>
 import { ref, computed } from 'vue';
 import FavoriteButton from '@/components/FavoriteButton.vue';
+import VisitedButton from '@/components/VisitedButton.vue';
+import VisitDetailsModal from '@/components/VisitDetailsModal.vue';
 import AuthModal from '@/components/AuthModal.vue';
+
+// Añadir nuevas variables reactivas
+const showVisitDetailsModal = ref(false);
+const selectedLugarId = ref(null);
+
+// Añadir función para mostrar el modal de detalles de visita
+const showVisitDetails = (lugarId) => {
+    selectedLugarId.value = lugarId;
+    showVisitDetailsModal.value = true;
+};
+
+// Añadir función para manejar el cierre del modal de detalles de visita
+const closeVisitDetailsModal = () => {
+    showVisitDetailsModal.value = false;
+    selectedLugarId.value = null;
+};
 
 const props = defineProps({
     nombrePais: {
@@ -114,6 +132,9 @@ function showNotification(message) {
                             @toggle="(isFavorite) => handleFavoriteToggle(isFavorite, lugar)"
                             @login-required="showLoginModal" />
 
+                        <!-- Visited button -->
+                        <VisitedButton :lugar-id="lugar.id_lugar" @visit="showVisitDetails(lugar.id_lugar)" />
+
                         <!-- Price tag -->
                         <div class="price-tag">
                             <span v-if="lugar.precio === 0">Free</span>
@@ -157,6 +178,10 @@ function showNotification(message) {
 
         <!-- Login Modal -->
         <AuthModal :visible="showModal" @close="showModal = false" @login-success="handleLoginSuccess" />
+
+        <!-- Visit Details Modal -->
+        <VisitDetailsModal :lugar-id="selectedLugarId" :visible="showVisitDetailsModal"
+            @close="closeVisitDetailsModal" />
     </div>
 </template>
 
