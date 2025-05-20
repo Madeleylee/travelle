@@ -27,18 +27,18 @@ export default async function handler(req, res) {
 
         // Configure Nodemailer transporter
         const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST || "smtp.gmail.com",
-            port: Number.parseInt(process.env.SMTP_PORT || "587"),
-            secure: process.env.SMTP_SECURE === "true",
+            host: process.env.VITE_SMTP_HOST || "smtp.gmail.com",
+            port: Number.parseInt(process.env.VITE_SMTP_PORT || "587"),
+            secure: process.env.VITE_SMTP_SECURE === "true",
             auth: {
-                user: process.env.SMTP_USERNAME,
-                pass: process.env.SMTP_PASSWORD,
+                user: process.env.VITE_SMTP_USERNAME,
+                pass: process.env.VITE_SMTP_PASSWORD,
             },
         })
 
         // Configure email
         const mailOptions = {
-            from: `"Travelle" <${process.env.SMTP_USERNAME}>`,
+            from: `"Travelle" <${process.env.VITE_SMTP_USERNAME}>`,
             to,
             subject,
             html,
