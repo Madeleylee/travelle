@@ -10,11 +10,11 @@ const props = defineProps({
     },
     lugarInfo: {
         type: Object,
-        required: true
+        default: () => ({})
     }
 });
 
-const emit = defineEmits(['toggle', 'login-required', 'show-details']);
+const emit = defineEmits(['toggle', 'login-required', 'visit', 'show-details']);
 
 const { isUserAuthenticated } = useAuth();
 const { isVisited, toggleVisitedPlace } = useVisitados();
@@ -61,7 +61,7 @@ const toggleVisited = async () => {
 
         if (result.success) {
             isVisitedState.value = result.isNowVisited;
-            emit('toggle', result.isNowVisited);
+            emit('toggle', result.isNowVisited, props.lugarInfo);
 
             // Si se acaba de marcar como visitado, mostrar modal de detalles
             if (result.isNowVisited) {

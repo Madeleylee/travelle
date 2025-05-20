@@ -72,15 +72,28 @@ function handleFavoriteToggle(isFavorite, lugar) {
     showNotification(`${lugar.nombre} ${action} favorites`);
 }
 
-// Show login modal
-function showLoginModal() {
-    showModal.value = true;
+// Handle visit toggle
+function handleVisitToggle(isVisited, lugarInfo) {
+    if (!lugarInfo) return; // Protección contra undefined
+    const action = isVisited ? 'marked as visited' : 'removed from visited places';
+    showNotification(`${lugarInfo.nombre || 'Place'} ${action}`);
 }
 
 // Handle successful login
 function handleLoginSuccess() {
     showModal.value = false;
     showNotification('You can now add places to your favorites!');
+}
+
+// Handle visit saved
+function handleVisitSaved(data) {
+    showVisitDetailsModal.value = false;
+    showNotification(`Place marked as visited on ${new Date(data.fecha).toLocaleDateString()}`);
+}
+
+// Show login modal
+function showLoginModal() {
+    showModal.value = true;
 }
 
 // Show notification
@@ -133,7 +146,9 @@ function showNotification(message) {
                             @login-required="showLoginModal" />
 
                         <!-- Visited button -->
-                        <VisitedButton :lugar-id="lugar.id_lugar" @visit="showVisitDetails(lugar.id_lugar)" />
+                        <VisitedButton :lugar-id="lugar.id_lugar" :lugar-info="getLugarInfo(lugar)"
+                            @toggle="(isVisited, lugarInfo) => handleVisitToggle(isVisited, lugarInfo)"
+                            @login-required="showLoginModal" @show-details="showVisitDetails(lugar.id_lugar)" />
 
                         <!-- Price tag -->
                         <div class="price-tag">
@@ -180,8 +195,8 @@ function showNotification(message) {
         <AuthModal :visible="showModal" @close="showModal = false" @login-success="handleLoginSuccess" />
 
         <!-- Visit Details Modal -->
-        <VisitDetailsModal :lugar-id="selectedLugarId" :visible="showVisitDetailsModal"
-            @close="closeVisitDetailsModal" />
+        <VisitDetailsModal :visible="showVisitDetailsModal" :lugar-id="selectedLugarId" @close="closeVisitDetailsModal"
+            @saved="handleVisitSaved" @login-required="showLoginModal" />
     </div>
 </template>
 

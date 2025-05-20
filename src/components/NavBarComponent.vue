@@ -28,9 +28,8 @@ const pendingNavigation = ref(null);
 const authRequiredRoutes = [
   '/favoritos',
   '/visitados',
-  '/lista',
   '/viajes',
-  '/perfil'
+  '/perfil',
 ];
 
 const usuarioActual = computed(() => {
@@ -432,9 +431,9 @@ onUnmounted(() => {
           </li>
 
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/lista')" class="nav-link px-2 px-md-3 fw-medium text-white">
-              <span class="d-none d-md-inline">List</span>
-              <i class="bi bi-list-ul d-inline d-md-none"></i>
+            <a href="#" @click.prevent="navigateTo('/viajes')" class="nav-link px-2 px-md-3 fw-medium text-white">
+              <span class="d-none d-md-inline">Mis Viajes</span>
+              <i class="bi bi-suitcase d-inline d-md-none"></i>
             </a>
           </li>
         </ul>
@@ -474,6 +473,10 @@ onUnmounted(() => {
             <a href="#" @click.prevent="navigateTo('/viajes')" class="dropdown-item d-flex align-items-center py-2">
               <i class="bi bi-signpost-split me-2"></i>
               <span>My Trips</span>
+            </a>
+            <a href="#" @click.prevent="navigateTo('/viajes')" class="dropdown-item d-flex align-items-center py-2">
+              <i class="bi bi-suitcase me-2"></i>
+              <span>Mis Viajes</span>
             </a>
             <!-- Logout button -->
             <button class="dropdown-item d-flex align-items-center py-2" @click="cerrarSesion">

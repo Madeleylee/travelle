@@ -1,3 +1,5 @@
+"use client"
+
 import { createRouter, createWebHistory } from "vue-router"
 import Home from "../views/HomeView.vue"
 import Pais from "../views/PaisView.vue"
@@ -7,10 +9,9 @@ import Paises from "../views/CountriesGridPage.vue"
 import Favorite from "../views/FavoriteView.vue"
 import Visitados from "../views/VisitadosView.vue"
 import Perfil from "../views/PerfilView.vue"
-import Lista from "../views/TodoListView.vue"
 import NotFound from "../views/NotFoundView.vue"
-
-
+import TripLists from "../views/TripListsView.vue"
+import TripListDetail from "../views/TripListDetailView.vue"
 
 /*Componentes de registro */
 import LoginForm from "../components/LoginForm.vue"
@@ -72,34 +73,39 @@ const routes = [
     path: "/favoritos",
     name: "Favoritos",
     component: Favorite,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
-  // Añade aquí las demás rutas protegidas
-
   {
     path: "/perfil",
     name: "Perfil",
     component: Perfil,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: "/lista",
-    name: "Lista",
-    component: Lista,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: "/visitados",
     name: "visitados",
     component: Visitados,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
+  },
+  // Nuevas rutas para listas de viaje
+  {
+    path: "/viajes",
+    name: "TripLists",
+    component: TripLists,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/viajes/:id",
+    name: "TripListDetail",
+    component: TripListDetail,
+    meta: { requiresAuth: true },
   },
   // Ruta para manejar páginas no encontradas (404)
   {
     path: "/:pathMatch(.*)*",
     name: "NotFound",
-    component:NotFound
-  }
+    component: NotFound,
+  },
 ]
 
 const router = createRouter({
@@ -114,19 +120,19 @@ const router = createRouter({
 // Navigation Guard para proteger rutas
 router.beforeEach((to, from, next) => {
   // Obtener el estado de autenticación
-  const { isUserAuthenticated } = useAuth();
+  const { isUserAuthenticated } = useAuth()
 
   // Comprobar si la ruta requiere autenticación
   if (to.meta.requiresAuth && !isUserAuthenticated()) {
     // Si requiere autenticación y el usuario no está autenticado,
     // redirigir a la página de login con la ruta de retorno
     next({
-      name: 'Login',
-      query: { redirect: to.fullPath }
-    });
+      name: "Login",
+      query: { redirect: to.fullPath },
+    })
   } else {
     // En caso contrario, permitir la navegación
-    next();
+    next()
   }
 })
 
