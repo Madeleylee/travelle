@@ -22,8 +22,24 @@ try {
 
 export function useAuth() {
     // Obtener usuario actual
+    // Modificar la función getUsuarioActual para garantizar que el usuario tenga un ID
     function getUsuarioActual() {
-        return user.value
+        // Si no hay usuario, devolver null
+        if (!user.value) return null
+
+        // Crear una copia del usuario para no modificar el original
+        const usuarioActual = { ...user.value }
+
+        // Si el usuario no tiene id pero tiene id_usuario, asignar id_usuario a id
+        if (!usuarioActual.id && usuarioActual.id_usuario) {
+            usuarioActual.id = usuarioActual.id_usuario
+        }
+        // Si el usuario no tiene id_usuario pero tiene id, asignar id a id_usuario
+        else if (!usuarioActual.id_usuario && usuarioActual.id) {
+            usuarioActual.id_usuario = usuarioActual.id
+        }
+
+        return usuarioActual
     }
 
     // Verificar si el usuario está autenticado
@@ -348,6 +364,35 @@ export function useAuth() {
         }
     }
 
+    // Añadir una función de depuración para verificar la estructura del usuario
+    function debugUsuario() {
+        try {
+            if (!user.value) {
+                console.log("No hay usuario autenticado")
+                return { autenticado: false }
+            }
+
+            console.log("Objeto usuario completo:", JSON.stringify(user.value))
+
+            // Verificar si existe id o id_usuario
+            const tieneId = user.value.hasOwnProperty("id")
+            const tieneIdUsuario = user.value.hasOwnProperty("id_usuario")
+
+            return {
+                autenticado: true,
+                tieneId,
+                tieneIdUsuario,
+                id: user.value.id,
+                id_usuario: user.value.id_usuario,
+                usuario: user.value,
+            }
+        } catch (error) {
+            console.error("Error al depurar usuario:", error)
+            return { error: error.message }
+        }
+    }
+
+    // Añadir la función debugUsuario al objeto de retorno
     return {
         user,
         isAuthenticated,
@@ -361,5 +406,6 @@ export function useAuth() {
         solicitarRecuperacion,
         verificarTokenRecuperacion,
         restablecerContrasena,
+        debugUsuario, // Nueva función de depuración
     }
 }
