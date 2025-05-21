@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useTripLists } from '@/composables/useTripLists';
 import { useAuth } from '@/composables/useAuth';
 import AuthModal from '@/components/AuthModal.vue';
+import { checkTripsAndNotify } from '@/services/tripNotificationService';
 
 const router = useRouter();
 const { isUserAuthenticated } = useAuth();
@@ -29,10 +30,20 @@ const nuevaLista = ref({
 // Validación del formulario
 const formErrors = ref({});
 
+// Estado para el filtro actual
+const filtroActual = ref('proximos'); // 'todos', 'proximos', 'pasados'
+
 // Listas filtradas según el filtro actual
 const listasFiltradas = computed(() => {
     const hoy = new Date();
-    return listasOrdenadas.value.filter(lista => new Date(lista.fechaInicio) >= hoy);
+
+    if (filtroActual.value === 'todos') {
+        return listasOrdenadas.value;
+    } else if (filtroActual.value === 'pasados') {
+        return listasOrdenadas.value.filter(lista => new Date(lista.fechaInicio) < hoy);
+    } else { // proximos (default)
+        return listasOrdenadas.value.filter(lista => new Date(lista.fechaInicio) >= hoy);
+    }
 });
 
 // Verificar si hay listas
@@ -159,10 +170,31 @@ function handleLoginSuccess() {
     }, 500);
 }
 
+// Cambiar el filtro actual
+function cambiarFiltro(filtro) {
+    filtroActual.value = filtro;
+}
+
+// Verificar viajes y enviar notificaciones si es necesario
+async function verificarViajesYNotificar() {
+    if (isUserAuthenticated()) {
+        try {
+            await checkTripsAndNotify();
+            // No mostramos notificación en la UI para no interrumpir la experiencia del usuario
+            console.log('Verificación de viajes completada');
+        } catch (error) {
+            console.error('Error al verificar viajes:', error);
+        }
+    }
+}
+
 onMounted(() => {
     // Si no hay autenticación, mostrar modal de login
     if (!isUserAuthenticated()) {
         showAuthModal.value = true;
+    } else {
+        // Verificar viajes y enviar notificaciones si es necesario
+        verificarViajesYNotificar();
     }
 });
 </script>
@@ -180,6 +212,21 @@ onMounted(() => {
                     </div>
                     <h1 class="display-5 fw-bold">Mis Viajes</h1>
                     <p class="lead text-muted">Organiza tus viajes y no olvides nada importante</p>
+                    <!-- Filtros de viajes -->
+                    <div class="trip-filters">
+                        <button class="filter-btn" :class="{ active: filtroActual === 'todos' }"
+                            @click="cambiarFiltro('todos')">
+                            <i class="bi bi-grid-3x3-gap-fill me-1"></i> Todos
+                        </button>
+                        <button class="filter-btn" :class="{ active: filtroActual === 'proximos' }"
+                            @click="cambiarFiltro('proximos')">
+                            <i class="bi bi-calendar-check me-1"></i> Próximos
+                        </button>
+                        <button class="filter-btn" :class="{ active: filtroActual === 'pasados' }"
+                            @click="cambiarFiltro('pasados')">
+                            <i class="bi bi-calendar-x me-1"></i> Pasados
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Nuevo botón de agregar viaje -->
@@ -202,8 +249,17 @@ onMounted(() => {
                     <div class="empty-illustration mb-4">
                         <i class="bi bi-suitcase display-1"></i>
                     </div>
-                    <h3>No tienes viajes planeados</h3>
-                    <p class="text-muted mb-4">Crea tu primer viaje para empezar a organizar</p>
+                    <h3 v-if="filtroActual === 'todos'">No tienes viajes</h3>
+                    <h3 v-else-if="filtroActual === 'proximos'">No tienes viajes próximos</h3>
+                    <h3 v-else>No tienes viajes pasados</h3>
+
+                    <p class="text-muted mb-4" v-if="filtroActual === 'todos' || filtroActual === 'proximos'">
+                        Crea tu primer viaje para empezar a organizar
+                    </p>
+                    <p class="text-muted mb-4" v-else>
+                        Tus viajes pasados aparecerán aquí
+                    </p>
+
                     <button class="btn btn-primary btn-lg" @click="abrirModalNuevaLista">
                         <i class="bi bi-plus-lg me-2"></i> Nuevo Viaje
                     </button>
@@ -218,7 +274,8 @@ onMounted(() => {
                             <span class="trip-day">{{ new Date(lista.fechaInicio).getDate() }}</span>
                             <span class="trip-month">{{ new Date(lista.fechaInicio).toLocaleString('es-ES', {
                                 month:
-                                'short' }) }}</span>
+                                    'short'
+                            }) }}</span>
                         </div>
                         <div class="trip-badge"
                             :class="diasRestantes(lista.fechaInicio) === '¡Hoy!' ? 'trip-badge-today' : ''">
@@ -248,7 +305,7 @@ onMounted(() => {
                             </div>
                             <div class="trip-progress-text">
                                 <span>{{lista.items.filter(item => item.completado).length}}/{{ lista.items.length
-                                    }}</span>
+                                }}</span>
                                 <span>{{ porcentajeCompletado(lista) }}%</span>
                             </div>
                         </div>
@@ -604,5 +661,45 @@ onMounted(() => {
     .empty-state {
         padding: 2rem 1rem;
     }
+}
+
+/* Filtros */
+.trip-filters {
+    display: flex;
+    justify-content: center;
+    margin: 1.5rem 0;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 2rem;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filter-btn:hover {
+    background-color: #f8f9fa;
+    color: var(--color-primary);
+}
+
+.filter-btn.active {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 10px rgba(var(--color-primary-rgb), 0.3);
+}
+
+/* Mensaje cuando no hay listas */
+.empty-state {
+    background-color: white;
+    border-radius: 1rem;
+    padding: 3rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    text-align: center;
 }
 </style>
