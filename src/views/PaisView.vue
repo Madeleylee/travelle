@@ -26,7 +26,7 @@ async function cargarCiudadesConLugares(paisActual) {
 
         if (!paisActual.ciudades || !Array.isArray(paisActual.ciudades)) {
             console.error('El país no tiene ciudades o no es un array:', paisActual);
-            error.value = 'No se encontraron ciudades para este país';
+            error.value = 'No cities found for this country';
             return;
         }
 
@@ -54,7 +54,7 @@ async function cargarCiudadesConLugares(paisActual) {
         console.log('Ciudades con lugares cargadas:', ciudadesConLugares.value);
     } catch (err) {
         console.error('Error al cargar ciudades con lugares:', err);
-        error.value = 'Error al cargar los destinos';
+        error.value = 'Error loading destinations';
     } finally {
         loading.value = false;
     }
@@ -99,11 +99,11 @@ onMounted(async () => {
             ciudadSeleccionada.value = route.query.ciudad || null;
             lugarSeleccionado.value = route.query.lugar || null;
         } else {
-            error.value = 'País no encontrado';
+            error.value = 'Country not found';
         }
     } catch (err) {
         console.error('Error al cargar datos iniciales:', err);
-        error.value = 'Error al cargar los datos';
+        error.value = 'Error loading data';
     } finally {
         loading.value = false;
     }
@@ -120,12 +120,12 @@ watch(() => route.params.nombrePais, async () => {
             ciudadSeleccionada.value = route.query.ciudad || null;
             lugarSeleccionado.value = route.query.lugar || null;
         } else {
-            error.value = 'País no encontrado';
+            error.value = 'Country not found';
             ciudadesConLugares.value = [];
         }
     } catch (err) {
         console.error('Error al cambiar de país:', err);
-        error.value = 'Error al cargar los datos';
+        error.value = 'Error loading data';
         ciudadesConLugares.value = [];
     } finally {
         loading.value = false;
@@ -137,20 +137,20 @@ watch(() => route.params.nombrePais, async () => {
     <div class="pais-view">
         <div v-if="loading" class="loading-container">
             <div class="spinner"></div>
-            <p>Cargando destinos...</p>
+            <p>Loading destinations...</p>
         </div>
 
         <div v-else-if="error" class="error-container">
             <p>{{ error }}</p>
-            <button @click="$router.go(0)" class="retry-button">Reintentar</button>
+            <button @click="$router.go(0)" class="retry-button">Try again</button>
         </div>
 
         <template v-else-if="pais">
-            <h1>Destinos en {{ nombrePais }}</h1>
+            <h1>Destinations in {{ nombrePais }}</h1>
 
             <div class="ciudades-nav">
                 <button @click="selectCiudad(null)" :class="{ active: !ciudadSeleccionada }" class="btn-ciudad">
-                    Todos
+                    All
                 </button>
                 <button v-for="ciudad in ciudadesConLugares" :key="ciudad.nombre" @click="selectCiudad(ciudad.nombre)"
                     :class="{ active: ciudadSeleccionada === ciudad.nombre }" class="btn-ciudad">
@@ -159,7 +159,7 @@ watch(() => route.params.nombrePais, async () => {
             </div>
 
             <div v-if="ciudadesConLugares.length === 0" class="no-data">
-                No se encontraron ciudades para este país.
+                No cities found for this country.
             </div>
 
             <template v-else>
@@ -174,7 +174,7 @@ watch(() => route.params.nombrePais, async () => {
                                 :lugares="ciudad.lugares" />
                         </div>
                         <div v-else class="no-data">
-                            No hay lugares disponibles para esta ciudad.
+                            No destinations available for this city.
                         </div>
                     </div>
                 </template>
@@ -182,8 +182,8 @@ watch(() => route.params.nombrePais, async () => {
         </template>
 
         <div v-else class="error-container">
-            <p>País no encontrado</p>
-            <button @click="$router.push('/')" class="retry-button">Volver al inicio</button>
+            <p>Country not found</p>
+            <button @click="$router.push('/')" class="retry-button">Back to home</button>
         </div>
     </div>
 </template>

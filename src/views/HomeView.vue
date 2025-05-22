@@ -1,7 +1,8 @@
 <script setup>
+// Importaciones necesarias
 import { ref, computed, onMounted } from 'vue';
 import DestinoCard from '../components/DestinoCard.vue';
-import { getDestinosAleatorios } from '@/composables/useDatabase'; // Nueva función que crearemos
+import { getDestinosAleatorios } from '@/composables/useDatabase';
 
 // Estado local para guardar los destinos
 const destinos = ref([]);
@@ -18,18 +19,17 @@ const destinosAleatorios = computed(() => destinos.value);
 <template>
     <div class="home">
         <section class="hero">
-            <h1>Descubre Europa con Travelle</h1>
-            <p>Comparte tus aventuras y encuentra nuevos destinos</p>
+            <h1>Discover Europe with Travelle</h1>
+            <p>Share your adventures and find new destinations</p>
         </section>
 
         <section class="destinos-destacados">
-            <h2>Destinos Destacados</h2>
+            <h2>Featured Destinations</h2>
             <div class="destinos-grid">
                 <!-- Mostrar los destinos obtenidos -->
                 <DestinoCard v-for="destino in destinosAleatorios"
                     :key="`${destino.nombre}-${destino.ciudad}-${destino.pais}`" :destino="destino"
                     :nombrePais="destino.pais" :nombreCiudad="destino.ciudad" />
-
             </div>
         </section>
     </div>

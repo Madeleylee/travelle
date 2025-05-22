@@ -12,6 +12,7 @@ import Perfil from "../views/PerfilView.vue"
 import NotFound from "../views/NotFoundView.vue"
 import TripLists from "../views/TripListsView.vue"
 import TripListDetail from "../views/TripListDetailView.vue"
+import Map from "../views/MapView.vue"
 
 /*Componentes de registro */
 import LoginForm from "../components/LoginForm.vue"
@@ -29,17 +30,17 @@ const routes = [
     component: Home,
   },
   {
-    path: "/pais/:nombrePais",
+    path: "/country/:nombrePais",
     name: "Pais",
     component: Pais,
   },
   {
-    path: "/pais/:nombrePais/:nombreCiudad",
+    path: "/country/:nombrePais/:nombreCiudad",
     name: "Ciudad",
     component: Ciudad,
   },
   {
-    path: "/pais/:nombrePais/:nombreCiudad/:nombreDestino",
+    path: "/country/:nombrePais/:nombreCiudad/:nombreDestino",
     name: "Destino",
     component: Destino,
   },
@@ -64,38 +65,44 @@ const routes = [
     component: ResetPassword,
   },
   {
-    path: "/paises",
+    path: "/map",
+    name: "Mapa",
+    component: Map,
+  },
+
+  {
+    path: "/countries",
     name: "Paises",
     component: Paises,
   },
   // Rutas protegidas
   {
-    path: "/favoritos",
-    name: "Favoritos",
+    path: "/favorites",
+    name: "Favorites",
     component: Favorite,
     meta: { requiresAuth: true },
   },
   {
-    path: "/perfil",
+    path: "/profile",
     name: "Perfil",
     component: Perfil,
     meta: { requiresAuth: true },
   },
   {
-    path: "/visitados",
+    path: "/visited",
     name: "visitados",
     component: Visitados,
     meta: { requiresAuth: true },
   },
   // Nuevas rutas para listas de viaje
   {
-    path: "/viajes",
+    path: "/trips",
     name: "TripLists",
     component: TripLists,
     meta: { requiresAuth: true },
   },
   {
-    path: "/viajes/:id",
+    path: "/trips/:id",
     name: "TripListDetail",
     component: TripListDetail,
     meta: { requiresAuth: true },

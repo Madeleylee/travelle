@@ -5,11 +5,12 @@ import { getPaisesConCiudades, buscarTodo } from '@/composables/useDatabase';
 import { useAuth } from '@/composables/useAuth';
 import AuthModal from '@/components/AuthModal.vue';
 
+// Inicialización de Vue Router
 const route = useRoute();
 const router = useRouter();
 const { isUserAuthenticated, getUsuarioActual, logoutUsuario } = useAuth();
 
-// Reactive variables
+// Variables reactivas
 const isHidden = ref(false);
 const lastScrollPosition = ref(0);
 const searchText = ref('');
@@ -24,7 +25,7 @@ const showSuggestions = ref(false);
 const paises = ref([]);
 const pendingNavigation = ref(null);
 
-// Routes that require authentication
+// Rutas que requieren autenticación
 const authRequiredRoutes = [
   '/favoritos',
   '/visitados',
@@ -32,10 +33,12 @@ const authRequiredRoutes = [
   '/perfil',
 ];
 
+// Propiedad computada para obtener el usuario actual
 const usuarioActual = computed(() => {
   return getUsuarioActual();
 });
 
+// Propiedad computada para obtener las ciudades de un país seleccionado
 const ciudadesDelPais = computed(() => {
   if (!selectedCountry.value) return [];
   const pais = paises.value.find(
@@ -44,26 +47,26 @@ const ciudadesDelPais = computed(() => {
   return pais ? pais.ciudades.map((c) => c.nombre) : [];
 });
 
-// Navigation function that checks authentication
+// Función de navegación que verifica la autenticación
 function navigateTo(path) {
-  // Check if the route requires authentication
+  // Verificar si la ruta requiere autenticación
   if (authRequiredRoutes.includes(path) && !isUserAuthenticated()) {
-    // Save the path for after login
+    // Guardar la ruta para después del inicio de sesión
     pendingNavigation.value = path;
 
-    // Show login modal with redirect path
+    // Mostrar modal de inicio de sesión con la ruta de redirección
     showModal.value = true;
 
-    // Show notification
+    // Mostrar notificación
     showNotification('Please log in to access this feature');
     return;
   }
 
-  // If authenticated or route doesn't require auth, navigate
+  // Si está autenticado o la ruta no requiere autenticación, navegar
   router.push(path);
 }
 
-// Watch for changes in search text to show suggestions
+// Observar cambios en el texto de búsqueda para mostrar sugerencias
 watch(searchText, async (newValue) => {
   if (newValue.trim().length >= 2) {
     await buscarSugerencias(newValue);
@@ -73,18 +76,18 @@ watch(searchText, async (newValue) => {
   }
 });
 
-// Function to search for suggestions as the user types
+// Función para buscar sugerencias mientras el usuario escribe
 async function buscarSugerencias(texto) {
   if (!texto || texto.trim().length < 2) return;
 
   isSearching.value = true;
   try {
-    // Search in all available places
+    // Buscar en todos los lugares disponibles
     const resultados = await buscarTodo(texto.trim().toLowerCase());
     searchSuggestions.value = resultados;
     showSuggestions.value = resultados.length > 0;
 
-    // Position suggestions correctly
+    // Posicionar sugerencias correctamente
     if (resultados.length > 0) {
       setTimeout(() => {
         posicionarSugerencias();
@@ -98,7 +101,7 @@ async function buscarSugerencias(texto) {
   }
 }
 
-// Function to position suggestions
+// Función para posicionar sugerencias
 function posicionarSugerencias() {
   const inputElement = document.getElementById('destinoInput');
   const suggestionsElement = document.querySelector('.search-suggestions-floating');
@@ -106,42 +109,42 @@ function posicionarSugerencias() {
   if (inputElement && suggestionsElement) {
     const rect = inputElement.getBoundingClientRect();
 
-    // Position suggestions below the input
+    // Posicionar sugerencias debajo del input
     suggestionsElement.style.top = `${rect.bottom + window.scrollY}px`;
     suggestionsElement.style.left = `${rect.left}px`;
     suggestionsElement.style.width = `${rect.width}px`;
   }
 }
 
-// Function to check if a place is in favorites
+// Función para verificar si un lugar está en favoritos
 function esFavorito(lugarId) {
   if (!isUserAuthenticated()) return false;
   const favoritos = JSON.parse(localStorage.getItem('favoritos') || '[]');
   return favoritos.some(fav => fav.id === lugarId);
 }
 
-// Function to handle favorite toggle
+// Función para manejar el toggle de favoritos
 function toggleFavorito(event, sugerencia) {
-  // Stop propagation to prevent selecting the suggestion
+  // Detener la propagación para evitar seleccionar la sugerencia
   event.stopPropagation();
 
-  // Check if user is authenticated
+  // Verificar si el usuario está autenticado
   if (!isUserAuthenticated()) {
-    // If not authenticated, show login modal
+    // Si no está autenticado, mostrar modal de inicio de sesión
     showModal.value = true;
     return;
   }
 
-  // If authenticated, toggle favorite
+  // Si está autenticado, alternar favorito
   const favoritos = JSON.parse(localStorage.getItem('favoritos') || '[]');
   const index = favoritos.findIndex(fav => fav.id === sugerencia.id);
 
   if (index >= 0) {
-    // If it already exists, remove from favorites
+    // Si ya existe, eliminar de favoritos
     favoritos.splice(index, 1);
     showNotification(`${sugerencia.lugar || sugerencia.ciudad || sugerencia.pais} removed from favorites`);
   } else {
-    // If it doesn't exist, add to favorites
+    // Si no existe, agregar a favoritos
     favoritos.push({
       id: sugerencia.id,
       lugar: sugerencia.lugar,
@@ -152,11 +155,11 @@ function toggleFavorito(event, sugerencia) {
     showNotification(`${sugerencia.lugar || sugerencia.ciudad || sugerencia.pais} added to favorites`);
   }
 
-  // Save to localStorage
+  // Guardar en localStorage
   localStorage.setItem('favoritos', JSON.stringify(favoritos));
 }
 
-// Function to select a suggestion
+// Función para seleccionar una sugerencia
 function seleccionarSugerencia(sugerencia) {
   router.push({
     name: 'Pais',
@@ -213,26 +216,26 @@ function limpiarFiltros() {
   showSuggestions.value = false;
 }
 
-// Function to open the search panel
+// Función para abrir el panel de búsqueda
 function abrirPanelBusqueda() {
   showSearchPanel.value = true;
-  // Auto focus on search field
+  // Auto enfoque en el campo de búsqueda
   setTimeout(() => {
     const searchInput = document.getElementById('destinoInput');
     if (searchInput) searchInput.focus();
   }, 100);
 
-  // Prevent scroll
+  // Prevenir scroll
   document.body.classList.add('overflow-hidden');
 }
 
-// Function to close the search panel
+// Función para cerrar el panel de búsqueda
 function cerrarPanelBusqueda() {
   showSearchPanel.value = false;
   searchSuggestions.value = [];
   showSuggestions.value = false;
 
-  // Restore scroll
+  // Restaurar scroll
   document.body.classList.remove('overflow-hidden');
 }
 
@@ -244,19 +247,19 @@ function onScroll() {
   lastScrollPosition.value = currentScrollPosition;
 }
 
-// Function to log out
+// Función para cerrar sesión
 function cerrarSesion() {
   logoutUsuario();
   showUserMenu.value = false;
 
-  // Show successful logout notification
+  // Mostrar notificación de cierre de sesión exitoso
   showNotification('You have successfully logged out');
 
-  // Optional: redirect to home page
+  // Opcional: redirigir a la página de inicio
   router.push('/');
 }
 
-// Function to show/hide user menu
+// Función para mostrar/ocultar el menú de usuario
 function toggleUserMenu() {
   if (isUserAuthenticated()) {
     showUserMenu.value = !showUserMenu.value;
@@ -265,9 +268,9 @@ function toggleUserMenu() {
   }
 }
 
-// Function to show notifications
+// Función para mostrar notificaciones
 function showNotification(message) {
-  // Create notification element with Bootstrap classes
+  // Crear elemento de notificación con clases de Bootstrap
   const notification = document.createElement('div');
   notification.className = 'toast position-fixed top-0 end-0 m-3 show';
   notification.setAttribute('role', 'alert');
@@ -290,7 +293,7 @@ function showNotification(message) {
 
   document.body.appendChild(notification);
 
-  // Remove notification after 3 seconds
+  // Eliminar notificación después de 3 segundos
   setTimeout(() => {
     notification.classList.remove('show');
     setTimeout(() => {
@@ -299,11 +302,11 @@ function showNotification(message) {
   }, 3000);
 }
 
-// Function to handle successful login
+// Función para manejar el inicio de sesión exitoso
 function handleLoginSuccess(user) {
   showNotification(`Welcome ${user.nombre}!`);
 
-  // Navigate to pending route if exists
+  // Navegar a la ruta pendiente si existe
   if (pendingNavigation.value) {
     const path = pendingNavigation.value;
     pendingNavigation.value = null;
@@ -311,11 +314,11 @@ function handleLoginSuccess(user) {
   }
 }
 
-// Function to handle successful registration
+// Función para manejar el registro exitoso
 function handleRegisterSuccess(user) {
   showNotification(`Registration successful! Welcome ${user.nombre}`);
 
-  // Navigate to pending route if exists
+  // Navegar a la ruta pendiente si existe
   if (pendingNavigation.value) {
     const path = pendingNavigation.value;
     pendingNavigation.value = null;
@@ -333,14 +336,14 @@ onMounted(async () => {
     paises.value = [];
   }
 
-  // Close menus when clicking outside of them
+  // Cerrar menús al hacer clic fuera de ellos
   document.addEventListener('click', (e) => {
-    // Close user menu
+    // Cerrar menú de usuario
     if (showUserMenu.value && !e.target.closest('.dropdown')) {
       showUserMenu.value = false;
     }
 
-    // Close search suggestions
+    // Cerrar sugerencias de búsqueda
     if (showSuggestions.value &&
       !e.target.closest('.search-suggestions-floating') &&
       !e.target.closest('#destinoInput')) {
@@ -348,7 +351,7 @@ onMounted(async () => {
     }
   });
 
-  // Close search panel when pressing Escape
+  // Cerrar panel de búsqueda al presionar Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (showSearchPanel.value) {
@@ -360,7 +363,7 @@ onMounted(async () => {
     }
   });
 
-  // Handle window resizing
+  // Manejar redimensionamiento de ventana
   window.addEventListener('resize', () => {
     if (showSuggestions.value && searchSuggestions.value.length > 0) {
       posicionarSugerencias();
@@ -383,13 +386,13 @@ onUnmounted(() => {
     }
   });
 
-  // Restore scroll if necessary
+  // Restaurar scroll si es necesario
   document.body.classList.remove('overflow-hidden');
 });
 </script>
 
 <template>
-  <!-- Navbar horizontal con Bootstrap (siempre horizontal) -->
+  <!-- Barra de navegación horizontal con Bootstrap (siempre horizontal) -->
   <nav class="navbar navbar-expand-lg sticky-top shadow-sm bg-primary">
     <div class="container py-2">
       <!-- Logo (aumentado de tamaño) -->
@@ -400,53 +403,53 @@ onUnmounted(() => {
       <!-- Navegación principal horizontal (sin colapsar en móviles) -->
       <div class="navbar-nav-scroll ms-auto">
         <ul class="navbar-nav flex-row">
-          <!-- Link to countries page -->
+          <!-- Enlace a la página de países -->
           <li class="nav-item">
-            <router-link to="/paises" class="nav-link px-2 px-md-3 fw-medium text-white">
+            <router-link to="/countries" class="nav-link px-2 px-md-3 fw-medium text-white">
               <span class="d-none d-md-inline">Countries</span>
               <i class="bi bi-globe d-inline d-md-none"></i>
             </router-link>
           </li>
 
-          <!-- Protected links that require authentication -->
+          <!-- Enlaces protegidos que requieren autenticación -->
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/favoritos')" class="nav-link px-2 px-md-3 fw-medium text-white">
+            <a href="#" @click.prevent="navigateTo('/favorites')" class="nav-link px-2 px-md-3 fw-medium text-white">
               <span class="d-none d-md-inline">Favorites</span>
               <i class="bi bi-heart d-inline d-md-none"></i>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/visitados')" class="nav-link px-2 px-md-3 fw-medium text-white">
+            <a href="#" @click.prevent="navigateTo('/visited')" class="nav-link px-2 px-md-3 fw-medium text-white">
               <span class="d-none d-md-inline">Visited</span>
               <i class="bi bi-check-circle d-inline d-md-none"></i>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/mapa')" class="nav-link px-2 px-md-3 fw-medium text-white">
+            <a href="#" @click.prevent="navigateTo('/map')" class="nav-link px-2 px-md-3 fw-medium text-white">
               <span class="d-none d-md-inline">Map</span>
               <i class="bi bi-map d-inline d-md-none"></i>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/viajes')" class="nav-link px-2 px-md-3 fw-medium text-white">
-              <span class="d-none d-md-inline">Mis Viajes</span>
+            <a href="#" @click.prevent="navigateTo('/trips')" class="nav-link px-2 px-md-3 fw-medium text-white">
+              <span class="d-none d-md-inline">My Trips</span>
               <i class="bi bi-suitcase d-inline d-md-none"></i>
             </a>
           </li>
         </ul>
       </div>
 
-      <!-- User actions -->
+      <!-- Acciones de usuario -->
       <div class="d-flex align-items-center ms-2">
-        <!-- Search button -->
+        <!-- Botón de búsqueda -->
         <button class="btn border-0 me-2 text-white" @click="abrirPanelBusqueda">
           <i class="bi bi-search"></i>
         </button>
 
-        <!-- User dropdown -->
+        <!-- Menú desplegable de usuario -->
         <div class="dropdown">
           <button class="btn border-0 text-white" type="button" @click="toggleUserMenu">
             <i class="bi" :class="isUserAuthenticated() ? 'bi-person-check' : 'bi-person'"></i>
@@ -459,26 +462,22 @@ onUnmounted(() => {
               <p class="text-muted mb-0 small">{{ usuarioActual?.email || '' }}</p>
             </div>
             <div class="dropdown-divider"></div>
-            <!-- User profile link -->
-            <a href="#" @click.prevent="navigateTo('/perfil')" class="dropdown-item d-flex align-items-center py-2">
+            <!-- Enlace al perfil de usuario -->
+            <a href="#" @click.prevent="navigateTo('/profile')" class="dropdown-item d-flex align-items-center py-2">
               <i class="bi bi-person-gear me-2"></i>
               <span>Profile</span>
             </a>
-            <!-- Visited places link in dropdown -->
-            <a href="#" @click.prevent="navigateTo('/visitados')" class="dropdown-item d-flex align-items-center py-2">
+            <!-- Enlace a lugares visitados en el menú desplegable -->
+            <a href="#" @click.prevent="navigateTo('/visited')" class="dropdown-item d-flex align-items-center py-2">
               <i class="bi bi-check-circle me-2"></i>
               <span>Visited Places</span>
             </a>
-            <!-- Trip plans link -->
-            <a href="#" @click.prevent="navigateTo('/viajes')" class="dropdown-item d-flex align-items-center py-2">
+            <!-- Enlace a planes de viaje -->
+            <a href="#" @click.prevent="navigateTo('/trips')" class="dropdown-item d-flex align-items-center py-2">
               <i class="bi bi-signpost-split me-2"></i>
               <span>My Trips</span>
             </a>
-            <a href="#" @click.prevent="navigateTo('/viajes')" class="dropdown-item d-flex align-items-center py-2">
-              <i class="bi bi-suitcase me-2"></i>
-              <span>Mis Viajes</span>
-            </a>
-            <!-- Logout button -->
+            <!-- Botón de cerrar sesión -->
             <button class="dropdown-item d-flex align-items-center py-2" @click="cerrarSesion">
               <i class="bi bi-box-arrow-right me-2"></i>
               <span>Logout</span>
@@ -489,7 +488,7 @@ onUnmounted(() => {
     </div>
   </nav>
 
-  <!-- Search panel overlay -->
+  <!-- Superposición del panel de búsqueda -->
   <div v-if="showSearchPanel" class="search-overlay">
     <div class="search-panel">
       <div class="search-panel-header">
@@ -529,7 +528,7 @@ onUnmounted(() => {
                   placeholder="Type a destination, city or country"
                   @focus="showSuggestions = searchSuggestions.length > 0" />
 
-                <!-- Loading indicator -->
+                <!-- Indicador de carga -->
                 <div v-if="isSearching" class="position-absolute top-50 end-0 translate-middle-y pe-3">
                   <div class="spinner-border spinner-border-sm" role="status" style="color: var(--color-primary);">
                     <span class="visually-hidden">Loading...</span>
@@ -546,7 +545,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Popular destinations -->
+        <!-- Destinos populares -->
         <div>
           <h6 class="mb-2">Popular destinations</h6>
           <div class="d-flex flex-wrap gap-2">
@@ -559,7 +558,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Suggestions list (outside the panel to appear above) -->
+    <!-- Lista de sugerencias (fuera del panel para aparecer arriba) -->
     <div v-if="showSuggestions && searchSuggestions.length > 0" class="search-suggestions-floating">
       <div v-for="(sugerencia, index) in searchSuggestions" :key="index"
         class="suggestion-item p-2 border-bottom d-flex align-items-center justify-content-between"
@@ -577,7 +576,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Favorite star -->
+        <!-- Estrella de favoritos -->
         <button class="btn btn-link p-0"
           :class="{ 'opacity-100': esFavorito(sugerencia.id), 'opacity-25': !esFavorito(sugerencia.id) }"
           style="color: var(--color-accent);" @click.stop="toggleFavorito($event, sugerencia)">
@@ -587,13 +586,13 @@ onUnmounted(() => {
     </div>
   </div>
 
-  <!-- AuthModal outside the header to cover the entire screen -->
+  <!-- AuthModal fuera del encabezado para cubrir toda la pantalla -->
   <AuthModal :visible="showModal" @close="showModal = false" @login-success="handleLoginSuccess"
     @register-success="handleRegisterSuccess" />
 </template>
 
 <style scoped>
-/* Custom styles that complement Bootstrap */
+/* Estilos personalizados que complementan Bootstrap */
 .logo {
   height: 80px;
   width: auto;
@@ -609,7 +608,7 @@ onUnmounted(() => {
   transition: transform 0.3s ease;
 }
 
-/* Styles to keep navbar horizontal on mobile */
+/* Estilos para mantener la barra de navegación horizontal en móviles */
 .navbar-nav-scroll {
   max-width: 100%;
   overflow-x: auto;
@@ -618,7 +617,7 @@ onUnmounted(() => {
   scrollbar-width: none;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
+/* Ocultar barra de desplazamiento para Chrome, Safari y Opera */
 .navbar-nav-scroll::-webkit-scrollbar {
   display: none;
 }
@@ -627,7 +626,7 @@ onUnmounted(() => {
   flex-wrap: nowrap;
 }
 
-/* Styles for navigation links */
+/* Estilos para enlaces de navegación */
 .nav-link {
   color: var(--color-textWhite) !important;
   font-weight: 500;
@@ -639,7 +638,7 @@ onUnmounted(() => {
   color: var(--color-accent) !important;
 }
 
-/* Custom search panel */
+/* Panel de búsqueda personalizado */
 .search-overlay {
   position: fixed;
   top: 0;
@@ -679,12 +678,12 @@ onUnmounted(() => {
   padding: 1.25rem;
 }
 
-/* Search container and suggestions */
+/* Contenedor de búsqueda y sugerencias */
 .search-container {
   position: relative;
 }
 
-/* New style for floating suggestions */
+/* Nuevo estilo para sugerencias flotantes */
 .search-suggestions-floating {
   position: fixed;
   background-color: var(--color-backgroundCard);
@@ -710,24 +709,24 @@ onUnmounted(() => {
   border-bottom: none !important;
 }
 
-/* Add top margin to main content to compensate for fixed navbar */
+/* Añadir margen superior al contenido principal para compensar la barra de navegación fija */
 main {
   margin-top: 80px;
 }
 
-/* Custom toast */
+/* Toast personalizado */
 .toast {
   z-index: 1100;
 }
 
-/* Styles for search modal */
+/* Estilos para el modal de búsqueda */
 .form-control:focus,
 .form-select:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 0.2rem var(--color-background);
 }
 
-/* Buttons with application colors */
+/* Botones con colores de la aplicación */
 .btn-primary {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
@@ -763,19 +762,19 @@ main {
     height: 75px;
   }
 
-  /* Larger icons on mobile for better touch */
+  /* Iconos más grandes en móviles para mejor tacto */
   .d-inline.d-md-none {
     font-size: 1.2rem;
   }
 
-  /* Adjustments for suggestions on mobile */
+  /* Ajustes para sugerencias en móviles */
   .search-suggestions-floating {
     width: 90% !important;
     left: 5% !important;
   }
 }
 
-/* Media queries for adaptive text */
+/* Consultas de medios para texto adaptativo */
 @media (min-width: 992px) {
   .navbar-nav .nav-link {
     font-size: 1rem;
@@ -788,7 +787,7 @@ main {
   }
 }
 
-/* Class for primary color navbar */
+/* Clase para barra de navegación de color primario */
 .bg-primary {
   background-color: var(--color-primary) !important;
 }

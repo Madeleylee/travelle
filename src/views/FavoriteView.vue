@@ -1,118 +1,3 @@
-<template>
-    <div class="favorites-container">
-        <div class="favorites-header">
-            <h1>My Favorite Places</h1>
-            <p v-if="totalFavorites > 0">You have saved {{ totalFavorites }} places to your favorites</p>
-        </div>
-
-        <!-- Loading state -->
-        <div v-if="isLoading" class="loading-container">
-            <div class="spinner">
-                <div class="bounce1"></div>
-                <div class="bounce2"></div>
-                <div class="bounce3"></div>
-            </div>
-            <p>Loading your favorite places...</p>
-        </div>
-
-        <!-- Empty state (no favorites) -->
-        <div v-else-if="totalFavorites === 0" class="empty-favorites">
-            <div class="empty-heart">
-                <i class="bi bi-heart"></i>
-                <i class="bi bi-plus plus-icon"></i>
-            </div>
-            <h2>You don't have any favorite places yet</h2>
-            <p>Explore our destinations and mark the places you like as favorites to save them here</p>
-            <router-link to="/" class="btn-explore">
-                <i class="bi bi-compass"></i> Explore destinations
-            </router-link>
-        </div>
-
-        <!-- Favorites list -->
-        <div v-else class="favorites-content">
-            <!-- Filters -->
-            <div class="favorites-filters">
-                <div class="search-filter">
-                    <i class="bi bi-search"></i>
-                    <input type="text" v-model="searchQuery" placeholder="Search by country, city or place..."
-                        class="form-control" />
-                </div>
-            </div>
-
-            <!-- Favorites list by country -->
-            <div v-if="Object.keys(favoritosPorPais).length > 0">
-                <div v-for="(lugares, pais) in favoritosPorPais" :key="pais" class="country-section">
-                    <div class="country-header">
-                        <h2>{{ pais }}</h2>
-                    </div>
-
-                    <!-- Places grid -->
-                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-                        <div v-for="lugar in lugares" :key="lugar.id" class="col">
-                            <div class="card destino-card">
-                                <div class="position-relative">
-                                    <img :src="lugar.imagen1 || '/placeholder.jpg'" :alt="lugar.lugar"
-                                        class="card-img-top destino-imagen">
-
-                                    <!-- Favorite button -->
-                                    <FavoriteButton :lugar-id="lugar.id" :lugar-info="{
-                                        nombre: lugar.lugar,
-                                        nombreCiudad: lugar.ciudad,
-                                        nombrePais: lugar.pais,
-                                        precio: lugar.precio,
-                                        valoracion: lugar.valoracion,
-                                        imagen1: lugar.imagen1
-                                    }" @toggle="handleFavoriteToggle" @remove-favorite="removeFavorite" />
-
-                                    <!-- Price tag -->
-                                    <div class="price-tag">
-                                        <span v-if="!lugar.precio || lugar.precio === 0">Free</span>
-                                        <span v-else>{{ lugar.precio }}€</span>
-                                    </div>
-                                </div>
-
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ lugar.lugar }}</h5>
-
-                                    <!-- Rating with stars -->
-                                    <div class="rating" v-if="lugar.valoracion">
-                                        <div class="stars">
-                                            <template v-for="n in 5" :key="n">
-                                                <i class="bi"
-                                                    :class="n <= Math.round(lugar.valoracion) ? 'bi-star-fill' : 'bi-star'"></i>
-                                            </template>
-                                        </div>
-                                        <span class="rating-value">{{ lugar.valoracion }}</span>
-                                    </div>
-
-                                    <!-- Location -->
-                                    <p class="location">
-                                        <i class="bi bi-geo-alt"></i> {{ lugar.ciudad }}, {{ lugar.pais }}
-                                    </p>
-
-                                    <router-link :to="{
-                                        name: 'Destino',
-                                        params: {
-                                            nombrePais: lugar.pais,
-                                            nombreCiudad: lugar.ciudad,
-                                            nombreDestino: lugar.lugar
-                                        }
-                                    }" class="btn-details">
-                                        View details
-                                    </router-link>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div v-else-if="totalFavorites > 0" class="empty-message">
-                <p>Could not group favorites by country. Check the console for more details.</p>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import FavoriteButton from '@/components/FavoriteButton.vue';
@@ -280,6 +165,121 @@ onUnmounted(() => {
     window.removeEventListener('storage', handleStorageChange);
 });
 </script>
+
+<template>
+    <div class="favorites-container">
+        <div class="favorites-header">
+            <h1>My Favorite Places</h1>
+            <p v-if="totalFavorites > 0">You have saved {{ totalFavorites }} places to your favorites</p>
+        </div>
+
+        <!-- Loading state -->
+        <div v-if="isLoading" class="loading-container">
+            <div class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+            </div>
+            <p>Loading your favorite places...</p>
+        </div>
+
+        <!-- Empty state (no favorites) -->
+        <div v-else-if="totalFavorites === 0" class="empty-favorites">
+            <div class="empty-heart">
+                <i class="bi bi-heart"></i>
+                <i class="bi bi-plus plus-icon"></i>
+            </div>
+            <h2>You don't have any favorite places yet</h2>
+            <p>Explore our destinations and mark the places you like as favorites to save them here</p>
+            <router-link to="/" class="btn-explore">
+                <i class="bi bi-compass"></i> Explore destinations
+            </router-link>
+        </div>
+
+        <!-- Favorites list -->
+        <div v-else class="favorites-content">
+            <!-- Filters -->
+            <div class="favorites-filters">
+                <div class="search-filter">
+                    <i class="bi bi-search"></i>
+                    <input type="text" v-model="searchQuery" placeholder="Search by country, city or place..."
+                        class="form-control" />
+                </div>
+            </div>
+
+            <!-- Favorites list by country -->
+            <div v-if="Object.keys(favoritosPorPais).length > 0">
+                <div v-for="(lugares, pais) in favoritosPorPais" :key="pais" class="country-section">
+                    <div class="country-header">
+                        <h2>{{ pais }}</h2>
+                    </div>
+
+                    <!-- Places grid -->
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                        <div v-for="lugar in lugares" :key="lugar.id" class="col">
+                            <div class="card destino-card">
+                                <div class="position-relative">
+                                    <img :src="lugar.imagen1 || '/placeholder.jpg'" :alt="lugar.lugar"
+                                        class="card-img-top destino-imagen">
+
+                                    <!-- Favorite button -->
+                                    <FavoriteButton :lugar-id="lugar.id" :lugar-info="{
+                                        nombre: lugar.lugar,
+                                        nombreCiudad: lugar.ciudad,
+                                        nombrePais: lugar.pais,
+                                        precio: lugar.precio,
+                                        valoracion: lugar.valoracion,
+                                        imagen1: lugar.imagen1
+                                    }" @toggle="handleFavoriteToggle" @remove-favorite="removeFavorite" />
+
+                                    <!-- Price tag -->
+                                    <div class="price-tag">
+                                        <span v-if="!lugar.precio || lugar.precio === 0">Free</span>
+                                        <span v-else>{{ lugar.precio }}€</span>
+                                    </div>
+                                </div>
+
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ lugar.lugar }}</h5>
+
+                                    <!-- Rating with stars -->
+                                    <div class="rating" v-if="lugar.valoracion">
+                                        <div class="stars">
+                                            <template v-for="n in 5" :key="n">
+                                                <i class="bi"
+                                                    :class="n <= Math.round(lugar.valoracion) ? 'bi-star-fill' : 'bi-star'"></i>
+                                            </template>
+                                        </div>
+                                        <span class="rating-value">{{ lugar.valoracion }}</span>
+                                    </div>
+
+                                    <!-- Location -->
+                                    <p class="location">
+                                        <i class="bi bi-geo-alt"></i> {{ lugar.ciudad }}, {{ lugar.pais }}
+                                    </p>
+
+                                    <router-link :to="{
+                                        name: 'Destino',
+                                        params: {
+                                            nombrePais: lugar.pais,
+                                            nombreCiudad: lugar.ciudad,
+                                            nombreDestino: lugar.lugar
+                                        }
+                                    }" class="btn-details">
+                                        View details
+                                    </router-link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div v-else-if="totalFavorites > 0" class="empty-message">
+                <p>Could not group favorites by country. Check the console for more details.</p>
+            </div>
+        </div>
+    </div>
+</template>
 
 <style scoped>
 .favorites-container {

@@ -1,28 +1,28 @@
 <script setup>
-// Importaciones necesarias
+// Importaciones necesarias (Necessary imports)
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { getPaisesConCiudades, getLugaresPorCiudad } from '@/composables/useDatabase'; // funciones ya adaptadas
+import { getPaisesConCiudades, getLugaresPorCiudad } from '@/composables/useDatabase'; // funciones ya adaptadas (already adapted functions)
 import DestinoCard from "@/components/DestinoCard.vue";
 
-// Ruta actual
+// Ruta actual (Current route)
 const route = useRoute();
 
-// Variables reactivas
+// Variables reactivas (Reactive variables)
 const lugares = ref([]);
 const nombrePais = computed(() => route.params.nombrePais);
 const nombreCiudad = computed(() => route.params.nombreCiudad);
 const ciudadEncontrada = ref(false);
 
-// Obtener lugares de la ciudad
+// Obtener lugares de la ciudad (Get city places)
 onMounted(async () => {
     const paises = await getPaisesConCiudades();
 
-    // Buscar el país
+    // Buscar el país (Find the country)
     const pais = paises.find(p => p.nombre.trim().toLowerCase() === nombrePais.value.trim().toLowerCase());
 
     if (pais) {
-        // Buscar la ciudad dentro del país
+        // Buscar la ciudad dentro del país (Find the city within the country)
         const ciudad = pais.ciudades.find(c => c.nombre.trim().toLowerCase() === nombreCiudad.value.trim().toLowerCase());
 
         if (ciudad) {
@@ -35,7 +35,7 @@ onMounted(async () => {
 
 <template>
     <div class="ciudad-view" v-if="ciudadEncontrada">
-        <h1>Destinos en {{ nombreCiudad }}</h1>
+        <h1>Destinations in {{ nombreCiudad }}</h1>
         <div class="lugares-container">
             <div class="lugares-grid">
                 <DestinoCard v-for="lugar in lugares" :key="lugar.id_lugar" :destino="lugar" :nombrePais="nombrePais"
@@ -45,8 +45,8 @@ onMounted(async () => {
     </div>
 
     <div v-else class="error-view">
-        <h1>Ciudad no encontrada</h1>
-        <router-link to="/" class="btn-volver">Volver al inicio</router-link>
+        <h1>City not found</h1>
+        <router-link to="/" class="btn-volver">Return to home</router-link>
     </div>
 </template>
 

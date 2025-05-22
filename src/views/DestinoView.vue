@@ -2,7 +2,7 @@
 // Importaciones
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { getLugarPorNombreCiudadPais } from "@/composables/useDatabase"; // Función que haremos ahora
+import { getLugarPorNombreCiudadPais } from "@/composables/useDatabase";
 import { safeGoBack } from '@/utils/navegation';
 
 // Iconos
@@ -14,96 +14,96 @@ const route = useRoute();
 const router = useRouter();
 
 // Parámetros de la URL
-const nombrePais = computed(() => route.params.nombrePais);
-const nombreCiudad = computed(() => route.params.nombreCiudad);
-const nombreDestino = computed(() => route.params.nombreDestino);
+const countryName = computed(() => route.params.nombrePais); // Nombre del país
+const cityName = computed(() => route.params.nombreCiudad); // Nombre de la ciudad
+const destinationName = computed(() => route.params.nombreDestino); // Nombre del destino
 
 // Variables reactivas
-const destino = ref(null);
-const imagenSeleccionada = ref(null);
+const destination = ref(null); // Información del destino
+const selectedImage = ref(null); // Índice de la imagen seleccionada
 
 // Funciones de galería
-function abrirImagen(index) {
-  imagenSeleccionada.value = index;
+function openImage(index) {
+  selectedImage.value = index; // Abrir imagen en el modal
 }
 
-function cerrarImagen() {
-  imagenSeleccionada.value = null;
+function closeImage() {
+  selectedImage.value = null; // Cerrar el modal de imagen
 }
 
-function imagenAnterior() {
-  if (imagenSeleccionada.value > 0) {
-    imagenSeleccionada.value--;
+function previousImage() {
+  if (selectedImage.value > 0) {
+    selectedImage.value--; // Ir a la imagen anterior
   }
 }
 
-function imagenSiguiente() {
-  if (destino.value && imagenSeleccionada.value < destino.value.imagenes.length - 1) {
-    imagenSeleccionada.value++;
+function nextImage() {
+  if (destination.value && selectedImage.value < destination.value.imagenes.length - 1) {
+    selectedImage.value++; // Ir a la siguiente imagen
   }
 }
 
 // Volver atrás
-function volverAtras() {
-  safeGoBack(router);
+function goBack() {
+  safeGoBack(router); // Volver a la página anterior
 }
 
 // Cargar destino al montar
 onMounted(async () => {
-  destino.value = await getLugarPorNombreCiudadPais(nombreDestino.value, nombreCiudad.value, nombrePais.value);
+  destination.value = await getLugarPorNombreCiudadPais(destinationName.value, cityName.value, countryName.value);
 
   // Si no existe, redirigimos a home
-  if (!destino.value) {
+  if (!destination.value) {
     router.push({ name: "Home" });
   }
 });
 </script>
 
 <template>
-  <div class="destino-view" v-if="destino">
+  <div class="destination-view" v-if="destination">
     <div class="header-container">
-      <button @click="volverAtras" class="btn-volver">
+      <button @click="goBack" class="btn-back">
         <ArrowIcon :width="20" :height="20" />
-        Volver
+        Back
       </button>
-      <h1>{{ destino.nombre }}</h1>
+      <h1>{{ destination.nombre }}</h1>
     </div>
 
-    <div class="destino-content">
-      <div class="galeria-container">
-        <div class="galeria">
-          <img v-for="(imagen, index) in destino.imagenes" :key="index" :src="imagen"
-            :alt="`${destino.nombre} - Imagen ${index + 1}`" class="galeria-imagen" @click="abrirImagen(index)" />
+    <div class="destination-content">
+      <div class="gallery-container">
+        <div class="gallery">
+          <img v-for="(image, index) in destination.imagenes" :key="index" :src="image"
+            :alt="`${destination.nombre} - Image ${index + 1}`" class="gallery-image" @click="openImage(index)" />
         </div>
       </div>
 
-      <div class="destino-info">
+      <div class="destination-info">
         <div class="info-section">
-          <h2>Información</h2>
-          <p><strong>Ciudad:</strong> {{ nombreCiudad }}</p>
-          <p><strong>País:</strong> {{ nombrePais }}</p>
-          <p><strong>Precio:</strong> {{ destino.precio === 0 ? 'Gratis' : `${destino.precio} €` }}</p>
-          <p><strong>Valoración:</strong> {{ destino.valoracion }} ⭐</p>
+          <h2>Information</h2>
+          <p><strong>City:</strong> {{ cityName }}</p>
+          <p><strong>Country:</strong> {{ countryName }}</p>
+          <p><strong>Price:</strong> {{ destination.precio === 0 ? 'Free' : `${destination.precio} €` }}</p>
+          <p><strong>Rating:</strong> {{ destination.valoracion }} ⭐</p>
         </div>
 
-        <a :href="`https://www.google.com/maps/search/?api=1&query=${destino.latitud},${destino.longitud}`"
-          target="_blank" rel="noopener noreferrer" class="btn-ubicacion">
+        <a :href="`https://www.google.com/maps/search/?api=1&query=${destination.latitud},${destination.longitud}`"
+          target="_blank" rel="noopener noreferrer" class="btn-location">
           <MapIcon :width="20" :height="20" />
-          Ver ubicación en Google Maps
+          View location on Google Maps
         </a>
       </div>
     </div>
 
     <!-- Modal de imagen -->
-    <div v-if="imagenSeleccionada !== null" class="modal" @click="cerrarImagen">
+    <div v-if="selectedImage !== null" class="modal" @click="closeImage">
       <div class="modal-content">
-        <button class="modal-close" @click="cerrarImagen">&times;</button>
-        <img :src="destino.imagenes[imagenSeleccionada]" :alt="`${destino.nombre} - Imagen ${imagenSeleccionada + 1}`"
-          class="modal-imagen" />
+        <button class="modal-close" @click="closeImage">&times;</button>
+        <img :src="destination.imagenes[selectedImage]" :alt="`${destination.nombre} - Image ${selectedImage + 1}`"
+          class="modal-image" />
         <div class="modal-nav">
-          <button @click.stop="imagenAnterior" :disabled="imagenSeleccionada === 0" class="nav-button">&#8592;</button>
-          <span>{{ imagenSeleccionada + 1 }} / {{ destino.imagenes.length }}</span>
-          <button @click.stop="imagenSiguiente" :disabled="imagenSeleccionada === destino.imagenes.length - 1"
+          <button @click.stop="previousImage" :disabled="selectedImage === 0" class="nav-button">&#8592;</button>
+          <span>{{ selectedImage + 1 }} / {{ destination.imagenes.length }}</span>
+          <button @click.stop="nextImage" :disabled="selectedImage === destination.imagenes.length - 1"
             class="nav-button">&#8594;</button>
         </div>
       </div>
@@ -113,84 +113,90 @@ onMounted(async () => {
 
 <style scoped>
 /* Estilos específicos para este componente */
-.destino-view {
+.destination-view {
   padding: 2rem;
   max-width: 1200px;
   padding-top: 5rem;
   margin: 0 auto;
+  font-family: 'Arial', sans-serif;
 }
 
 /* Contenedor del encabezado */
 .header-container {
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
   align-items: center;
   margin-bottom: 2rem;
   position: relative;
 }
 
 /* Estilo para el botón de volver */
-.btn-volver {
-  position: relative;
+.btn-back {
   display: flex;
   align-items: center;
-  background-color: var(--color-primary);
-  color: var(--color-textWhite);
+  background-color: #4a6fa5;
+  color: white;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s;
+  font-weight: bold;
+  margin-right: 1rem;
 }
 
 /* Efecto hover para el botón de volver */
-.btn-volver:hover {
-  background-color: var(--color-accent);
+.btn-back:hover {
+  background-color: #3a5a8f;
 }
 
 /* Estilo para el título principal */
 h1 {
-  color: var(--color-primary);
+  color: #4a6fa5;
   font-size: 2.5rem;
+  margin: 0;
+  flex-grow: 1;
   text-align: center;
-  width: 100%;
 }
 
 /* Contenedor del contenido del destino */
-.destino-content {
+.destination-content {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 2rem;
-  background-color: var(--color-textWhite);
+  background-color: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px var(--color-primary);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 2rem;
 }
 
 /* Estilo para la galería de imágenes */
-.galeria {
+.gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
 }
 
 /* Estilo para cada imagen en la galería */
-.galeria-imagen {
+.gallery-image {
   width: 100%;
   height: 200px;
   object-fit: cover;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  filter: brightness(0.9);
 }
 
 /* Efecto hover para las imágenes de la galería */
-.galeria-imagen:hover {
+.gallery-image:hover {
   transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  filter: brightness(1.1);
 }
 
 /* Contenedor de la información del destino */
-.destino-info {
+.destination-info {
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -198,14 +204,15 @@ h1 {
 
 /* Sección de información */
 .info-section {
-  background-color: var(--color-background);
+  background-color: #f8f9fa;
   padding: 1.5rem;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Estilo para el título de la sección de información */
 .info-section h2 {
-  color: var(--color-primary);
+  color: #4a6fa5;
   margin-bottom: 1rem;
   font-size: 1.5rem;
 }
@@ -213,25 +220,28 @@ h1 {
 /* Estilo para los párrafos de información */
 .info-section p {
   margin-bottom: 0.5rem;
+  color: #333;
 }
 
 /* Estilo para el botón de ubicación */
-.btn-ubicacion {
+.btn-location {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: var(--color-primary);
-  color: var(--color-textWhite);
+  background-color: #4a6fa5;
+  color: white;
   padding: 1rem;
   text-decoration: none;
   border-radius: 8px;
   transition: background-color 0.3s;
+  font-weight: bold;
+  margin-top: 1rem;
 }
 
 /* Efecto hover para el botón de ubicación */
-.btn-ubicacion:hover {
-  background-color: var(--color-accent);
+.btn-location:hover {
+  background-color: #3a5a8f;
 }
 
 /* Estilos para el modal */
@@ -241,7 +251,7 @@ h1 {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--color-text);
+  background-color: rgba(0, 0, 0, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -253,6 +263,9 @@ h1 {
   position: relative;
   max-width: 90vw;
   max-height: 90vh;
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
 }
 
 /* Estilo para el botón de cerrar el modal */
@@ -262,16 +275,18 @@ h1 {
   right: 0;
   background: none;
   border: none;
-  color: var(--color-textWhite);
+  color: white;
   font-size: 2rem;
   cursor: pointer;
 }
 
 /* Estilo para la imagen en el modal */
-.modal-imagen {
+.modal-image {
   max-width: 100%;
   max-height: 80vh;
   object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Navegación del modal */
@@ -284,17 +299,23 @@ h1 {
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  color: var(--color-textWhite);
+  color: white;
 }
 
 /* Estilo para los botones de navegación */
 .nav-button {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
-  color: var(--color-textWhite);
+  color: white;
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Estilo para los botones de navegación deshabilitados */
@@ -303,19 +324,18 @@ h1 {
   cursor: not-allowed;
 }
 
-
 /* Media queries para ajustar el diseño en pantallas más pequeñas */
 @media (max-width: 768px) {
-  .destino-view {
-    padding: 2rem;
-    padding-top: 4rem;
+  .destination-view {
+    padding: 1rem;
+    padding-top: 3rem;
   }
 
-  .destino-content {
+  .destination-content {
     grid-template-columns: 1fr;
   }
 
-  .galeria {
+  .gallery {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 
@@ -328,7 +348,7 @@ h1 {
     gap: 1rem;
   }
 
-  .btn-volver {
+  .btn-back {
     position: static;
     margin-bottom: 1rem;
   }
