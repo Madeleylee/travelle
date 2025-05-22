@@ -14,13 +14,29 @@ const route = useRoute();
 const router = useRouter();
 
 // Parámetros de la URL
-const countryName = computed(() => route.params.nombrePais); // Nombre del país
-const cityName = computed(() => route.params.nombreCiudad); // Nombre de la ciudad
-const destinationName = computed(() => route.params.nombreDestino); // Nombre del destino
+const nombrePais = computed(() => route.params.nombrePais);
+const nombreCiudad = computed(() => route.params.nombreCiudad);
+const nombreDestino = computed(() => route.params.nombreDestino);
 
 // Variables reactivas
 const destination = ref(null); // Información del destino
 const selectedImage = ref(null); // Índice de la imagen seleccionada
+const currentIndex = ref(0); // Índice actual para el carrusel 3D
+
+// Cargar destino al montar
+onMounted(async () => {
+  try {
+    destination.value = await getLugarPorNombreCiudadPais(nombreDestino.value, nombreCiudad.value, nombrePais.value);
+
+    // Si no existe, redirigimos a home
+    if (!destination.value) {
+      router.push({ name: "Home" });
+    }
+  } catch (error) {
+    console.error("Error fetching destination:", error);
+    router.push({ name: "Home" }); // Redirect to home on error
+  }
+});
 
 // Funciones de galería
 function openImage(index) {
@@ -43,20 +59,37 @@ function nextImage() {
   }
 }
 
+// Funciones para el carrusel 3D
+function rotateCarousel(direction) {
+  if (!destination.value || !destination.value.imagenes.length) return;
+
+  const totalImages = destination.value.imagenes.length;
+
+  if (direction === 'next') {
+    currentIndex.value = (currentIndex.value + 1) % totalImages;
+  } else {
+    currentIndex.value = (currentIndex.value - 1 + totalImages) % totalImages;
+  }
+}
+
+function getCardPosition(index) {
+  if (!destination.value) return {};
+
+  const totalImages = destination.value.imagenes.length;
+  const angle = 360 / totalImages;
+  const rotationY = (index - currentIndex.value) * angle;
+  const zIndex = index === currentIndex.value ? 10 : 5;
+
+  return {
+    transform: `rotateY(${rotationY}deg) translateZ(250px)`,
+    zIndex: zIndex
+  };
+}
+
 // Volver atrás
 function goBack() {
   safeGoBack(router); // Volver a la página anterior
 }
-
-// Cargar destino al montar
-onMounted(async () => {
-  destination.value = await getLugarPorNombreCiudadPais(destinationName.value, cityName.value, countryName.value);
-
-  // Si no existe, redirigimos a home
-  if (!destination.value) {
-    router.push({ name: "Home" });
-  }
-});
 </script>
 
 <template>
@@ -71,17 +104,39 @@ onMounted(async () => {
 
     <div class="destination-content">
       <div class="gallery-container">
-        <div class="gallery">
-          <img v-for="(image, index) in destination.imagenes" :key="index" :src="image"
-            :alt="`${destination.nombre} - Image ${index + 1}`" class="gallery-image" @click="openImage(index)" />
+        <h2 class="gallery-title">Photo Gallery</h2>
+
+        <!-- Carrusel 3D -->
+        <div class="carousel-3d-container">
+          <div class="carousel-3d-stage">
+            <div v-for="(image, index) in destination.imagenes" :key="index" class="carousel-3d-card"
+              :style="getCardPosition(index)" @click="openImage(index)">
+              <div class="carousel-3d-card-face">
+                <img :src="image" :alt="`${destination.nombre} - Image ${index + 1}`" class="carousel-3d-image" />
+                <div class="carousel-3d-caption">
+                  <span>{{ destination.nombre }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controles del carrusel -->
+          <div class="carousel-3d-controls">
+            <button @click="rotateCarousel('prev')" class="carousel-3d-control prev-control">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <button @click="rotateCarousel('next')" class="carousel-3d-control next-control">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="destination-info">
         <div class="info-section">
           <h2>Information</h2>
-          <p><strong>City:</strong> {{ cityName }}</p>
-          <p><strong>Country:</strong> {{ countryName }}</p>
+          <p><strong>City:</strong> {{ nombreCiudad }}</p>
+          <p><strong>Country:</strong> {{ nombrePais }}</p>
           <p><strong>Price:</strong> {{ destination.precio === 0 ? 'Free' : `${destination.precio} €` }}</p>
           <p><strong>Rating:</strong> {{ destination.valoracion }} ⭐</p>
         </div>
@@ -94,12 +149,14 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Modal de imagen -->
+    <!-- Modal de imagen (ajustado) -->
     <div v-if="selectedImage !== null" class="modal" @click="closeImage">
       <div class="modal-content">
         <button class="modal-close" @click="closeImage">&times;</button>
-        <img :src="destination.imagenes[selectedImage]" :alt="`${destination.nombre} - Image ${selectedImage + 1}`"
-          class="modal-image" />
+        <div class="modal-image-wrapper">
+          <img :src="destination.imagenes[selectedImage]" :alt="`${destination.nombre} - Image ${selectedImage + 1}`"
+            class="modal-image" />
+        </div>
         <div class="modal-nav">
           <button @click.stop="previousImage" :disabled="selectedImage === 0" class="nav-button">&#8592;</button>
           <span>{{ selectedImage + 1 }} / {{ destination.imagenes.length }}</span>
@@ -169,30 +226,111 @@ h1 {
   padding: 2rem;
 }
 
-/* Estilo para la galería de imágenes */
-.gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
+/* Contenedor de la galería */
+.gallery-container {
+  margin-bottom: 2rem;
 }
 
-/* Estilo para cada imagen en la galería */
-.gallery-image {
+.gallery-title {
+  color: #4a6fa5;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Carrusel 3D */
+.carousel-3d-container {
+  position: relative;
+  height: 400px;
+  perspective: 1000px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #1c2331, #2c3e50);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.carousel-3d-stage {
   width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  filter: brightness(0.9);
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
 }
 
-/* Efecto hover para las imágenes de la galería */
-.gallery-image:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  filter: brightness(1.1);
+.carousel-3d-card {
+  position: absolute;
+  width: 300px;
+  height: 200px;
+  left: 50%;
+  top: 50%;
+  margin-left: -150px;
+  margin-top: -100px;
+  transition: all 0.5s ease;
+  cursor: pointer;
+  transform-style: preserve-3d;
+}
+
+.carousel-3d-card-face {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 4px solid white;
+  background-color: #0088cc;
+  backface-visibility: hidden;
+}
+
+.carousel-3d-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carousel-3d-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  text-align: center;
+  font-weight: 500;
+}
+
+.carousel-3d-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.carousel-3d-control {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.carousel-3d-control:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 /* Contenedor de la información del destino */
@@ -261,11 +399,14 @@ h1 {
 /* Contenedor del contenido del modal */
 .modal-content {
   position: relative;
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: 80vw;
+  max-height: 80vh;
   background-color: white;
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Estilo para el botón de cerrar el modal */
@@ -280,10 +421,20 @@ h1 {
   cursor: pointer;
 }
 
+/* Contenedor de la imagen en el modal */
+.modal-image-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
 /* Estilo para la imagen en el modal */
 .modal-image {
   max-width: 100%;
-  max-height: 80vh;
+  max-height: 60vh;
   object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -291,23 +442,19 @@ h1 {
 
 /* Navegación del modal */
 .modal-nav {
-  position: absolute;
-  bottom: -40px;
-  left: 0;
-  right: 0;
+  margin-top: 1rem;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  color: white;
 }
 
 /* Estilo para los botones de navegación */
 .nav-button {
-  background: rgba(255, 255, 255, 0.2);
+  background: #4a6fa5;
   border: none;
   color: white;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
@@ -335,8 +482,16 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .gallery {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  .carousel-3d-container {
+    height: 300px;
+    padding: 1rem;
+  }
+
+  .carousel-3d-card {
+    width: 220px;
+    height: 150px;
+    margin-left: -110px;
+    margin-top: -75px;
   }
 
   h1 {
@@ -351,6 +506,35 @@ h1 {
   .btn-back {
     position: static;
     margin-bottom: 1rem;
+  }
+
+  .modal-content {
+    max-width: 90vw;
+  }
+
+  .modal-image {
+    max-height: 50vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .carousel-3d-container {
+    height: 250px;
+  }
+
+  .carousel-3d-card {
+    width: 180px;
+    height: 120px;
+    margin-left: -90px;
+    margin-top: -60px;
+  }
+
+  .modal-content {
+    padding: 1rem;
+  }
+
+  .modal-image {
+    max-height: 40vh;
   }
 }
 </style>

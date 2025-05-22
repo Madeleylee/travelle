@@ -44,43 +44,45 @@ onMounted(async () => {
 </script>
 
 <template>
-    <!-- Vista principal que se muestra cuando se encuentra la ciudad -->
-    <div class="ciudad-view" v-if="ciudadEncontrada">
-        <!-- Título de la página con el nombre de la ciudad -->
-        <div class="ciudad-header">
-            <h1>Destinations in {{ nombreCiudad }}</h1>
-            <p v-if="lugares.length > 0">Discover {{ lugares.length }} amazing places in {{ nombreCiudad }}</p>
-        </div>
+    <div class="ciudad-page">
+        <div class="container py-4">
+            <!-- Vista principal que se muestra cuando se encuentra la ciudad -->
+            <div v-if="ciudadEncontrada">
+                <!-- Cabecera de la página con título y contador de destinos -->
+                <div class="ciudad-header">
+                    <h1>Destinations in {{ nombreCiudad }}</h1>
+                    <p v-if="lugares.length > 0">Discover {{ lugares.length }} amazing places in {{ nombreCiudad }}</p>
+                </div>
 
-        <!-- Contenedor para los lugares/destinos -->
-        <div class="lugares-container">
-            <!-- Cuadrícula de tarjetas de destino -->
-            <div class="lugares-grid">
-                <!-- Renderizar una tarjeta por cada lugar encontrado -->
-                <DestinoCard v-for="lugar in lugares" :key="lugar.id_lugar" :destino="lugar" :nombrePais="nombrePais"
-                    :nombreCiudad="nombreCiudad" />
+                <!-- Cuadrícula de tarjetas de destino -->
+                <div class="lugares-grid">
+                    <DestinoCard v-for="lugar in lugares" :key="lugar.id_lugar" :destino="lugar"
+                        :nombrePais="nombrePais" :nombreCiudad="nombreCiudad" />
+                </div>
+            </div>
+
+            <!-- Vista de error que se muestra cuando no se encuentra la ciudad -->
+            <div v-else class="no-results text-center py-5">
+                <i class="bi bi-geo-alt-fill display-1 text-muted"></i>
+                <h3 class="mt-3">City not found</h3>
+                <p class="text-muted">The city you're looking for doesn't exist or has been removed.</p>
+                <router-link to="/" class="btn-volver">
+                    <span>Return to home</span>
+                    <i class="bi bi-arrow-right"></i>
+                </router-link>
             </div>
         </div>
-    </div>
-
-    <!-- Vista de error que se muestra cuando no se encuentra la ciudad -->
-    <div v-else class="error-view">
-        <h1>City not found</h1>
-        <!-- Enlace para volver a la página principal -->
-        <router-link to="/" class="btn-volver">Return to home</router-link>
     </div>
 </template>
 
 <style scoped>
-/* Estilos para la vista principal de la ciudad */
-.ciudad-view {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding-top: 5rem;
+/* Estilos para la página de ciudad */
+.ciudad-page {
+    min-height: 100vh;
+    background-color: var(--color-background);
 }
 
-/* Estilos para la cabecera de la ciudad */
+/* Estilos para la cabecera de la página */
 .ciudad-header {
     margin-bottom: 2.5rem;
     text-align: center;
@@ -91,7 +93,7 @@ onMounted(async () => {
 .ciudad-header h1 {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
-    color: var(--color-primary);
+    color: var(--color-primary, #3a506b);
     font-weight: 700;
     position: relative;
     display: inline-block;
@@ -106,7 +108,7 @@ onMounted(async () => {
     transform: translateX(-50%);
     width: 80px;
     height: 4px;
-    background-color: var(--color-accent);
+    background-color: var(--color-accent, #ff6b6b);
     border-radius: 2px;
 }
 
@@ -117,11 +119,6 @@ onMounted(async () => {
     margin-top: 1rem;
 }
 
-/* Contenedor para los lugares/destinos */
-.lugares-container {
-    padding: 0 1rem;
-}
-
 /* Cuadrícula para organizar las tarjetas de destino */
 .lugares-grid {
     display: grid;
@@ -129,54 +126,43 @@ onMounted(async () => {
     gap: 1.5rem;
 }
 
-/* Estilos para la vista de error */
-.error-view {
-    text-align: center;
-    padding: 4rem 2rem;
+/* Estilos para el mensaje de no resultados */
+.no-results {
+    color: var(--color-text);
 }
 
-/* Estilos para el botón de volver */
-.btn-volver {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 0.6rem 1.5rem;
-    background: linear-gradient(135deg, var(--color-primary), #2c3e50);
-    color: white;
-    text-decoration: none;
-    border-radius: 25px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Efecto hover para el botón de volver */
-.btn-volver:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Media query para pantallas medianas (tablets) */
-@media (max-width: 1024px) {
-    .ciudad-view {
-        padding: 2rem;
-        padding-top: 4rem;
-    }
-
+/* Media query para pantallas medianas */
+@media (max-width: 767.98px) {
     .lugares-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+    }
+
+    .btn-volver {
+        padding: 0.5rem 1.2rem;
+        font-size: 0.9rem;
     }
 }
 
-/* Media query para pantallas pequeñas (móviles) */
-@media (max-width: 768px) {
+/* Media query para pantallas pequeñas */
+@media (max-width: 576px) {
     .ciudad-header h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
+    }
+
+    .ciudad-header p {
+        font-size: 1rem;
     }
 
     .lugares-grid {
         grid-template-columns: 1fr;
         max-width: 400px;
         margin: 0 auto;
+    }
+
+    .btn-volver {
+        padding: 0.4rem 1rem;
+        font-size: 0.85rem;
     }
 }
 </style>
