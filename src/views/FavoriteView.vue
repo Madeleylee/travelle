@@ -123,8 +123,6 @@ const removeFavorite = (id) => {
     }
 };
 
-
-
 // Handle favorite toggle
 const handleFavoriteToggle = (isNowFavorite) => {
     console.log('Favorite toggled, is now favorite:', isNowFavorite);

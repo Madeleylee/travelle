@@ -22,6 +22,7 @@ const locationPermissionStatus = ref('prompt'); // 'prompt', 'granted', 'denied'
 const selectedCountry = ref(null);
 const countries = ref([]);
 const viewMode = ref('nearby'); // 'nearby' or 'country'
+const showLocationInstructions = ref(false); // Para mostrar instrucciones de configuración de ubicación
 
 // Function to check if it's a mobile device
 const checkIfMobile = () => {
@@ -276,7 +277,14 @@ const checkLocationPermission = async () => {
 // Retry getting location
 const retryGetLocation = () => {
     try {
-        // Always try to get location again, even if permission was denied
+        // Si el permiso ya fue denegado, mostrar instrucciones para configuración manual
+        if (locationPermissionStatus.value === 'denied') {
+            showLocationInstructions.value = true;
+            return;
+        }
+
+        // Si no ha sido denegado explícitamente, intentar solicitar ubicación nuevamente
+        error.value = null;
         getUserLocation();
     } catch (err) {
         console.error('Error in retryGetLocation:', err);
@@ -289,6 +297,7 @@ const getUserLocation = async () => {
     try {
         isLoading.value = true;
         error.value = null;
+        showLocationInstructions.value = false;
 
         // Check location permission status
         const permissionState = await checkLocationPermission();
@@ -536,6 +545,26 @@ const viewPlaceDetails = (place) => {
     }
 };
 
+// Navigate to home
+const goToHome = () => {
+    try {
+        router.push({ name: 'Home' });
+        closeLocationInstructions();
+    } catch (err) {
+        console.error('Error navigating to home:', err);
+    }
+};
+
+// Navigate to countries page
+const goToCountries = () => {
+    try {
+        router.push({ name: 'Countries' });
+        closeLocationInstructions();
+    } catch (err) {
+        console.error('Error navigating to countries page:', err);
+    }
+};
+
 // Watch for changes in radius
 watch(radiusKm, () => {
     try {
@@ -564,6 +593,11 @@ const cleanupMap = () => {
     } catch (err) {
         console.error('Error in cleanupMap:', err);
     }
+};
+
+// Cerrar instrucciones de ubicación
+const closeLocationInstructions = () => {
+    showLocationInstructions.value = false;
 };
 
 // Modify onMounted to load countries and check if mobile
@@ -605,15 +639,79 @@ onUnmounted(() => {
 
 <template>
     <div class="map-view">
-        <!-- Hero section -->
-        <div class="hero-section">
-            <div class="container">
-                <h1 class="hero-title">Explore the world around you</h1>
-                <p class="hero-subtitle">Discover amazing places near you or by country</p>
-            </div>
+        <!-- Header exactamente como FavoriteView -->
+        <div class="header-container">
+            <h1 class="header-title">Interactive Map</h1>
+            <div class="header-underline"></div>
+            <p class="header-subtitle">Explore destinations near you or by country</p>
         </div>
 
         <div class="container py-4">
+            <!-- Modal de instrucciones de configuración de ubicación -->
+            <div v-if="showLocationInstructions" class="location-modal-overlay">
+                <div class="location-modal">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-geo-alt-fill me-2"></i>Manual Location Configuration
+                            Required</h5>
+                        <button @click="closeLocationInstructions" class="btn-close" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="lead">You have denied access to your location. To allow access, you need to configure
+                            it manually in your browser:</p>
+
+                        <div class="row mt-4">
+                            <div class="col-md-4 mb-3">
+                                <div class="browser-instructions">
+                                    <h5><i class="bi bi-browser-chrome me-2"></i>Chrome</h5>
+                                    <ol>
+                                        <li>Click on the lock icon in the address bar</li>
+                                        <li>Select "Site settings"</li>
+                                        <li>Find "Location" and change to "Allow"</li>
+                                        <li>Reload the page</li>
+                                    </ol>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="browser-instructions">
+                                    <h5><i class="bi bi-browser-firefox me-2"></i>Firefox</h5>
+                                    <ol>
+                                        <li>Click on the lock icon in the address bar</li>
+                                        <li>Select "Permissions"</li>
+                                        <li>Find "Access Your Location" and change to "Allow"</li>
+                                        <li>Reload the page</li>
+                                    </ol>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="browser-instructions">
+                                    <h5><i class="bi bi-browser-safari me-2"></i>Safari</h5>
+                                    <ol>
+                                        <li>Open Preferences (⌘ + ,)</li>
+                                        <li>Go to the "Websites" tab</li>
+                                        <li>Select "Location" in the left panel</li>
+                                        <li>Find this site and change to "Allow"</li>
+                                        <li>Reload the page</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button @click="closeLocationInstructions" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Close
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button @click="goToHome" class="btn btn-primary">
+                                <i class="bi bi-house-fill me-2"></i>Go to Home
+                            </button>
+                            <button @click="goToCountries" class="btn btn-primary">
+                                <i class="bi bi-flag-fill me-2"></i>Explore Countries
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Map container -->
             <div class="map-container mb-4">
                 <!-- Show loading message -->
@@ -634,8 +732,8 @@ onUnmounted(() => {
                     </button>
 
                     <div v-if="locationPermissionStatus === 'denied'" class="mt-3">
-                        <button @click="setViewMode('country')" class="btn btn-outline-primary btn-sm w-100">
-                            <i class="bi bi-flag-fill me-2"></i>View places by country
+                        <button @click="goToCountries" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-flag-fill me-2"></i>Explore Countries
                         </button>
                     </div>
                 </div>
@@ -756,33 +854,36 @@ onUnmounted(() => {
 <style scoped>
 /* General styles */
 .map-view {
-    background-color: var(--color-background);
     min-height: 100vh;
 }
 
-/* Hero section */
-.hero-section {
-    background: linear-gradient(135deg, #3a506b 0%, #0f2557 100%);
-    color: white;
-    padding: 3rem 0;
+/* Header exactamente como FavoriteView */
+.header-container {
     text-align: center;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.hero-title {
-    font-size: 2.5rem;
-    font-weight: 800;
+    padding: 2.5rem 0 2rem;
     margin-bottom: 1rem;
-    color: white;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.hero-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.9;
-    max-width: 600px;
+.header-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+}
+
+.header-underline {
+    width: 80px;
+    height: 4px;
+    background-color: #ff9800;
+    margin: 0.5rem auto 1.2rem;
+    border-radius: 2px;
+}
+
+.header-subtitle {
+    font-size: 1.1rem;
+    color: var(--color-primary);
     margin: 0 auto;
+    max-width: 600px;
 }
 
 /* Map container */
@@ -820,7 +921,7 @@ onUnmounted(() => {
     background: none;
     padding: 0.7rem 1.5rem;
     font-weight: 600;
-    color: #6c757d;
+    color: var(--color-primary);
     transition: all 0.3s;
     display: flex;
     align-items: center;
@@ -829,7 +930,7 @@ onUnmounted(() => {
 }
 
 .tab-button.active {
-    background-color: #3a506b;
+    background-color: var(--color-primary);
     color: white;
 }
 
@@ -872,7 +973,7 @@ onUnmounted(() => {
 .section-title {
     font-size: 1.8rem;
     font-weight: 700;
-    color: #3a506b;
+    color: var(--color-primary);
     margin: 0;
     display: flex;
     align-items: center;
@@ -884,7 +985,7 @@ onUnmounted(() => {
 }
 
 .places-counter {
-    background-color: #3a506b;
+    background-color: var(--color-primary);;
     color: white;
     padding: 0.4rem 1rem;
     border-radius: 50px;
@@ -939,17 +1040,17 @@ onUnmounted(() => {
 }
 
 .distance-badge {
-    background-color: #3a506b;
+    background-color: var(--color-primary);
     color: white;
 }
 
 .price-badge {
-    background-color: #ff6b6b;
+    background-color: var(--color-primary);
     color: white;
 }
 
 .free-badge {
-    background-color: #38b000;
+    background-color: var(--color-primary);
     color: white;
 }
 
@@ -961,16 +1062,13 @@ onUnmounted(() => {
     font-size: 1.3rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
-    color: #3a506b;
+    color: var(--color-primary);
     transition: color 0.3s ease;
 }
 
-.place-card:hover .place-title {
-    color: #ff6b6b;
-}
 
 .place-location {
-    color: #6c757d;
+    color: var(--color-primary);
     margin-bottom: 1rem;
     font-size: 0.95rem;
     display: flex;
@@ -979,7 +1077,7 @@ onUnmounted(() => {
 
 .place-location i {
     margin-right: 8px;
-    color: #3a506b;
+    color: var(--color-primary)
 }
 
 .place-rating {
@@ -1000,7 +1098,7 @@ onUnmounted(() => {
 
 .rating-value {
     font-weight: 600;
-    color: #495057;
+    color: var(--color-primary);
     background-color: #f8f9fa;
     padding: 0.2rem 0.5rem;
     border-radius: 50px;
@@ -1012,14 +1110,14 @@ onUnmounted(() => {
     padding: 0.7rem;
     font-weight: 600;
     transition: all 0.3s;
-    background-color: #3a506b;
+    background-color: var(--color-primary);
     border: none;
 }
 
 .place-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    background-color: #ff6b6b;
+    background-color: var(--color-accent);
 }
 
 /* Loading overlay */
@@ -1049,7 +1147,7 @@ onUnmounted(() => {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background-color: #3a506b;
+    background-color: var(--color-primary);
     opacity: 0.6;
     position: absolute;
     top: 0;
@@ -1075,7 +1173,7 @@ onUnmounted(() => {
 
 .loading-overlay p {
     margin-top: 1.5rem;
-    color: #3a506b;
+    color: var(--color-primary);
     font-weight: 600;
 }
 
@@ -1115,7 +1213,7 @@ onUnmounted(() => {
 .btn-retry:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    background-color: #ff6b6b;
+    background-color: v;
 }
 
 /* Custom popup styles */
@@ -1151,7 +1249,7 @@ onUnmounted(() => {
 
 :global(.popup-location) {
     font-size: 1rem;
-    color: #6c757d;
+    color: var(--color-primary);
     margin-bottom: 0.8rem;
     display: flex;
     align-items: center;
@@ -1159,12 +1257,12 @@ onUnmounted(() => {
 
 :global(.popup-location i) {
     margin-right: 8px;
-    color: #3a506b;
+    color: var(--color-primary);
 }
 
 :global(.popup-distance) {
     font-size: 1rem;
-    color: #3a506b;
+    color: var(--color-primary);
     font-weight: 600;
     margin-bottom: 0.8rem;
     display: flex;
@@ -1190,7 +1288,7 @@ onUnmounted(() => {
 :global(.popup-rating span) {
     margin-left: 8px;
     font-weight: 700;
-    color: #495057;
+    color: var(--color-primary);
     background-color: #f8f9fa;
     padding: 0.2rem 0.6rem;
     border-radius: 50px;
@@ -1199,7 +1297,7 @@ onUnmounted(() => {
 :global(.popup-link) {
     display: inline-block;
     padding: 0.6rem 1.5rem;
-    background-color: #3a506b;
+    background-color: var(--color-primary);
     color: white;
     text-decoration: none;
     border-radius: 50px;
@@ -1210,7 +1308,7 @@ onUnmounted(() => {
 }
 
 :global(.popup-link:hover) {
-    background-color: #ff6b6b;
+    background-color: var(--color-accent);
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
@@ -1224,10 +1322,10 @@ onUnmounted(() => {
 :global(.user-marker-inner) {
     width: 24px;
     height: 24px;
-    background-color: #3a506b;
+    background-color: var(--color-primary);
     border-radius: 50%;
     border: 3px solid white;
-    box-shadow: 0 0 0 2px #3a506b;
+    box-shadow: 0 0 0 2px var(--color-primary);
     position: relative;
 }
 
@@ -1265,7 +1363,7 @@ onUnmounted(() => {
     height: 18px;
     border-radius: 50%;
     border: 3px solid white;
-    box-shadow: 0 0 0 2px #3a506b;
+    box-shadow: 0 0 0 2px var(--color-primary);
     transition: transform 0.3s;
 }
 
@@ -1273,18 +1371,118 @@ onUnmounted(() => {
     transform: scale(1.2);
 }
 
+/* Modal styles */
+.location-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease;
+}
+
+.location-modal {
+    background-color: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background-color: var(--color-primary);
+    color: white;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.modal-title {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #e9ecef;
+}
+
+.browser-instructions {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    height: 100%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.browser-instructions h5 {
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.browser-instructions ol {
+    padding-left: 1.5rem;
+    margin-bottom: 0;
+}
+
+.browser-instructions li {
+    margin-bottom: 0.5rem;
+}
+
+.browser-instructions li:last-child {
+    margin-bottom: 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 /* Media queries */
 @media (max-width: 768px) {
-    .hero-title {
+    .header-title {
         font-size: 2rem;
     }
 
-    .hero-subtitle {
-        font-size: 1.1rem;
-    }
-
-    .map-container {
-        height: 350px;
+    .header-subtitle {
+        font-size: 1rem;
     }
 
     .view-tabs {
@@ -1311,19 +1509,35 @@ onUnmounted(() => {
         align-items: flex-start;
         gap: 0.5rem;
     }
+
+    .modal-footer {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .modal-footer .d-flex {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .modal-footer button {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
 }
 
 @media (max-width: 576px) {
-    .hero-title {
+    .header-title {
         font-size: 1.8rem;
     }
 
-    .hero-subtitle {
-        font-size: 1rem;
+    .header-subtitle {
+        font-size: 0.9rem;
     }
 
-    .map-container {
-        height: 300px;
+    .header-underline {
+        width: 60px;
+        height: 3px;
     }
 
     .tab-button {
