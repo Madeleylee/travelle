@@ -254,7 +254,7 @@ export function useTripLists() {
     }
 
     // Añadir un elemento a una lista
-    const agregarItem = (listaId, texto, categoria = "otros", prioridad = 2) => {
+    const agregarItem = (listaId, texto, categoria = "otros", prioridad = 2, notas = "") => {
         const lista = obtenerLista(listaId)
         if (!lista) {
             console.error(`No se encontró lista con ID: ${listaId} para agregar item`)
@@ -273,6 +273,7 @@ export function useTripLists() {
             completado: false,
             categoria, // ✅ Garantiza que siempre tenga valor
             prioridad,
+            notas,
             createdAt: new Date().toISOString(),
         }
 
