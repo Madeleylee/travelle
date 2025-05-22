@@ -467,16 +467,6 @@ onUnmounted(() => {
               <i class="bi bi-person-gear me-2"></i>
               <span>Profile</span>
             </a>
-            <!-- Enlace a lugares visitados en el menú desplegable -->
-            <a href="#" @click.prevent="navigateTo('/visitados')" class="dropdown-item d-flex align-items-center py-2">
-              <i class="bi bi-check-circle me-2"></i>
-              <span>Visited Places</span>
-            </a>
-            <!-- Enlace a planes de viaje -->
-            <a href="#" @click.prevent="navigateTo('/trips')" class="dropdown-item d-flex align-items-center py-2">
-              <i class="bi bi-signpost-split me-2"></i>
-              <span>My Trips</span>
-            </a>
             <!-- Botón de cerrar sesión -->
             <button class="dropdown-item d-flex align-items-center py-2" @click="cerrarSesion">
               <i class="bi bi-box-arrow-right me-2"></i>

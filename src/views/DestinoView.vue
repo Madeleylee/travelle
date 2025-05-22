@@ -68,8 +68,8 @@ function nextSlide() {
 
 function prevSlide() {
   if (destination.value && destination.value.imagenes.length > 0) {
-    currentSlide.value = currentSlide.value === 0 
-      ? destination.value.imagenes.length - 1 
+    currentSlide.value = currentSlide.value === 0
+      ? destination.value.imagenes.length - 1
       : currentSlide.value - 1;
   }
 }
@@ -86,12 +86,16 @@ function goBack() {
 
 <template>
   <div class="destination-view" v-if="destination">
-    <!-- Título principal con estilo consistente -->
-    <div class="countries-header">
+    <!-- Header con botón Back separado del título -->
+    <div class="back-button-container">
       <button @click="goBack" class="btn-back">
         <ArrowIcon :width="20" :height="20" />
         Back
       </button>
+    </div>
+
+    <!-- Título principal en su propio contenedor -->
+    <div class="title-container">
       <h1>{{ destination.nombre }}</h1>
       <div class="header-line"></div>
     </div>
@@ -101,26 +105,16 @@ function goBack() {
       <div class="carousel-3d-wrapper">
         <div class="carousel-3d-container">
           <div class="carousel-3d-track">
-            <div 
-              v-for="(image, index) in destination.imagenes" 
-              :key="index"
-              class="carousel-3d-slide"
-              :class="{
-                'active': index === currentSlide,
-                'prev': index === (currentSlide - 1 + destination.imagenes.length) % destination.imagenes.length,
-                'next': index === (currentSlide + 1) % destination.imagenes.length,
-                'prev-2': index === (currentSlide - 2 + destination.imagenes.length) % destination.imagenes.length,
-                'next-2': index === (currentSlide + 2) % destination.imagenes.length
-              }"
-              @click="openImage(index)"
-            >
+            <div v-for="(image, index) in destination.imagenes" :key="index" class="carousel-3d-slide" :class="{
+              'active': index === currentSlide,
+              'prev': index === (currentSlide - 1 + destination.imagenes.length) % destination.imagenes.length,
+              'next': index === (currentSlide + 1) % destination.imagenes.length,
+              'prev-2': index === (currentSlide - 2 + destination.imagenes.length) % destination.imagenes.length,
+              'next-2': index === (currentSlide + 2) % destination.imagenes.length
+            }" @click="openImage(index)">
               <div class="slide-content">
                 <div class="slide-frame">
-                  <img 
-                    :src="image" 
-                    :alt="`${destination.nombre} - Image ${index + 1}`"
-                    class="slide-image"
-                  />
+                  <img :src="image" :alt="`${destination.nombre} - Image ${index + 1}`" class="slide-image" />
                   <div class="slide-reflection"></div>
                 </div>
                 <div class="slide-caption">
@@ -130,7 +124,7 @@ function goBack() {
             </div>
           </div>
         </div>
-        
+
         <!-- Controles del carrusel -->
         <div class="carousel-controls">
           <button @click="prevSlide" class="carousel-btn prev-btn">
@@ -140,15 +134,11 @@ function goBack() {
             <i class="bi bi-chevron-right"></i>
           </button>
         </div>
-        
+
         <!-- Indicadores -->
         <div class="carousel-indicators">
-          <button 
-            v-for="(image, index) in destination.imagenes"
-            :key="index"
-            @click="goToSlide(index)"
-            :class="['indicator', { active: index === currentSlide }]"
-          ></button>
+          <button v-for="(image, index) in destination.imagenes" :key="index" @click="goToSlide(index)"
+            :class="['indicator', { active: index === currentSlide }]"></button>
         </div>
       </div>
 
@@ -171,14 +161,11 @@ function goBack() {
 
     <!-- Modal de imagen -->
     <div v-if="selectedImage !== null" class="modal" @click="closeImage">
-      <div class="modal-content">
+      <div class="modal-content" @click.stop>
         <button class="modal-close" @click="closeImage">&times;</button>
         <div class="modal-image-wrapper">
-          <img 
-            :src="destination.imagenes[selectedImage]" 
-            :alt="`${destination.nombre} - Image ${selectedImage + 1}`"
-            class="modal-image" 
-          />
+          <img :src="destination.imagenes[selectedImage]" :alt="`${destination.nombre} - Image ${selectedImage + 1}`"
+            class="modal-image" />
         </div>
         <div class="modal-nav">
           <button @click.stop="previousImage" :disabled="selectedImage === 0" class="nav-button">&#8592;</button>
@@ -200,33 +187,18 @@ function goBack() {
   font-family: 'Arial', sans-serif;
 }
 
-/* Estilo del encabezado consistente con Countries */
-.countries-header {
-  text-align: center;
-  margin-bottom: 2rem;
+/* Contenedor del botón Back */
+.back-button-container {
+  margin-bottom: 1.5rem;
   position: relative;
-}
-
-.countries-header h1 {
-  color: var(--color-primary);
-  font-size: 2.5rem;
-  margin: 0 0 0.5rem 0;
-  font-weight: 700;
-}
-
-.header-line {
-  height: 4px;
-  width: 80px;
-  background-color: var(--color-accent);
-  margin: 0 auto;
+  height: 40px;
 }
 
 /* Estilo para el botón de volver */
 .btn-back {
   position: absolute;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
   display: flex;
   align-items: center;
   background-color: var(--color-primary);
@@ -237,6 +209,7 @@ function goBack() {
   cursor: pointer;
   transition: background-color 0.3s;
   font-weight: bold;
+  z-index: 10;
 }
 
 /* Efecto hover para el botón de volver */
@@ -244,10 +217,32 @@ function goBack() {
   background-color: var(--color-accent);
 }
 
+/* Contenedor del título */
+.title-container {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Estilo para el título */
+.title-container h1 {
+  color: var(--color-primary);
+  font-size: 2.5rem;
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+}
+
+/* Línea decorativa debajo del título */
+.header-line {
+  height: 4px;
+  width: 80px;
+  background-color: var(--color-accent);
+  margin: 0 auto;
+}
+
 /* Contenedor del contenido del destino */
 .destination-content {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto;
   gap: 2rem;
   background-color: white;
   border-radius: 8px;
@@ -273,7 +268,7 @@ function goBack() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
   pointer-events: none;
   border-radius: 15px;
 }
@@ -351,7 +346,7 @@ function goBack() {
   background: linear-gradient(145deg, #ffffff, #e6e6e6);
   border-radius: 15px;
   padding: 12px;
-  box-shadow: 
+  box-shadow:
     0 25px 50px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
   position: relative;
@@ -365,7 +360,7 @@ function goBack() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%);
   pointer-events: none;
   border-radius: 15px;
 }
@@ -384,7 +379,7 @@ function goBack() {
   left: 12px;
   right: 12px;
   height: 40px;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
   border-radius: 0 0 8px 8px;
   transform: scaleY(-1);
   opacity: 0.3;
@@ -608,24 +603,39 @@ function goBack() {
 }
 
 /* Media queries para ajustar el diseño en pantallas más pequeñas */
+@media (max-width: 1024px) {
+  .destination-view {
+    padding: 1.5rem;
+  }
+
+  .carousel-3d-container {
+    height: 350px;
+  }
+
+  .carousel-3d-slide {
+    width: 280px;
+    height: 210px;
+    margin-left: -140px;
+    margin-top: -105px;
+  }
+
+  .slide-frame {
+    height: 180px;
+  }
+}
+
 @media (max-width: 768px) {
   .destination-view {
     padding: 1rem;
   }
 
-  .countries-header h1 {
+  .title-container h1 {
     font-size: 2rem;
-    margin-top: 2.5rem;
-  }
-
-  .btn-back {
-    top: 0;
-    transform: none;
   }
 
   .destination-content {
-    grid-template-columns: 1fr;
-    padding: 1.5rem;
+    padding: 1.5rem 1rem;
+    gap: 1.5rem;
   }
 
   .carousel-3d-wrapper {
@@ -659,43 +669,142 @@ function goBack() {
   .carousel-3d-slide.next-2 {
     display: none;
   }
-  
+
+  .carousel-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
   .modal-content {
     max-width: 90vw;
   }
-  
+
   .modal-image {
     max-height: 50vh;
   }
+
+  .info-section {
+    padding: 1.25rem;
+  }
+
+  .info-section h2 {
+    font-size: 1.3rem;
+  }
+
+  .btn-location {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
 }
 
-@media (max-width: 480px) {
-  .countries-header h1 {
+@media (max-width: 576px) {
+  .destination-view {
+    padding: 0.75rem;
+  }
+
+  .title-container h1 {
     font-size: 1.8rem;
-    margin-top: 3rem;
+  }
+
+  .header-line {
+    width: 60px;
+    height: 3px;
+  }
+
+  .destination-content {
+    padding: 1rem;
+    border-radius: 6px;
+  }
+
+  .carousel-3d-wrapper {
+    padding: 1.5rem 0.75rem;
+    border-radius: 15px;
   }
 
   .carousel-3d-container {
     height: 250px;
   }
-  
+
   .carousel-3d-slide {
     width: 200px;
     height: 150px;
     margin-left: -100px;
     margin-top: -75px;
   }
-  
+
   .slide-frame {
     height: 120px;
+    padding: 8px;
   }
-  
+
+  .carousel-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .indicator {
+    width: 8px;
+    height: 8px;
+  }
+
   .modal-content {
     padding: 1rem;
+    max-width: 95vw;
   }
-  
+
   .modal-image {
     max-height: 40vh;
   }
+
+  .modal-close {
+    top: -30px;
+    font-size: 1.5rem;
+  }
+
+  .nav-button {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .title-container h1 {
+    font-size: 1.5rem;
+  }
+
+  .carousel-3d-container {
+    height: 220px;
+  }
+
+  .carousel-3d-slide {
+    width: 180px;
+    height: 135px;
+    margin-left: -90px;
+    margin-top: -67.5px;
+  }
+
+  .slide-frame {
+    height: 110px;
+  }
+
+  .slide-caption p {
+    font-size: 0.8rem;
+  }
+
+  .info-section h2 {
+    font-size: 1.2rem;
+  }
+
+  .info-section p {
+    font-size: 0.9rem;
+  }
+
+  .btn-location {
+    font-size: 0.85rem;
+  }
 }
 </style>
+

@@ -18,7 +18,7 @@ const destinosAleatorios = computed(() => destinos.value);
 
 <template>
     <div class="home">
-        <section class="hero">
+        <section class="countries-header">
             <h1>Discover Europe with Travelle</h1>
             <p>Share your adventures and find new destinations</p>
         </section>
@@ -41,6 +41,7 @@ const destinosAleatorios = computed(() => destinos.value);
     padding-top: 5rem;
 }
 
+/* Estos estilos pueden ser eliminados o comentados
 .hero {
     text-align: center;
     margin-bottom: 2rem;
@@ -51,6 +52,7 @@ h1 {
     font-size: 2.5rem;
     margin-bottom: 1rem;
 }
+*/
 
 h2 {
     color: var(--color-primary);
@@ -85,6 +87,54 @@ h2 {
 
     .destinos-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Estilos para la cabecera de la página */
+.countries-header {
+    margin-bottom: 2.5rem;
+    text-align: center;
+    position: relative;
+}
+
+/* Estilos para el título principal */
+.countries-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-primary, #3a506b);
+    font-weight: 700;
+    position: relative;
+    display: inline-block;
+}
+
+/* Línea decorativa debajo del título */
+.countries-header h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background-color: var(--color-accent, #ff6b6b);
+    border-radius: 2px;
+}
+
+/* Estilos para el párrafo de la cabecera */
+.countries-header p {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin-top: 1rem;
+}
+
+/* Ajustes responsivos para la cabecera */
+@media (max-width: 576px) {
+    .countries-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .countries-header p {
+        font-size: 1rem;
     }
 }
 </style>
