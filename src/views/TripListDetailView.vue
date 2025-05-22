@@ -1,1042 +1,1572 @@
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useTripLists } from '@/composables/useTripLists';
-import { useAuth } from '@/composables/useAuth';
-import AuthModal from '@/components/AuthModal.vue';
-
-const route = useRoute();
-const router = useRouter();
-const { isUserAuthenticated } = useAuth();
-const { obtenerLista, actualizarLista, eliminarLista, agregarItem, actualizarItem, eliminarItem, toggleCompletado, categorias, obtenerCategoria } = useTripLists();
-
-// Estado para el modal de autenticación
-const showAuthModal = ref(false);
-
-// ID de la lista actual
-const listaId = route.params.id;
-
-// Estado de la lista
-const lista = ref(null);
-const isLoading = ref(true);
-const error = ref(null);
-
-// Estado para el formulario de nuevo elemento
-const nuevoItem = ref({
-    texto: '',
-    categoria: 'otros',
-    prioridad: 2
-});
-
-// Estado para el modal de edición
-const showEditModal = ref(false);
-const itemEditando = ref(null);
-
-// Estado para el modal de confirmación de eliminación
-const showDeleteModal = ref(false);
-const itemEliminando = ref(null);
-
-// Estado para el modal de edición de lista
-const showEditListModal = ref(false);
-const listaEditando = ref(null);
-
-// Estado para el modal de confirmación de eliminación de lista
-const showDeleteListModal = ref(false);
-
-// Cargar la lista
-const cargarLista = () => {
-    isLoading.value = true;
-    error.value = null;
-
-    try {
-        const listaEncontrada = obtenerLista(listaId);
-        if (listaEncontrada) {
-            lista.value = listaEncontrada;
-        } else {
-            error.value = 'Lista no encontrada';
-            router.push({ name: 'TripLists' });
-        }
-    } catch (err) {
-        console.error('Error al cargar la lista:', err);
-        error.value = 'No se pudo cargar la lista';
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-// Formatear fecha
-const formatearFecha = (fecha) => {
-    if (!fecha) return '';
-    return new Date(fecha).toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-};
-
-// Calcular días restantes
-const diasRestantes = computed(() => {
-    if (!lista.value) return '';
-
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const inicio = new Date(lista.value.fechaInicio);
-    inicio.setHours(0, 0, 0, 0);
-    const diferencia = inicio - hoy;
-    const dias = Math.ceil(diferencia / (1000 * 60 * 60 * 24));
-
-    if (dias < 0) return 'Viaje pasado';
-    if (dias === 0) return '¡Hoy!';
-    if (dias === 1) return 'Mañana';
-    return `En ${dias} días`;
-});
-
-// Calcular porcentaje de completado
-const porcentajeCompletado = computed(() => {
-    if (!lista.value || !lista.value.items || lista.value.items.length === 0) return 0;
-
-    const completados = lista.value.items.filter(item => item.completado).length;
-    return Math.round((completados / lista.value.items.length) * 100);
-});
-
-// Verificar si la lista está completa
-const listaCompleta = computed(() => {
-    return porcentajeCompletado.value === 100 && lista.value?.items.length > 0;
-});
-
-// Verificar si el viaje es hoy
-const viajeEsHoy = computed(() => {
-    if (!lista.value) return false;
-
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const inicio = new Date(lista.value.fechaInicio);
-    inicio.setHours(0, 0, 0, 0);
-
-    return inicio.getTime() === hoy.getTime();
-});
-
-// Filtrar items por categoría
-const itemsPorCategoria = computed(() => {
-    if (!lista.value || !lista.value.items) return {};
-
-    const resultado = {};
-    categorias.forEach(cat => {
-        resultado[cat.id] = lista.value.items.filter(item => item.categoria === cat.id);
-    });
-
-    return resultado;
-});
-
-// Agregar un nuevo elemento
-const agregarNuevoItem = () => {
-    if (!nuevoItem.value.texto.trim()) return;
-
-    agregarItem(
-        listaId,
-        nuevoItem.value.texto,
-        nuevoItem.value.categoria,
-        parseInt(nuevoItem.value.prioridad)
-    );
-
-    // Limpiar el formulario
-    nuevoItem.value = {
-        texto: '',
-        categoria: 'otros',
-        prioridad: 2
-    };
-
-    // Recargar la lista
-    cargarLista();
-};
-
-// Abrir modal de edición
-const abrirModalEdicion = (item) => {
-    itemEditando.value = { ...item };
-    showEditModal.value = true;
-};
-
-// Guardar cambios de edición
-const guardarEdicion = () => {
-    if (!itemEditando.value.texto.trim()) return;
-
-    actualizarItem(listaId, itemEditando.value.id, {
-        texto: itemEditando.value.texto,
-        categoria: itemEditando.value.categoria,
-        prioridad: parseInt(itemEditando.value.prioridad)
-    });
-
-    showEditModal.value = false;
-    itemEditando.value = null;
-
-    // Recargar la lista
-    cargarLista();
-};
-
-// Abrir modal de confirmación de eliminación
-const abrirModalEliminar = (item) => {
-    itemEliminando.value = item;
-    showDeleteModal.value = true;
-};
-
-// Confirmar eliminación
-const confirmarEliminar = () => {
-    if (!itemEliminando.value) return;
-
-    eliminarItem(listaId, itemEliminando.value.id);
-    showDeleteModal.value = false;
-    itemEliminando.value = null;
-
-    // Recargar la lista
-    cargarLista();
-};
-
-// Abrir modal de edición de lista
-const abrirModalEdicionLista = () => {
-    listaEditando.value = { ...lista.value };
-    showEditListModal.value = true;
-};
-
-// Guardar cambios de edición de lista
-const guardarEdicionLista = () => {
-    if (!listaEditando.value.nombre.trim() || !listaEditando.value.destino.trim()) return;
-
-    actualizarLista(listaId, {
-        nombre: listaEditando.value.nombre,
-        destino: listaEditando.value.destino,
-        fechaInicio: listaEditando.value.fechaInicio,
-        fechaFin: listaEditando.value.fechaFin
-    });
-
-    showEditListModal.value = false;
-    listaEditando.value = null;
-
-    // Recargar la lista
-    cargarLista();
-};
-
-// Abrir modal de confirmación de eliminación de lista
-const abrirModalEliminarLista = () => {
-    showDeleteListModal.value = true;
-};
-
-// Confirmar eliminación de lista
-const confirmarEliminarLista = () => {
-    eliminarLista(listaId);
-    showDeleteListModal.value = false;
-    router.push({ name: 'TripLists' });
-};
-
-// Marcar/desmarcar elemento como completado
-const marcarCompletado = (itemId) => {
-    toggleCompletado(listaId, itemId);
-    cargarLista();
-};
-
-// Volver a la lista de viajes
-const volverAListas = () => {
-    router.push({ name: 'TripLists' });
-};
-
-// Manejar inicio de sesión exitoso
-const handleLoginSuccess = () => {
-    showAuthModal.value = false;
-    cargarLista();
-};
-
-let initialAuthCheck = ref(false);
-
-// Verificar autenticación al montar el componente
-onMounted(() => {
-    initialAuthCheck.value = isUserAuthenticated();
-    if (!initialAuthCheck.value) {
-        showAuthModal.value = true;
-    } else {
-        cargarLista();
-    }
-});
-
-// Observar cambios en la ruta para recargar la lista si cambia el ID
-watch(() => route.params.id, (newId) => {
-    if (newId && newId !== listaId) {
-        cargarLista();
-    }
-});
-</script>
-
 <template>
-    <div class="trip-detail-container">
-        <div class="container py-4">
-            <!-- Spinner de carga -->
-            <div v-if="isLoading" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Cargando...</span>
-                </div>
-            </div>
+  <div v-if="cargando" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Cargando detalles del viaje...</p>
+  </div>
 
-            <!-- Mensaje de error -->
-            <div v-else-if="error" class="alert alert-danger" role="alert">
-                {{ error }}
-            </div>
+  <div v-else-if="error" class="error-container">
+    <p>{{ error }}</p>
+    <button @click="cargarLista" class="btn-retry">Intentar de nuevo</button>
+  </div>
 
-            <!-- Contenido de la lista -->
-            <div v-else-if="lista" class="trip-detail">
-                <!-- Encabezado -->
-                <div class="trip-header">
-                    <button class="btn-back" @click="volverAListas">
-                        <i class="bi bi-arrow-left"></i>
-                    </button>
-
-                    <div class="trip-header-content">
-                        <div class="trip-badge" :class="{ 'trip-badge-today': viajeEsHoy }">
-                            {{ diasRestantes }}
-                        </div>
-
-                        <h1 class="trip-title">{{ lista.nombre }}</h1>
-
-                        <div class="trip-info">
-                            <div class="trip-destination">
-                                <i class="bi bi-geo-alt-fill"></i> {{ lista.destino }}
-                            </div>
-                            <div class="trip-dates">
-                                <i class="bi bi-calendar3"></i>
-                                {{ formatearFecha(lista.fechaInicio) }} - {{ formatearFecha(lista.fechaFin) }}
-                            </div>
-                        </div>
-
-                        <div class="trip-actions">
-                            <button class="btn-edit" @click="abrirModalEdicionLista">
-                                <i class="bi bi-pencil"></i> Editar
-                            </button>
-                            <button class="btn-delete" @click="abrirModalEliminarLista">
-                                <i class="bi bi-trash"></i> Eliminar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Progreso -->
-                <div class="trip-progress-container">
-                    <div class="progress-header">
-                        <h3>Progreso</h3>
-                        <div class="progress-percentage" :class="{ 'text-success': listaCompleta }">
-                            {{ porcentajeCompletado }}%
-                        </div>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar" :class="{ 'bg-success': listaCompleta }" role="progressbar"
-                            :style="`width: ${porcentajeCompletado}%`" :aria-valuenow="porcentajeCompletado"
-                            aria-valuemin="0" aria-valuemax="100">
-                        </div>
-                    </div>
-                    <div class="progress-status">
-                        <span v-if="listaCompleta" class="text-success">
-                            <i class="bi bi-check-circle-fill"></i> ¡Todo listo para tu viaje!
-                        </span>
-                        <span v-else>
-                            <i class="bi bi-info-circle"></i>
-                            {{lista.items.filter(item => !item.completado).length}} elementos pendientes
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Formulario para agregar nuevo elemento -->
-                <div class="add-item-form">
-                    <h3>Agregar elemento</h3>
-                    <form @submit.prevent="agregarNuevoItem" class="item-form">
-                        <div class="form-row">
-                            <div class="form-group item-text">
-                                <input type="text" class="form-control" v-model="nuevoItem.texto"
-                                    placeholder="¿Qué necesitas llevar?" required>
-                            </div>
-                            <div class="form-group item-category">
-                                <select class="form-select" v-model="nuevoItem.categoria">
-                                    <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
-                                        {{ cat.nombre }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="form-group item-priority">
-                                <select class="form-select" v-model="nuevoItem.prioridad">
-                                    <option value="1">Alta</option>
-                                    <option value="2">Media</option>
-                                    <option value="3">Baja</option>
-                                </select>
-                            </div>
-                            <div class="form-group item-submit">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-plus-lg"></i> Agregar
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Lista de elementos por categoría -->
-                <div class="items-container">
-                    <div v-for="categoria in categorias" :key="categoria.id" class="category-section"
-                        v-if="itemsPorCategoria[categoria.id] && itemsPorCategoria[categoria.id].length > 0">
-                        <div class="category-header">
-                            <h3>
-                                <i class="bi" :class="`bi-${categoria.icon}`"></i>
-                                {{ categoria.nombre }}
-                            </h3>
-                            <span class="category-count">
-                                {{itemsPorCategoria[categoria.id].filter(item => item.completado).length}}/{{
-                                    itemsPorCategoria[categoria.id].length }}
-                            </span>
-                        </div>
-
-                        <div class="items-list">
-                            <div v-for="item in itemsPorCategoria[categoria.id]" :key="item.id" class="item-card"
-                                :class="{ 'item-completed': item.completado, 'item-priority-1': item.prioridad === 1, 'item-priority-2': item.prioridad === 2, 'item-priority-3': item.prioridad === 3 }">
-                                <div class="item-checkbox">
-                                    <input type="checkbox" :id="`item-${item.id}`" :checked="item.completado"
-                                        @change="marcarCompletado(item.id)">
-                                    <label :for="`item-${item.id}`"></label>
-                                </div>
-                                <div class="item-content">
-                                    <div class="item-text">{{ item.texto }}</div>
-                                    <div class="item-priority">
-                                        <span v-if="item.prioridad === 1" class="priority-high">Alta</span>
-                                        <span v-else-if="item.prioridad === 2" class="priority-medium">Media</span>
-                                        <span v-else class="priority-low">Baja</span>
-                                    </div>
-                                </div>
-                                <div class="item-actions">
-                                    <button class="btn-item-edit" @click="abrirModalEdicion(item)">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn-item-delete" @click="abrirModalEliminar(item)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Mensaje cuando no hay elementos -->
-                    <div v-if="!lista.items || lista.items.length === 0" class="empty-items">
-                        <div class="empty-illustration">
-                            <i class="bi bi-list-check display-1"></i>
-                        </div>
-                        <h3>No hay elementos en tu lista</h3>
-                        <p class="text-muted">Agrega elementos para organizar tu viaje</p>
-                    </div>
-                </div>
-            </div>
+  <div v-else-if="lista" class="trip-detail-container">
+    <!-- Cabecera -->
+    <header class="trip-header">
+      <div class="trip-header-content">
+        <div class="trip-title-section">
+          <div class="title-with-back">
+            <button @click="volverAtras" class="btn-back">
+              <font-awesome-icon icon="arrow-left" />
+            </button>
+            <h1 class="trip-title">{{ lista.nombre }}</h1>
+          </div>
+          <div class="trip-actions">
+            <button @click="editarLista" class="btn-icon-text">
+              <font-awesome-icon icon="edit" /> Editar
+            </button>
+          </div>
         </div>
-
-        <!-- Modal de edición de elemento -->
-        <div class="modal fade" :class="{ show: showEditModal }" tabindex="-1"
-            :style="{ display: showEditModal ? 'block' : 'none' }">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Editar elemento</h5>
-                        <button type="button" class="btn-close" @click="showEditModal = false"></button>
-                    </div>
-                    <div class="modal-body" v-if="itemEditando">
-                        <form @submit.prevent="guardarEdicion">
-                            <div class="mb-3">
-                                <label for="editItemText" class="form-label">Texto</label>
-                                <input type="text" class="form-control" id="editItemText" v-model="itemEditando.texto"
-                                    required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="editItemCategory" class="form-label">Categoría</label>
-                                <select class="form-select" id="editItemCategory" v-model="itemEditando.categoria">
-                                    <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
-                                        {{ cat.nombre }}
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="editItemPriority" class="form-label">Prioridad</label>
-                                <select class="form-select" id="editItemPriority" v-model="itemEditando.prioridad">
-                                    <option value="1">Alta</option>
-                                    <option value="2">Media</option>
-                                    <option value="3">Baja</option>
-                                </select>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-link" @click="showEditModal = false">Cancelar</button>
-                        <button type="button" class="btn btn-primary" @click="guardarEdicion">Guardar</button>
-                    </div>
-                </div>
-            </div>
+        <div class="trip-meta">
+          <div class="trip-destination">
+            <font-awesome-icon icon="map-marker-alt" />
+            {{ lista.destino }}
+          </div>
+          <div class="trip-dates">
+            <font-awesome-icon icon="calendar-alt" />
+            {{ formatearFecha(lista.fechaInicio) }} - {{ formatearFecha(lista.fechaFin) }}
+          </div>
         </div>
-        <div v-if="showEditModal" class="modal-backdrop fade show"></div>
+      </div>
+    </header>
 
-        <!-- Modal de confirmación de eliminación -->
-        <div class="modal fade" :class="{ show: showDeleteModal }" tabindex="-1"
-            :style="{ display: showDeleteModal ? 'block' : 'none' }">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Confirmar eliminación</h5>
-                        <button type="button" class="btn-close" @click="showDeleteModal = false"></button>
-                    </div>
-                    <div class="modal-body" v-if="itemEliminando">
-                        <p>¿Estás seguro de que deseas eliminar el elemento "{{ itemEliminando.texto }}"?</p>
-                        <p class="text-danger">Esta acción no se puede deshacer.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-link" @click="showDeleteModal = false">Cancelar</button>
-                        <button type="button" class="btn btn-danger" @click="confirmarEliminar">Eliminar</button>
-                    </div>
-                </div>
-            </div>
+    <!-- Progreso -->
+    <div class="trip-progress-container">
+      <div class="progress-header">
+        <h2>Progreso del viaje</h2>
+        <div class="progress-percentage">{{ calcularPorcentajeCompletado() }}%</div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" :style="{ width: `${calcularPorcentajeCompletado()}%` }" :class="{
+          'progress-low': calcularPorcentajeCompletado() < 30,
+          'progress-medium': calcularPorcentajeCompletado() >= 30 && calcularPorcentajeCompletado() < 70,
+          'progress-high': calcularPorcentajeCompletado() >= 70
+        }"></div>
+      </div>
+      <div class="progress-stats">
+        <div class="stat">
+          <div class="stat-value">{{ itemsCompletados }}</div>
+          <div class="stat-label">Completados</div>
         </div>
-        <div v-if="showDeleteModal" class="modal-backdrop fade show"></div>
-
-        <!-- Modal de edición de lista -->
-        <div class="modal fade" :class="{ show: showEditListModal }" tabindex="-1"
-            :style="{ display: showEditListModal ? 'block' : 'none' }">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Editar viaje</h5>
-                        <button type="button" class="btn-close" @click="showEditListModal = false"></button>
-                    </div>
-                    <div class="modal-body" v-if="listaEditando">
-                        <form @submit.prevent="guardarEdicionLista">
-                            <div class="mb-3">
-                                <label for="editListName" class="form-label">Nombre</label>
-                                <input type="text" class="form-control" id="editListName" v-model="listaEditando.nombre"
-                                    required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="editListDestination" class="form-label">Destino</label>
-                                <input type="text" class="form-control" id="editListDestination"
-                                    v-model="listaEditando.destino" required>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="editListStartDate" class="form-label">Fecha de inicio</label>
-                                    <input type="date" class="form-control" id="editListStartDate"
-                                        v-model="listaEditando.fechaInicio" required>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label for="editListEndDate" class="form-label">Fecha de fin</label>
-                                    <input type="date" class="form-control" id="editListEndDate"
-                                        v-model="listaEditando.fechaFin" required>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-link" @click="showEditListModal = false">Cancelar</button>
-                        <button type="button" class="btn btn-primary" @click="guardarEdicionLista">Guardar</button>
-                    </div>
-                </div>
-            </div>
+        <div class="stat">
+          <div class="stat-value">{{ itemsPendientes }}</div>
+          <div class="stat-label">Pendientes</div>
         </div>
-        <div v-if="showEditListModal" class="modal-backdrop fade show"></div>
-
-        <!-- Modal de confirmación de eliminación de lista -->
-        <div class="modal fade" :class="{ show: showDeleteListModal }" tabindex="-1"
-            :style="{ display: showDeleteListModal ? 'block' : 'none' }">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Confirmar eliminación</h5>
-                        <button type="button" class="btn-close" @click="showDeleteListModal = false"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>¿Estás seguro de que deseas eliminar este viaje?</p>
-                        <p class="text-danger">Esta acción eliminará todos los elementos de la lista y no se puede
-                            deshacer.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-link"
-                            @click="showDeleteListModal = false">Cancelar</button>
-                        <button type="button" class="btn btn-danger" @click="confirmarEliminarLista">Eliminar</button>
-                    </div>
-                </div>
-            </div>
+        <div class="stat">
+          <div class="stat-value">{{ diasRestantes }}</div>
+          <div class="stat-label">{{ diasRestantes === 1 ? 'Día' : 'Días' }} restantes</div>
         </div>
-        <div v-if="showDeleteListModal" class="modal-backdrop fade show"></div>
-
-        <!-- Modal de autenticación -->
-        <AuthModal :visible="showAuthModal" @close="showAuthModal = false" @login-success="handleLoginSuccess" />
+      </div>
     </div>
+
+    <!-- Lista de elementos -->
+    <div class="items-container">
+      <div class="items-header">
+        <div class="items-header-top">
+          <h2>¿Qué necesitas para tu viaje?</h2>
+          <button @click="mostrarModalCrearItem" class="btn-add-item">
+            <font-awesome-icon icon="plus" /> Añadir
+          </button>
+        </div>
+
+        <!-- Filtro de categorías -->
+        <div class="categories-filter">
+          <button @click="mostrarTodasCategorias = true; categoriaSeleccionada = ''" class="category-pill"
+            :class="{ 'category-selected': mostrarTodasCategorias }">
+            <font-awesome-icon icon="list" /> Todos
+          </button>
+          <button v-for="cat in categorias" :key="cat.id" @click="seleccionarCategoria(cat.id)" class="category-pill"
+            :class="{ 'category-selected': categoriaSeleccionada === cat.id }">
+            <font-awesome-icon :icon="cat.icon" /> {{ cat.nombre }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Elementos -->
+      <div v-if="itemsFiltrados.length === 0" class="empty-items">
+        <div class="empty-illustration">
+          <font-awesome-icon icon="suitcase-rolling" />
+        </div>
+        <p>No hay elementos {{ !mostrarTodasCategorias && categoriaSeleccionada ? `en la categoría
+          ${obtenerNombreCategoria(categoriaSeleccionada)}` : 'en tu lista' }}</p>
+        <p class="empty-hint">Haz clic en el botón <strong>"Añadir"</strong> en la parte superior para comenzar a crear
+          tu lista.</p>
+      </div>
+
+      <div v-else class="items-list">
+        <div v-for="item in itemsFiltrados" :key="item.id" class="item-card"
+          :class="{ 'item-completed': item.completado }">
+          <div class="item-checkbox">
+            <input type="checkbox" :checked="item.completado" @change="toggleItemCompletado(item)"
+              :id="`item-${item.id}`" />
+            <label :for="`item-${item.id}`"></label>
+          </div>
+          <div class="item-content" @click="editarItem(item)">
+            <div class="item-text">{{ item.texto }}</div>
+            <div class="item-details">
+              <div v-if="item.categoria" class="item-category">
+                <font-awesome-icon :icon="obtenerIconoCategoria(item.categoria)" />
+                {{ obtenerNombreCategoria(item.categoria) }}
+              </div>
+              <div v-if="item.notas" class="item-notes">
+                <font-awesome-icon icon="sticky-note" /> {{ item.notas }}
+              </div>
+            </div>
+          </div>
+          <div class="item-actions">
+            <button @click.stop="editarItem(item)" class="btn-icon" title="Editar">
+              <font-awesome-icon icon="edit" />
+            </button>
+            <button @click.stop="eliminarItem(item)" class="btn-icon" title="Eliminar">
+              <font-awesome-icon icon="trash" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para crear/editar item -->
+  <div v-if="mostrarModal" class="modal-overlay" @click="cerrarModal">
+    <div class="modal-container" @click.stop>
+      <div class="modal-header">
+        <h2>{{ modoEdicion ? 'Editar elemento' : 'Añadir a tu lista' }}</h2>
+        <button @click="cerrarModal" class="btn-close">
+          <font-awesome-icon icon="times" />
+        </button>
+      </div>
+      <div class="modal-body">
+        <form @submit.prevent="guardarItem">
+          <div class="form-group">
+            <label for="texto">¿Qué necesitas llevar?</label>
+            <input type="text" id="texto" v-model="itemActual.texto" required
+              placeholder="Ej. Pasaporte, cargador, cámara..." class="form-input" autofocus />
+          </div>
+
+          <div class="form-group">
+            <label>Categoría</label>
+            <div class="category-selector">
+              <div v-for="cat in categoriasList" :key="cat.id" @click="itemActual.categoria = cat.id"
+                class="category-option" :class="{ 'category-option-selected': itemActual.categoria === cat.id }">
+                <font-awesome-icon :icon="cat.icon" />
+                <span>{{ cat.nombre }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notas">Notas adicionales (opcional)</label>
+            <textarea id="notas" v-model="itemActual.notas" placeholder="Añade detalles importantes..."
+              class="form-textarea"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="itemActual.completado" />
+              <span>Ya tengo este elemento</span>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" @click="cerrarModal" class="btn-secondary">Cancelar</button>
+            <button type="submit" class="btn-primary">
+              {{ modoEdicion ? 'Guardar cambios' : 'Añadir a mi lista' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para editar lista -->
+  <div v-if="mostrarModalLista" class="modal-overlay" @click="cerrarModalLista">
+    <div class="modal-container" @click.stop>
+      <div class="modal-header">
+        <h2>Editar viaje</h2>
+        <button @click="cerrarModalLista" class="btn-close">
+          <font-awesome-icon icon="times" />
+        </button>
+      </div>
+      <div class="modal-body">
+        <form @submit.prevent="guardarLista">
+          <div class="form-group">
+            <label for="nombre">Nombre del viaje</label>
+            <input type="text" id="nombre" v-model="listaEditada.nombre" required placeholder="Ej. Vacaciones de verano"
+              class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="destino">Destino</label>
+            <input type="text" id="destino" v-model="listaEditada.destino" required placeholder="Ej. Barcelona, España"
+              class="form-input" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fechaInicio">Fecha de inicio</label>
+              <input type="date" id="fechaInicio" v-model="listaEditada.fechaInicio" required class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="fechaFin">Fecha de fin</label>
+              <input type="date" id="fechaFin" v-model="listaEditada.fechaFin" required class="form-input" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="descripcion">Descripción (opcional)</label>
+            <textarea id="descripcion" v-model="listaEditada.descripcion" placeholder="Describe tu viaje..."
+              class="form-textarea"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" @click="cerrarModalLista" class="btn-secondary">Cancelar</button>
+            <button type="submit" class="btn-primary">Guardar cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sistema de notificaciones -->
+  <div class="notifications-container">
+    <div v-for="(notification, index) in notifications" :key="index" class="notification" :class="notification.type">
+      <div class="notification-icon">
+        <font-awesome-icon :icon="notification.icon" />
+      </div>
+      <div class="notification-content">
+        <div class="notification-title">{{ notification.title }}</div>
+        <div class="notification-message">{{ notification.message }}</div>
+      </div>
+      <button @click="removeNotification(index)" class="notification-close">
+        <font-awesome-icon icon="times" />
+      </button>
+    </div>
+  </div>
 </template>
 
+<script setup>
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useTripLists } from '@/composables/useTripLists';
+import { safeGoBack } from '@/utils/navegation';
+
+// Router
+const route = useRoute();
+const router = useRouter();
+
+// Estado
+const lista = ref(null);
+const cargando = ref(true);
+const error = ref(null);
+const mostrarModal = ref(false);
+const mostrarModalLista = ref(false);
+const modoEdicion = ref(false);
+const itemActual = ref({
+  texto: '',
+  categoria: 'otros',
+  notas: '',
+  completado: false
+});
+const listaEditada = ref({});
+const mostrarTodasCategorias = ref(true);
+const categoriaSeleccionada = ref('');
+const notifications = ref([]);
+
+// Control de notificaciones de guardado automático
+let lastSaveNotification = 0;
+const NOTIFICATION_COOLDOWN = 3000; // 3 segundos entre notificaciones
+
+// Composables
+const {
+  obtenerLista,
+  actualizarLista,
+  agregarItem,
+  actualizarItem,
+  eliminarItem: eliminarItemLista,
+  toggleCompletado,
+  categorias: categoriasList,
+  obtenerCategoria
+} = useTripLists();
+
+// Cargar lista al montar el componente
+const cargarLista = async () => {
+  cargando.value = true;
+  error.value = null;
+
+  try {
+    // Verificar que el ID existe en la ruta
+    const id = route.params.id;
+    if (!id) {
+      throw new Error('ID de lista no proporcionado');
+    }
+
+    console.log("Cargando lista con ID:", id);
+
+    // Obtener la lista
+    const resultado = obtenerLista(id);
+
+    if (!resultado) {
+      console.error("Lista no encontrada con ID:", id);
+      throw new Error('No se encontró la lista de viaje');
+    }
+
+    lista.value = resultado;
+    console.log("Lista cargada:", lista.value);
+
+    // Asegurarse de que items sea un array
+    if (!lista.value.items) {
+      lista.value.items = [];
+    }
+
+  } catch (err) {
+    console.error('Error al cargar lista:', err);
+    error.value = 'No se pudo cargar la lista de viaje. Por favor, intenta de nuevo.';
+  } finally {
+    cargando.value = false;
+  }
+}
+
+onMounted(() => {
+  cargarLista();
+});
+
+// Limpiar al desmontar
+onUnmounted(() => {
+  // Limpiar cualquier recurso si es necesario
+});
+
+// Observar cambios en la lista para mostrar notificación de guardado automático
+watch(
+  () => lista.value,
+  () => {
+    if (lista.value) {
+      const now = Date.now();
+      if (now - lastSaveNotification > NOTIFICATION_COOLDOWN) {
+        showNotification({
+          type: 'success',
+          icon: 'user-check',
+          title: 'Guardado automático',
+          message: 'Tus cambios se guardan automáticamente'
+        });
+        lastSaveNotification = now;
+      }
+    }
+  },
+  { deep: true }
+);
+
+// Computados
+const itemsCompletados = computed(() => {
+  if (!lista.value || !lista.value.items) return 0;
+  return lista.value.items.filter(item => item.completado).length;
+});
+
+const itemsPendientes = computed(() => {
+  if (!lista.value || !lista.value.items) return 0;
+  return lista.value.items.filter(item => !item.completado).length;
+});
+
+const diasRestantes = computed(() => {
+  if (!lista.value || !lista.value.fechaInicio) return 0;
+
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const fechaInicio = new Date(lista.value.fechaInicio);
+  fechaInicio.setHours(0, 0, 0, 0);
+
+  if (fechaInicio < hoy) return 0;
+
+  return Math.ceil((fechaInicio - hoy) / (1000 * 60 * 60 * 24));
+});
+
+const categorias = computed(() => {
+  // Convertir los iconos de texto a objetos de icono para Font Awesome
+  return categoriasList.map(cat => ({
+    ...cat,
+    icon: cat.icon // Asumimos que los iconos ya están en el formato correcto
+  }));
+});
+
+const itemsFiltrados = computed(() => {
+  if (!lista.value || !lista.value.items) return [];
+
+  if (mostrarTodasCategorias.value || !categoriaSeleccionada.value) {
+    return lista.value.items;
+  }
+
+  return lista.value.items.filter(item => item.categoria === categoriaSeleccionada.value);
+});
+
+// Métodos
+function calcularPorcentajeCompletado() {
+  if (!lista.value || !lista.value.items || lista.value.items.length === 0) return 0;
+  return Math.round((itemsCompletados.value / lista.value.items.length) * 100);
+}
+
+function formatearFecha(fecha) {
+  if (!fecha) return '';
+  return new Date(fecha).toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}
+
+function mostrarModalCrearItem() {
+  modoEdicion.value = false;
+
+  // Usar la categoría seleccionada si existe, de lo contrario usar 'otros'
+  const categoriaInicial = !mostrarTodasCategorias.value && categoriaSeleccionada.value
+    ? categoriaSeleccionada.value
+    : 'otros';
+
+  itemActual.value = {
+    texto: '',
+    categoria: categoriaInicial,
+    notas: '',
+    completado: false
+  };
+
+  mostrarModal.value = true;
+}
+
+function editarItem(item) {
+  modoEdicion.value = true;
+  itemActual.value = { ...item };
+  mostrarModal.value = true;
+}
+
+async function guardarItem() {
+  if (!lista.value) return;
+
+  try {
+    if (!itemActual.value.texto.trim()) {
+      alert("El texto del elemento es obligatorio");
+      return;
+    }
+
+    if (modoEdicion.value && itemActual.value.id) {
+      // Actualizar item existente
+      console.log("Actualizando item:", itemActual.value);
+      const resultado = actualizarItem(lista.value.id, itemActual.value.id, itemActual.value);
+      if (!resultado) {
+        throw new Error("No se pudo actualizar el elemento");
+      }
+
+      // Mostrar notificación
+      showNotification({
+        type: 'success',
+        icon: 'check-circle',
+        title: 'Elemento actualizado',
+        message: 'El elemento se ha actualizado correctamente'
+      });
+    } else {
+      // Crear nuevo item
+      console.log("Creando nuevo item:", itemActual.value);
+      const resultado = agregarItem(
+        lista.value.id,
+        itemActual.value.texto,
+        itemActual.value.categoria,
+        1,
+        itemActual.value.notas // Añadir las notas como parámetro
+      );
+      if (!resultado) {
+        throw new Error("No se pudo crear el elemento");
+      }
+
+      // Mostrar notificación
+      showNotification({
+        type: 'success',
+        icon: 'check-circle',
+        title: 'Elemento añadido',
+        message: 'El elemento se ha añadido correctamente a tu lista'
+      });
+    }
+
+    cerrarModal();
+    await cargarLista();
+  } catch (err) {
+    console.error('Error al guardar item:', err);
+
+    // Mostrar notificación de error
+    showNotification({
+      type: 'error',
+      icon: 'exclamation-circle',
+      title: 'Error',
+      message: 'Ocurrió un error al guardar el elemento. Por favor, intenta de nuevo.'
+    });
+  }
+}
+
+async function eliminarItem(item) {
+  if (!lista.value || !item.id) return;
+
+  if (!confirm("¿Estás seguro de que deseas eliminar este elemento?")) {
+    return;
+  }
+
+  try {
+    console.log("Eliminando item:", item.id);
+    const resultado = eliminarItemLista(lista.value.id, item.id);
+    if (!resultado) {
+      throw new Error("No se pudo eliminar el elemento");
+    }
+
+    // Mostrar notificación
+    showNotification({
+      type: 'info',
+      icon: 'trash',
+      title: 'Elemento eliminado',
+      message: 'El elemento se ha eliminado correctamente'
+    });
+
+    await cargarLista();
+  } catch (err) {
+    console.error('Error al eliminar item:', err);
+
+    // Mostrar notificación de error
+    showNotification({
+      type: 'error',
+      icon: 'exclamation-circle',
+      title: 'Error',
+      message: 'Ocurrió un error al eliminar el elemento. Por favor, intenta de nuevo.'
+    });
+  }
+}
+
+async function toggleItemCompletado(item) {
+  if (!lista.value) return;
+
+  try {
+    console.log("Cambiando estado de item:", item.id);
+    const resultado = toggleCompletado(lista.value.id, item.id);
+    if (!resultado) {
+      throw new Error("No se pudo cambiar el estado del elemento");
+    }
+
+    // Mostrar notificación
+    showNotification({
+      type: 'success',
+      icon: 'check-circle',
+      title: 'Estado actualizado',
+      message: item.completado ? 'Elemento marcado como pendiente' : 'Elemento marcado como completado'
+    });
+
+    await cargarLista();
+  } catch (err) {
+    console.error('Error al actualizar estado del item:', err);
+
+    // Mostrar notificación de error
+    showNotification({
+      type: 'error',
+      icon: 'exclamation-circle',
+      title: 'Error',
+      message: 'Ocurrió un error al actualizar el estado del elemento. Por favor, intenta de nuevo.'
+    });
+  }
+}
+
+function seleccionarCategoria(categoria) {
+  mostrarTodasCategorias.value = false;
+  if (categoriaSeleccionada.value === categoria) {
+    categoriaSeleccionada.value = '';
+    mostrarTodasCategorias.value = true;
+  } else {
+    categoriaSeleccionada.value = categoria;
+  }
+}
+
+function obtenerNombreCategoria(categoriaId) {
+  const categoria = obtenerCategoria(categoriaId);
+  return categoria ? categoria.nombre : 'Sin categoría';
+}
+
+function obtenerIconoCategoria(categoriaId) {
+  const categoria = obtenerCategoria(categoriaId);
+  return categoria ? categoria.icon : 'box';
+}
+
+function editarLista() {
+  if (!lista.value) return;
+
+  listaEditada.value = { ...lista.value };
+  mostrarModalLista.value = true;
+}
+
+async function guardarLista() {
+  if (!lista.value) return;
+
+  try {
+    if (!listaEditada.value.nombre.trim()) {
+      alert("El nombre del viaje es obligatorio");
+      return;
+    }
+
+    if (!listaEditada.value.destino.trim()) {
+      alert("El destino es obligatorio");
+      return;
+    }
+
+    console.log("Actualizando lista:", listaEditada.value);
+    const resultado = actualizarLista(lista.value.id, listaEditada.value);
+    if (!resultado) {
+      throw new Error("No se pudo actualizar la lista");
+    }
+
+    // Mostrar notificación
+    showNotification({
+      type: 'success',
+      icon: 'check-circle',
+      title: 'Viaje actualizado',
+      message: 'Los detalles del viaje se han actualizado correctamente'
+    });
+
+    cerrarModalLista();
+    await cargarLista();
+  } catch (err) {
+    console.error('Error al guardar lista:', err);
+
+    // Mostrar notificación de error
+    showNotification({
+      type: 'error',
+      icon: 'exclamation-circle',
+      title: 'Error',
+      message: 'Ocurrió un error al guardar los cambios. Por favor, intenta de nuevo.'
+    });
+  }
+}
+
+function cerrarModal() {
+  mostrarModal.value = false;
+}
+
+function cerrarModalLista() {
+  mostrarModalLista.value = false;
+}
+
+function volverAtras() {
+  safeGoBack(router, { name: 'TripLists' });
+}
+
+// Sistema de notificaciones
+function showNotification(notification) {
+  notifications.value.push({
+    ...notification,
+    id: Date.now()
+  });
+
+  // Auto-eliminar después de 5 segundos
+  setTimeout(() => {
+    removeNotification(0);
+  }, 5000);
+}
+
+function removeNotification(index) {
+  notifications.value.splice(index, 1);
+}
+</script>
+
 <style scoped>
+/* Estilos generales */
 .trip-detail-container {
-    min-height: 80vh;
-    padding-top: 2rem;
-    padding-bottom: 5rem;
-    background-color: #f8f9fa;
+  font-family: 'Roboto', sans-serif;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+  color: #333;
 }
 
-/* Encabezado */
+/* Estados de carga y error */
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 0;
+  text-align: center;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-retry {
+  margin-top: 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-retry:hover {
+  background-color: #2980b9;
+}
+
+/* Cabecera */
 .trip-header {
-    position: relative;
-    background-color: white;
-    border-radius: 1rem;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-}
-
-.btn-back {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    background-color: transparent;
-    border: none;
-    font-size: 1.5rem;
-    color: var(--color-primary);
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.btn-back:hover {
-    transform: translateX(-3px);
+  padding: 20px 0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 30px;
 }
 
 .trip-header-content {
-    text-align: center;
-    padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.trip-badge {
-    display: inline-block;
-    background-color: var(--color-primary);
-    color: white;
-    padding: 0.5rem 1.5rem;
-    border-radius: 2rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
+.trip-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
-.trip-badge-today {
-    background-color: var(--color-accent);
-    animation: pulse 2s infinite;
+.title-with-back {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(var(--color-accent-rgb), 0.7);
-    }
+.btn-back {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
 
-    70% {
-        box-shadow: 0 0 0 10px rgba(var(--color-accent-rgb), 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(var(--color-accent-rgb), 0);
-    }
+.btn-back:hover {
+  background-color: #f0f9ff;
+  transform: translateX(-3px);
 }
 
 .trip-title {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--color-primary);
-    margin-bottom: 1rem;
+  font-size: 32px;
+  color: #3498db;
+  margin: 0;
+  font-weight: 700;
 }
 
-.trip-info {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-bottom: 1.5rem;
-    color: #6c757d;
+.trip-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  color: #666;
+  font-size: 16px;
+}
+
+.trip-destination,
+.trip-dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trip-destination i,
+.trip-dates i {
+  color: #3498db;
 }
 
 .trip-actions {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
+  display: flex;
+  gap: 10px;
 }
 
-.btn-edit,
-.btn-delete {
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    border: none;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
+.btn-icon-text {
+  background-color: #f8f9fa;
+  color: #555;
+  border: 1px solid #ddd;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
 }
 
-.btn-edit {
-    background-color: #e9ecef;
-    color: #495057;
+.btn-icon-text:hover {
+  background-color: #e9ecef;
+  color: #333;
 }
 
-.btn-edit:hover {
-    background-color: #dee2e6;
-}
-
-.btn-delete {
-    background-color: #fff5f5;
-    color: #e53e3e;
-}
-
-.btn-delete:hover {
-    background-color: #fed7d7;
+.btn-icon-text i {
+  font-size: 14px;
 }
 
 /* Progreso */
 .trip-progress-container {
-    background-color: white;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 35px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.progress-header h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    color: var(--color-primary);
+.progress-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #333;
+  font-weight: 600;
 }
 
 .progress-percentage {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--color-primary);
-}
-
-.progress {
-    height: 10px;
-    margin-bottom: 1rem;
-    border-radius: 5px;
-    background-color: #e9ecef;
+  font-size: 28px;
+  font-weight: bold;
+  color: #3498db;
 }
 
 .progress-bar {
-    background-color: var(--color-primary);
-    border-radius: 5px;
-    transition: width 0.5s ease;
+  height: 12px;
+  background-color: #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 25px;
 }
 
-.progress-status {
-    text-align: center;
-    font-size: 0.9rem;
-    color: #6c757d;
+.progress-fill {
+  height: 100%;
+  background-color: #2ecc71;
+  transition: width 0.5s ease-in-out;
 }
 
-.text-success {
-    color: #38a169 !important;
+.progress-low {
+  background-color: #e74c3c;
 }
 
-/* Formulario para agregar elementos */
-.add-item-form {
-    background-color: white;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+.progress-medium {
+  background-color: #f39c12;
 }
 
-.add-item-form h3 {
-    margin-bottom: 1rem;
-    font-size: 1.25rem;
-    color: var(--color-primary);
+.progress-high {
+  background-color: #2ecc71;
 }
 
-.item-form {
-    width: 100%;
+.progress-stats {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
 }
 
-.form-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: flex-start;
+.stat {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
 }
 
-.form-group {
-    margin-bottom: 0;
+.stat:hover {
+  background-color: #e9ecef;
 }
 
-.item-text {
-    flex: 3;
-    min-width: 200px;
+.stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
 }
 
-.item-category,
-.item-priority {
-    flex: 1;
-    min-width: 120px;
-}
-
-.item-submit {
-    flex: 0 0 auto;
+.stat-label {
+  font-size: 14px;
+  color: #666;
 }
 
 /* Lista de elementos */
 .items-container {
-    margin-bottom: 2rem;
+  position: relative;
 }
 
-.category-section {
-    background-color: white;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+.items-header {
+  margin-bottom: 25px;
 }
 
-.category-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e9ecef;
+.items-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.category-header h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    color: var(--color-primary);
+.items-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+  font-weight: 600;
 }
 
-.category-count {
-    background-color: #e9ecef;
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    font-size: 0.8rem;
-    color: #495057;
+.btn-add-item {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
 }
 
-.items-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+.btn-add-item:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
 }
 
-.item-card {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    background-color: #f8f9fa;
-    transition: all 0.2s;
+.btn-add-item:active {
+  transform: translateY(0);
 }
 
-.item-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+/* Categorías */
+.categories-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 25px;
 }
 
-.item-completed {
-    background-color: #f0fff4;
+.category-pill {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 8px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.item-completed .item-text {
-    text-decoration: line-through;
-    color: #a0aec0;
+.category-pill:hover {
+  background-color: #e9ecef;
 }
 
-.item-priority-1 {
-    border-left: 4px solid #e53e3e;
+.category-pill i {
+  font-size: 14px;
 }
 
-.item-priority-2 {
-    border-left: 4px solid #dd6b20;
+.category-selected {
+  background-color: #3498db;
+  border-color: #3498db;
+  color: white;
 }
 
-.item-priority-3 {
-    border-left: 4px solid #3182ce;
+.category-selected:hover {
+  background-color: #2980b9;
 }
 
-.item-checkbox {
-    margin-right: 1rem;
-}
-
-.item-checkbox input[type="checkbox"] {
-    display: none;
-}
-
-.item-checkbox label {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    border: 2px solid #cbd5e0;
-    border-radius: 4px;
-    position: relative;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.item-checkbox input[type="checkbox"]:checked+label {
-    background-color: #38a169;
-    border-color: #38a169;
-}
-
-.item-checkbox input[type="checkbox"]:checked+label::after {
-    content: '\2713';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 14px;
-}
-
-.item-content {
-    flex: 1;
-}
-
-.item-text {
-    font-weight: 500;
-    margin-bottom: 0.25rem;
-}
-
-.item-priority {
-    font-size: 0.8rem;
-}
-
-.priority-high {
-    color: #e53e3e;
-}
-
-.priority-medium {
-    color: #dd6b20;
-}
-
-.priority-low {
-    color: #3182ce;
-}
-
-.item-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.btn-item-edit,
-.btn-item-delete {
-    background-color: transparent;
-    border: none;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-}
-
-.btn-item-edit {
-    color: #4a5568;
-}
-
-.btn-item-edit:hover {
-    background-color: #e9ecef;
-}
-
-.btn-item-delete {
-    color: #e53e3e;
-}
-
-.btn-item-delete:hover {
-    background-color: #fff5f5;
-}
-
-/* Estado vacío */
+/* Lista vacía */
 .empty-items {
-    background-color: white;
-    border-radius: 1rem;
-    padding: 3rem;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  padding: 40px 0;
+  color: #666;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  margin-top: 20px;
 }
 
 .empty-illustration {
-    color: var(--color-primary);
-    opacity: 0.7;
-    margin-bottom: 1.5rem;
+  font-size: 60px;
+  color: #bbb;
+  margin-bottom: 20px;
 }
 
-/* Modal */
-.modal-content {
-    border-radius: 1rem;
-    border: none;
+.empty-items p {
+  font-size: 18px;
+  margin-bottom: 20px;
 }
 
-.modal-header {
-    border-bottom: none;
-    padding: 1.5rem 1.5rem 0.5rem;
+.empty-hint {
+  font-size: 14px;
+  color: #777;
+  margin-top: 10px;
 }
 
-.modal-footer {
-    border-top: none;
-    padding: 0.5rem 1.5rem 1.5rem;
+.empty-items button {
+  margin-top: 15px;
 }
 
-.modal-title {
-    color: var(--color-primary);
-    font-weight: bold;
+/* Lista de elementos */
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
+.item-card {
+  display: flex;
+  align-items: flex-start;
+  background-color: white;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 18px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.item-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.item-completed {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+}
+
+.item-completed .item-text {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+.item-checkbox {
+  margin-right: 15px;
+  padding-top: 2px;
+}
+
+.item-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.item-checkbox label {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.item-checkbox label:hover {
+  border-color: #3498db;
+}
+
+.item-checkbox input[type="checkbox"]:checked+label {
+  background-color: #3498db;
+  border-color: #3498db;
+}
+
+.item-checkbox input[type="checkbox"]:checked+label::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 4px;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.item-content {
+  flex: 1;
+  cursor: pointer;
+}
+
+.item-text {
+  font-size: 18px;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.item-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.item-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #e9f7fe;
+  color: #3498db;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 15px;
+}
+
+.item-notes {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #777;
+  font-size: 13px;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+/* Botones principales */
 .btn-primary {
-    background-color: var(--color-primary);
-    border-color: var(--color-primary);
-    border-radius: 0.5rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
 }
 
 .btn-primary:hover {
-    background-color: var(--color-accent);
-    border-color: var(--color-accent);
+  background-color: #2980b9;
+  transform: translateY(-2px);
 }
 
-.btn-danger {
-    background-color: #e53e3e;
-    border-color: #e53e3e;
-    border-radius: 0.5rem;
+.btn-primary:active {
+  transform: translateY(0);
 }
 
-.btn-link {
-    color: var(--color-primary);
+.btn-secondary {
+  background-color: #f8f9fa;
+  color: #555;
+  border: 1px solid #ddd;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #e9ecef;
+  color: #333;
+}
+
+/* Modales */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-container {
+  background-color: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #333;
+  font-weight: 600;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 20px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-close:hover {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+  font-size: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: normal;
+  color: #555;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #3498db;
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+/* Selector de categorías */
+.category-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.category-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 15px 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-option:hover {
+  background-color: #f8f9fa;
+}
+
+.category-option i {
+  font-size: 20px;
+  color: #777;
+}
+
+.category-option span {
+  font-size: 14px;
+  color: #555;
+}
+
+.category-option-selected {
+  background-color: #e9f7fe;
+  border-color: #3498db;
+}
+
+.category-option-selected i,
+.category-option-selected span {
+  color: #3498db;
+}
+
+/* Sistema de notificaciones */
+.notifications-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 350px;
+}
+
+.notification {
+  display: flex;
+  align-items: flex-start;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideInRight 0.3s ease-out;
+  background-color: white;
+  border-left: 4px solid #3498db;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification.success {
+  border-left-color: #2ecc71;
+}
+
+.notification.error {
+  border-left-color: #e74c3c;
+}
+
+.notification.info {
+  border-left-color: #3498db;
+}
+
+.notification.warning {
+  border-left-color: #f39c12;
+}
+
+.notification-icon {
+  margin-right: 15px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification.success .notification-icon {
+  color: #2ecc71;
+}
+
+.notification.error .notification-icon {
+  color: #e74c3c;
+}
+
+.notification.info .notification-icon {
+  color: #3498db;
+}
+
+.notification.warning .notification-icon {
+  color: #f39c12;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-title {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.notification-message {
+  font-size: 14px;
+  color: #666;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 5px;
+  margin-left: 10px;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.notification-close:hover {
+  color: #333;
 }
 
 /* Responsive */
-@media (max-width: 767px) {
-    .trip-info {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
+@media (max-width: 768px) {
+  .trip-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-    .form-row {
-        flex-direction: column;
-    }
+  .trip-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 
-    .form-group {
-        width: 100%;
-    }
+  .progress-stats {
+    flex-direction: column;
+    gap: 15px;
+  }
 
-    .item-submit {
-        margin-top: 0.5rem;
-    }
+  .category-selector {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-    .btn-primary {
-        width: 100%;
-    }
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
 
-    .empty-items {
-        padding: 2rem 1rem;
-    }
+  .notifications-container {
+    left: 20px;
+    right: 20px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .category-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .item-details {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .items-header-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .btn-add-item {
+    align-self: flex-end;
+  }
+
+  .title-with-back {
+    width: 100%;
+  }
 }
 </style>

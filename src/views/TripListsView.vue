@@ -9,10 +9,12 @@ import { checkTripsAndNotify } from '@/services/tripNotificationService';
 const router = useRouter();
 const { isUserAuthenticated } = useAuth();
 const {
+    tripLists,
     listasOrdenadas,
     listasProximas,
     isLoading,
-    crearLista
+    crearLista,
+    cargarListas
 } = useTripLists();
 
 // Estado para el modal de autenticación
@@ -140,25 +142,54 @@ function validarFormulario() {
 }
 
 // Crear nueva lista
-function crearNuevaLista() {
+async function crearNuevaLista() {
     if (!validarFormulario()) return;
 
-    const lista = crearLista(
-        nuevaLista.value.nombre,
-        nuevaLista.value.destino,
-        nuevaLista.value.fechaInicio,
-        nuevaLista.value.fechaFin
-    );
+    try {
+        console.log("Creando nueva lista con datos:", nuevaLista.value);
 
-    if (lista) {
-        showNewListModal.value = false;
-        router.push({ name: 'TripListDetail', params: { id: lista.id } });
+        const lista = crearLista(
+            nuevaLista.value.nombre,
+            nuevaLista.value.destino,
+            nuevaLista.value.fechaInicio,
+            nuevaLista.value.fechaFin
+        );
+
+        if (lista) {
+            console.log("Lista creada exitosamente:", lista);
+            showNewListModal.value = false;
+
+            // Esperar un momento para asegurar que la lista se guarde
+            setTimeout(() => {
+                router.push({ name: 'TripListDetail', params: { id: lista.id } });
+            }, 100);
+        } else {
+            console.error("Error al crear lista: la función crearLista devolvió null o undefined");
+            alert("No se pudo crear el viaje. Por favor, intenta de nuevo.");
+        }
+    } catch (error) {
+        console.error("Error al crear nueva lista:", error);
+        alert("Ocurrió un error al crear el viaje. Por favor, intenta de nuevo.");
     }
 }
 
 // Ir a la vista de detalle de una lista
 function verLista(id) {
-    router.push({ name: 'TripListDetail', params: { id } });
+    try {
+        // Verificar que la lista existe antes de navegar
+        const listaExistente = listasOrdenadas.value.find(l => l.id === id);
+        if (!listaExistente) {
+            console.error('Lista no encontrada:', id);
+            alert("No se encontró la lista seleccionada.");
+            return;
+        }
+
+        console.log("Navegando a lista:", id);
+        router.push({ name: 'TripListDetail', params: { id } });
+    } catch (error) {
+        console.error("Error al navegar a la lista:", error);
+        alert("Ocurrió un error al abrir la lista. Por favor, intenta de nuevo.");
+    }
 }
 
 // Manejar inicio de sesión exitoso
@@ -188,7 +219,23 @@ async function verificarViajesYNotificar() {
     }
 }
 
-onMounted(() => {
+// Recargar listas
+async function recargarListas() {
+    try {
+        isLoading.value = true;
+        await cargarListas();
+        console.log("Listas recargadas:", tripLists.value.length);
+    } catch (error) {
+        console.error("Error al recargar listas:", error);
+    } finally {
+        isLoading.value = false;
+    }
+}
+
+onMounted(async () => {
+    // Recargar listas al montar el componente
+    await recargarListas();
+
     // Si no hay autenticación, mostrar modal de login
     if (!isUserAuthenticated()) {
         showAuthModal.value = true;
@@ -304,8 +351,8 @@ onMounted(() => {
                                 </div>
                             </div>
                             <div class="trip-progress-text">
-                                <span>{{lista.items.filter(item => item.completado).length}}/{{ lista.items.length
-                                }}</span>
+                                <span>{{lista.items && lista.items.filter(item => item.completado).length || 0}}/{{
+                                    lista.items ? lista.items.length : 0 }}</span>
                                 <span>{{ porcentajeCompletado(lista) }}%</span>
                             </div>
                         </div>
