@@ -380,6 +380,7 @@ const diasRestantes = computed(() => {
   const fechaInicio = new Date(lista.value.fechaInicio);
   fechaInicio.setHours(0, 0, 0, 0);
 
+
   if (fechaInicio < hoy) return 0;
 
   return Math.ceil((fechaInicio - hoy) / (1000 * 60 * 60 * 24));
