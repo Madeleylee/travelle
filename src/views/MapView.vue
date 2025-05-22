@@ -558,7 +558,7 @@ const goToHome = () => {
 // Navigate to countries page
 const goToCountries = () => {
     try {
-        router.push({ name: 'Countries' });
+        router.push({ name: 'Paises' });
         closeLocationInstructions();
     } catch (err) {
         console.error('Error navigating to countries page:', err);

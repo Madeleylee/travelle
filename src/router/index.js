@@ -30,17 +30,17 @@ const routes = [
     component: Home,
   },
   {
-    path: "/country/:nombrePais",
+    path: "/pais/:nombrePais",
     name: "Pais",
     component: Pais,
   },
   {
-    path: "/country/:nombrePais/:nombreCiudad",
+    path: "/pais/:nombrePais/:nombreCiudad",
     name: "Ciudad",
     component: Ciudad,
   },
   {
-    path: "/country/:nombrePais/:nombreCiudad/:nombreDestino",
+    path: "/pais/:nombrePais/:nombreCiudad/:nombreDestino",
     name: "Destino",
     component: Destino,
   },
@@ -65,44 +65,44 @@ const routes = [
     component: ResetPassword,
   },
   {
-    path: "/map",
+    path: "/mapa",
     name: "Mapa",
     component: Map,
   },
 
   {
-    path: "/countries",
+    path: "/paises",
     name: "Paises",
     component: Paises,
   },
   // Rutas protegidas
   {
-    path: "/favorites",
+    path: "/favoritos",
     name: "Favorites",
     component: Favorite,
     meta: { requiresAuth: true },
   },
   {
-    path: "/profile",
+    path: "/perfil",
     name: "Perfil",
     component: Perfil,
     meta: { requiresAuth: true },
   },
   {
-    path: "/visited",
+    path: "/visitados",
     name: "visitados",
     component: Visitados,
     meta: { requiresAuth: true },
   },
   // Nuevas rutas para listas de viaje
   {
-    path: "/trips",
+    path: "/viajes",
     name: "TripLists",
     component: TripLists,
     meta: { requiresAuth: true },
   },
   {
-    path: "/trips/:id",
+    path: "/viajes/:id",
     name: "TripListDetail",
     component: TripListDetail,
     meta: { requiresAuth: true },

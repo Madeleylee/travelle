@@ -30,7 +30,7 @@ const authRequiredRoutes = [
   '/favoritos',
   '/visitados',
   '/viajes',
-  '/perfil',
+  '/profile',
 ];
 
 // Propiedad computada para obtener el usuario actual
@@ -405,7 +405,7 @@ onUnmounted(() => {
         <ul class="navbar-nav flex-row">
           <!-- Enlace a la página de países -->
           <li class="nav-item">
-            <router-link to="/countries" class="nav-link px-2 px-md-3 fw-medium text-white">
+            <router-link to="/paises" class="nav-link px-2 px-md-3 fw-medium text-white">
               <span class="d-none d-md-inline">Countries</span>
               <i class="bi bi-globe d-inline d-md-none"></i>
             </router-link>
@@ -413,28 +413,28 @@ onUnmounted(() => {
 
           <!-- Enlaces protegidos que requieren autenticación -->
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/favorites')" class="nav-link px-2 px-md-3 fw-medium text-white">
+            <a href="#" @click.prevent="navigateTo('/favoritos')" class="nav-link px-2 px-md-3 fw-medium text-white">
               <span class="d-none d-md-inline">Favorites</span>
               <i class="bi bi-heart d-inline d-md-none"></i>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/visited')" class="nav-link px-2 px-md-3 fw-medium text-white">
+            <a href="#" @click.prevent="navigateTo('/visitados')" class="nav-link px-2 px-md-3 fw-medium text-white">
               <span class="d-none d-md-inline">Visited</span>
               <i class="bi bi-check-circle d-inline d-md-none"></i>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/map')" class="nav-link px-2 px-md-3 fw-medium text-white">
+            <a href="#" @click.prevent="navigateTo('/mapa')" class="nav-link px-2 px-md-3 fw-medium text-white">
               <span class="d-none d-md-inline">Map</span>
               <i class="bi bi-map d-inline d-md-none"></i>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/trips')" class="nav-link px-2 px-md-3 fw-medium text-white">
+            <a href="#" @click.prevent="navigateTo('/viajes')" class="nav-link px-2 px-md-3 fw-medium text-white">
               <span class="d-none d-md-inline">My Trips</span>
               <i class="bi bi-suitcase d-inline d-md-none"></i>
             </a>
@@ -468,7 +468,7 @@ onUnmounted(() => {
               <span>Profile</span>
             </a>
             <!-- Enlace a lugares visitados en el menú desplegable -->
-            <a href="#" @click.prevent="navigateTo('/visited')" class="dropdown-item d-flex align-items-center py-2">
+            <a href="#" @click.prevent="navigateTo('/visitados')" class="dropdown-item d-flex align-items-center py-2">
               <i class="bi bi-check-circle me-2"></i>
               <span>Visited Places</span>
             </a>
