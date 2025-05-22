@@ -21,7 +21,7 @@ const nombreDestino = computed(() => route.params.nombreDestino);
 // Variables reactivas
 const destination = ref(null); // Información del destino
 const selectedImage = ref(null); // Índice de la imagen seleccionada
-const currentIndex = ref(0); // Índice actual para el carrusel 3D
+const currentSlide = ref(0); // Slide actual del carrusel
 
 // Cargar destino al montar
 onMounted(async () => {
@@ -59,31 +59,23 @@ function nextImage() {
   }
 }
 
-// Funciones para el carrusel 3D
-function rotateCarousel(direction) {
-  if (!destination.value || !destination.value.imagenes.length) return;
-
-  const totalImages = destination.value.imagenes.length;
-
-  if (direction === 'next') {
-    currentIndex.value = (currentIndex.value + 1) % totalImages;
-  } else {
-    currentIndex.value = (currentIndex.value - 1 + totalImages) % totalImages;
+// Funciones del carrusel 3D
+function nextSlide() {
+  if (destination.value && destination.value.imagenes.length > 0) {
+    currentSlide.value = (currentSlide.value + 1) % destination.value.imagenes.length;
   }
 }
 
-function getCardPosition(index) {
-  if (!destination.value) return {};
+function prevSlide() {
+  if (destination.value && destination.value.imagenes.length > 0) {
+    currentSlide.value = currentSlide.value === 0 
+      ? destination.value.imagenes.length - 1 
+      : currentSlide.value - 1;
+  }
+}
 
-  const totalImages = destination.value.imagenes.length;
-  const angle = 360 / totalImages;
-  const rotationY = (index - currentIndex.value) * angle;
-  const zIndex = index === currentIndex.value ? 10 : 5;
-
-  return {
-    transform: `rotateY(${rotationY}deg) translateZ(250px)`,
-    zIndex: zIndex
-  };
+function goToSlide(index) {
+  currentSlide.value = index;
 }
 
 // Volver atrás
@@ -94,41 +86,69 @@ function goBack() {
 
 <template>
   <div class="destination-view" v-if="destination">
-    <div class="header-container">
+    <!-- Título principal con estilo consistente -->
+    <div class="countries-header">
       <button @click="goBack" class="btn-back">
         <ArrowIcon :width="20" :height="20" />
         Back
       </button>
       <h1>{{ destination.nombre }}</h1>
+      <div class="header-line"></div>
     </div>
 
     <div class="destination-content">
-      <div class="gallery-container">
-        <h2 class="gallery-title">Photo Gallery</h2>
-
-        <!-- Carrusel 3D -->
+      <!-- Carrusel 3D mejorado -->
+      <div class="carousel-3d-wrapper">
         <div class="carousel-3d-container">
-          <div class="carousel-3d-stage">
-            <div v-for="(image, index) in destination.imagenes" :key="index" class="carousel-3d-card"
-              :style="getCardPosition(index)" @click="openImage(index)">
-              <div class="carousel-3d-card-face">
-                <img :src="image" :alt="`${destination.nombre} - Image ${index + 1}`" class="carousel-3d-image" />
-                <div class="carousel-3d-caption">
-                  <span>{{ destination.nombre }}</span>
+          <div class="carousel-3d-track">
+            <div 
+              v-for="(image, index) in destination.imagenes" 
+              :key="index"
+              class="carousel-3d-slide"
+              :class="{
+                'active': index === currentSlide,
+                'prev': index === (currentSlide - 1 + destination.imagenes.length) % destination.imagenes.length,
+                'next': index === (currentSlide + 1) % destination.imagenes.length,
+                'prev-2': index === (currentSlide - 2 + destination.imagenes.length) % destination.imagenes.length,
+                'next-2': index === (currentSlide + 2) % destination.imagenes.length
+              }"
+              @click="openImage(index)"
+            >
+              <div class="slide-content">
+                <div class="slide-frame">
+                  <img 
+                    :src="image" 
+                    :alt="`${destination.nombre} - Image ${index + 1}`"
+                    class="slide-image"
+                  />
+                  <div class="slide-reflection"></div>
+                </div>
+                <div class="slide-caption">
+                  <p>Image {{ index + 1 }} of {{ destination.imagenes.length }}</p>
                 </div>
               </div>
             </div>
           </div>
-
-          <!-- Controles del carrusel -->
-          <div class="carousel-3d-controls">
-            <button @click="rotateCarousel('prev')" class="carousel-3d-control prev-control">
-              <i class="bi bi-chevron-left"></i>
-            </button>
-            <button @click="rotateCarousel('next')" class="carousel-3d-control next-control">
-              <i class="bi bi-chevron-right"></i>
-            </button>
-          </div>
+        </div>
+        
+        <!-- Controles del carrusel -->
+        <div class="carousel-controls">
+          <button @click="prevSlide" class="carousel-btn prev-btn">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button @click="nextSlide" class="carousel-btn next-btn">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+        
+        <!-- Indicadores -->
+        <div class="carousel-indicators">
+          <button 
+            v-for="(image, index) in destination.imagenes"
+            :key="index"
+            @click="goToSlide(index)"
+            :class="['indicator', { active: index === currentSlide }]"
+          ></button>
         </div>
       </div>
 
@@ -149,13 +169,16 @@ function goBack() {
       </div>
     </div>
 
-    <!-- Modal de imagen (ajustado) -->
+    <!-- Modal de imagen -->
     <div v-if="selectedImage !== null" class="modal" @click="closeImage">
       <div class="modal-content">
         <button class="modal-close" @click="closeImage">&times;</button>
         <div class="modal-image-wrapper">
-          <img :src="destination.imagenes[selectedImage]" :alt="`${destination.nombre} - Image ${selectedImage + 1}`"
-            class="modal-image" />
+          <img 
+            :src="destination.imagenes[selectedImage]" 
+            :alt="`${destination.nombre} - Image ${selectedImage + 1}`"
+            class="modal-image" 
+          />
         </div>
         <div class="modal-nav">
           <button @click.stop="previousImage" :disabled="selectedImage === 0" class="nav-button">&#8592;</button>
@@ -173,24 +196,40 @@ function goBack() {
 .destination-view {
   padding: 2rem;
   max-width: 1200px;
-  padding-top: 5rem;
   margin: 0 auto;
   font-family: 'Arial', sans-serif;
 }
 
-/* Contenedor del encabezado */
-.header-container {
-  display: flex;
-  align-items: center;
+/* Estilo del encabezado consistente con Countries */
+.countries-header {
+  text-align: center;
   margin-bottom: 2rem;
   position: relative;
 }
 
+.countries-header h1 {
+  color: var(--color-primary);
+  font-size: 2.5rem;
+  margin: 0 0 0.5rem 0;
+  font-weight: 700;
+}
+
+.header-line {
+  height: 4px;
+  width: 80px;
+  background-color: var(--color-accent);
+  margin: 0 auto;
+}
+
 /* Estilo para el botón de volver */
 .btn-back {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
-  background-color: #4a6fa5;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -198,21 +237,11 @@ function goBack() {
   cursor: pointer;
   transition: background-color 0.3s;
   font-weight: bold;
-  margin-right: 1rem;
 }
 
 /* Efecto hover para el botón de volver */
 .btn-back:hover {
-  background-color: #3a5a8f;
-}
-
-/* Estilo para el título principal */
-h1 {
-  color: #4a6fa5;
-  font-size: 2.5rem;
-  margin: 0;
-  flex-grow: 1;
-  text-align: center;
+  background-color: var(--color-accent);
 }
 
 /* Contenedor del contenido del destino */
@@ -226,111 +255,218 @@ h1 {
   padding: 2rem;
 }
 
-/* Contenedor de la galería */
-.gallery-container {
+/* Carrusel 3D mejorado */
+.carousel-3d-wrapper {
+  position: relative;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
   margin-bottom: 2rem;
 }
 
-.gallery-title {
-  color: #4a6fa5;
-  font-size: 1.8rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-weight: 600;
-}
-
-/* Carrusel 3D */
-.carousel-3d-container {
-  position: relative;
-  height: 400px;
-  perspective: 1000px;
-  margin: 0 auto;
-  background: linear-gradient(135deg, #1c2331, #2c3e50);
+.carousel-3d-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
   border-radius: 15px;
-  padding: 2rem;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
 }
 
-.carousel-3d-stage {
+.carousel-3d-container {
+  height: 400px;
+  perspective: 1200px;
+  position: relative;
+}
+
+.carousel-3d-track {
+  position: relative;
   width: 100%;
   height: 100%;
-  position: relative;
   transform-style: preserve-3d;
-  transition: transform 0.5s ease;
 }
 
-.carousel-3d-card {
+.carousel-3d-slide {
   position: absolute;
-  width: 300px;
-  height: 200px;
+  width: 320px;
+  height: 240px;
   left: 50%;
   top: 50%;
-  margin-left: -150px;
-  margin-top: -100px;
-  transition: all 0.5s ease;
+  margin-left: -160px;
+  margin-top: -120px;
+  transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
   cursor: pointer;
   transform-style: preserve-3d;
 }
 
-.carousel-3d-card-face {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  border: 4px solid white;
-  background-color: #0088cc;
-  backface-visibility: hidden;
+/* Posiciones del carrusel */
+.carousel-3d-slide.active {
+  transform: translateZ(0) scale(1.1);
+  z-index: 10;
 }
 
-.carousel-3d-image {
+.carousel-3d-slide.prev {
+  transform: translateX(-200px) translateZ(-100px) rotateY(35deg) scale(0.8);
+  z-index: 9;
+}
+
+.carousel-3d-slide.next {
+  transform: translateX(200px) translateZ(-100px) rotateY(-35deg) scale(0.8);
+  z-index: 9;
+}
+
+.carousel-3d-slide.prev-2 {
+  transform: translateX(-350px) translateZ(-200px) rotateY(55deg) scale(0.6);
+  z-index: 8;
+  opacity: 0.7;
+}
+
+.carousel-3d-slide.next-2 {
+  transform: translateX(350px) translateZ(-200px) rotateY(-55deg) scale(0.6);
+  z-index: 8;
+  opacity: 0.7;
+}
+
+/* Slides que no están visibles */
+.carousel-3d-slide:not(.active):not(.prev):not(.next):not(.prev-2):not(.next-2) {
+  opacity: 0;
+  transform: translateZ(-300px) scale(0.5);
+}
+
+.slide-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.slide-frame {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(145deg, #ffffff, #e6e6e6);
+  border-radius: 15px;
+  padding: 12px;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.slide-frame::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%);
+  pointer-events: none;
+  border-radius: 15px;
+}
+
+.slide-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.carousel-3d-caption {
+.slide-reflection {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  text-align: center;
-  font-weight: 500;
-}
-
-.carousel-3d-controls {
-  position: absolute;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-.carousel-3d-control {
-  width: 40px;
+  bottom: -20px;
+  left: 12px;
+  right: 12px;
   height: 40px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
+  border-radius: 0 0 8px 8px;
+  transform: scaleY(-1);
+  opacity: 0.3;
+}
+
+.slide-caption {
+  position: absolute;
+  bottom: -40px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.slide-caption p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Controles del carrusel */
+.carousel-controls {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1rem;
+  pointer-events: none;
+}
+
+.carousel-btn {
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
-  border: none;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   color: white;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  pointer-events: all;
 }
 
-.carousel-3d-control:hover {
+.carousel-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Indicadores */
+.carousel-indicators {
+  position: absolute;
+  bottom: 1rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
   background: rgba(255, 255, 255, 0.4);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.indicator.active {
+  background: white;
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 /* Contenedor de la información del destino */
@@ -350,7 +486,7 @@ h1 {
 
 /* Estilo para el título de la sección de información */
 .info-section h2 {
-  color: #4a6fa5;
+  color: var(--color-primary);
   margin-bottom: 1rem;
   font-size: 1.5rem;
 }
@@ -367,7 +503,7 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: #4a6fa5;
+  background-color: var(--color-primary);
   color: white;
   padding: 1rem;
   text-decoration: none;
@@ -379,7 +515,7 @@ h1 {
 
 /* Efecto hover para el botón de ubicación */
 .btn-location:hover {
-  background-color: #3a5a8f;
+  background-color: var(--color-accent);
 }
 
 /* Estilos para el modal */
@@ -451,7 +587,7 @@ h1 {
 
 /* Estilo para los botones de navegación */
 .nav-button {
-  background: #4a6fa5;
+  background: var(--color-primary);
   border: none;
   color: white;
   font-size: 1.2rem;
@@ -475,64 +611,89 @@ h1 {
 @media (max-width: 768px) {
   .destination-view {
     padding: 1rem;
-    padding-top: 3rem;
+  }
+
+  .countries-header h1 {
+    font-size: 2rem;
+    margin-top: 2.5rem;
+  }
+
+  .btn-back {
+    top: 0;
+    transform: none;
   }
 
   .destination-content {
     grid-template-columns: 1fr;
+    padding: 1.5rem;
+  }
+
+  .carousel-3d-wrapper {
+    padding: 2rem 1rem;
   }
 
   .carousel-3d-container {
     height: 300px;
-    padding: 1rem;
   }
 
-  .carousel-3d-card {
-    width: 220px;
+  .carousel-3d-slide {
+    width: 250px;
+    height: 180px;
+    margin-left: -125px;
+    margin-top: -90px;
+  }
+
+  .slide-frame {
     height: 150px;
-    margin-left: -110px;
-    margin-top: -75px;
   }
 
-  h1 {
-    font-size: 2rem;
+  .carousel-3d-slide.prev {
+    transform: translateX(-150px) translateZ(-80px) rotateY(25deg) scale(0.7);
   }
 
-  .header-container {
-    flex-direction: column;
-    gap: 1rem;
+  .carousel-3d-slide.next {
+    transform: translateX(150px) translateZ(-80px) rotateY(-25deg) scale(0.7);
   }
 
-  .btn-back {
-    position: static;
-    margin-bottom: 1rem;
+  .carousel-3d-slide.prev-2,
+  .carousel-3d-slide.next-2 {
+    display: none;
   }
-
+  
   .modal-content {
     max-width: 90vw;
   }
-
+  
   .modal-image {
     max-height: 50vh;
   }
 }
 
 @media (max-width: 480px) {
+  .countries-header h1 {
+    font-size: 1.8rem;
+    margin-top: 3rem;
+  }
+
   .carousel-3d-container {
     height: 250px;
   }
-
-  .carousel-3d-card {
-    width: 180px;
-    height: 120px;
-    margin-left: -90px;
-    margin-top: -60px;
+  
+  .carousel-3d-slide {
+    width: 200px;
+    height: 150px;
+    margin-left: -100px;
+    margin-top: -75px;
   }
-
+  
+  .slide-frame {
+    height: 120px;
+  }
+  
   .modal-content {
     padding: 1rem;
   }
-
+  
   .modal-image {
     max-height: 40vh;
   }
