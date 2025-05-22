@@ -13,10 +13,10 @@ export function useTripLists() {
     const categorias = [
         { id: "documentos", nombre: "Documentos", icon: "file-text" },
         { id: "ropa", nombre: "Ropa", icon: "shirt" },
-        { id: "electronica", nombre: "Electrónica", icon: "smartphone" },
+        { id: "electronica", nombre: "Electrónica", icon: "mobile-alt" },
         { id: "higiene", nombre: "Higiene", icon: "droplet" },
-        { id: "medicamentos", nombre: "Medicamentos", icon: "pill" },
-        { id: "otros", nombre: "Otros", icon: "package" },
+        { id: "medicamentos", nombre: "Medicamentos", icon: "pills" },
+        { id: "otros", nombre: "Otros", icon: "box" },
     ]
 
     // Cargar listas del localStorage
