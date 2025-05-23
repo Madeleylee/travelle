@@ -24,6 +24,7 @@ const isSearching = ref(false);
 const showSuggestions = ref(false);
 const paises = ref([]);
 const pendingNavigation = ref(null);
+const showOffcanvas = ref(false); // Nueva variable para el offcanvas
 
 // Rutas que requieren autenticación
 const authRequiredRoutes = [
@@ -47,6 +48,18 @@ const ciudadesDelPais = computed(() => {
   return pais ? pais.ciudades.map((c) => c.nombre) : [];
 });
 
+// Función para alternar el offcanvas
+function toggleOffcanvas() {
+  showOffcanvas.value = !showOffcanvas.value;
+
+  // Controlar el scroll del body
+  if (showOffcanvas.value) {
+    document.body.classList.add('overflow-hidden');
+  } else {
+    document.body.classList.remove('overflow-hidden');
+  }
+}
+
 // Función de navegación que verifica la autenticación
 function navigateTo(path) {
   // Verificar si la ruta requiere autenticación
@@ -64,6 +77,10 @@ function navigateTo(path) {
 
   // Si está autenticado o la ruta no requiere autenticación, navegar
   router.push(path);
+
+  // Cerrar el offcanvas después de navegar
+  showOffcanvas.value = false;
+  document.body.classList.remove('overflow-hidden');
 }
 
 // Observar cambios en el texto de búsqueda para mostrar sugerencias
@@ -360,6 +377,10 @@ onMounted(async () => {
       if (showSuggestions.value) {
         showSuggestions.value = false;
       }
+      if (showOffcanvas.value) {
+        showOffcanvas.value = false;
+        document.body.classList.remove('overflow-hidden');
+      }
     }
   });
 
@@ -367,6 +388,12 @@ onMounted(async () => {
   window.addEventListener('resize', () => {
     if (showSuggestions.value && searchSuggestions.value.length > 0) {
       posicionarSugerencias();
+    }
+
+    // Cerrar offcanvas en pantallas grandes
+    if (window.innerWidth >= 992 && showOffcanvas.value) {
+      showOffcanvas.value = false;
+      document.body.classList.remove('overflow-hidden');
     }
   });
 });
@@ -392,51 +419,40 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- Barra de navegación horizontal con Bootstrap (siempre horizontal) -->
+  <!-- Navbar principal -->
   <nav class="navbar navbar-expand-lg sticky-top shadow-sm bg-primary">
     <div class="container py-2">
-      <!-- Logo (aumentado de tamaño) -->
-      <router-link to="/" class="navbar-brand me-0 me-md-3">
+      <!-- Logo -->
+      <router-link to="/" class="navbar-brand me-0">
         <img src="../assets/img/logo.png" alt="Travelle Logo" class="logo" />
       </router-link>
 
-      <!-- Navegación principal horizontal (sin colapsar en móviles) -->
-      <div class="navbar-nav-scroll ms-auto">
+      <!-- Desktop: Navegación horizontal -->
+      <div class="d-none d-lg-flex navbar-nav-scroll ms-auto">
         <ul class="navbar-nav flex-row">
-          <!-- Enlace a la página de países -->
           <li class="nav-item">
-            <router-link to="/paises" class="nav-link px-2 px-md-3 fw-medium text-white">
-              <span class="d-none d-md-inline">Countries</span>
-              <i class="bi bi-globe d-inline d-md-none"></i>
+            <router-link to="/paises" class="nav-link px-3 fw-medium text-white">
+              Countries
             </router-link>
           </li>
-
-          <!-- Enlaces protegidos que requieren autenticación -->
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/favoritos')" class="nav-link px-2 px-md-3 fw-medium text-white">
-              <span class="d-none d-md-inline">Favorites</span>
-              <i class="bi bi-heart d-inline d-md-none"></i>
+            <a href="#" @click.prevent="navigateTo('/favoritos')" class="nav-link px-3 fw-medium text-white">
+              Favorites
             </a>
           </li>
-
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/visitados')" class="nav-link px-2 px-md-3 fw-medium text-white">
-              <span class="d-none d-md-inline">Visited</span>
-              <i class="bi bi-check-circle d-inline d-md-none"></i>
+            <a href="#" @click.prevent="navigateTo('/visitados')" class="nav-link px-3 fw-medium text-white">
+              Visited
             </a>
           </li>
-
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/mapa')" class="nav-link px-2 px-md-3 fw-medium text-white">
-              <span class="d-none d-md-inline">Map</span>
-              <i class="bi bi-map d-inline d-md-none"></i>
+            <a href="#" @click.prevent="navigateTo('/mapa')" class="nav-link px-3 fw-medium text-white">
+              Map
             </a>
           </li>
-
           <li class="nav-item">
-            <a href="#" @click.prevent="navigateTo('/viajes')" class="nav-link px-2 px-md-3 fw-medium text-white">
-              <span class="d-none d-md-inline">My Trips</span>
-              <i class="bi bi-suitcase d-inline d-md-none"></i>
+            <a href="#" @click.prevent="navigateTo('/viajes')" class="nav-link px-3 fw-medium text-white">
+              My Trips
             </a>
           </li>
         </ul>
@@ -449,36 +465,107 @@ onUnmounted(() => {
           <i class="bi bi-search"></i>
         </button>
 
-        <!-- Menú desplegable de usuario -->
-        <div class="dropdown">
-          <button class="btn border-0 text-white" type="button" @click="toggleUserMenu">
+        <!-- Menú desplegable de usuario (mejorado) -->
+        <div class="dropdown user-dropdown-container">
+          <button class="btn border-0 text-white user-icon-btn" type="button" @click="toggleUserMenu">
             <i class="bi" :class="isUserAuthenticated() ? 'bi-person-check' : 'bi-person'"></i>
           </button>
 
-          <div class="dropdown-menu dropdown-menu-end shadow mt-2"
-            :class="{ show: showUserMenu && isUserAuthenticated() }">
-            <div class="px-3 py-2" style="background-color: var(--color-background);">
-              <p class="fw-bold mb-1">{{ usuarioActual?.nombre || 'User' }}</p>
-              <p class="text-muted mb-0 small">{{ usuarioActual?.email || '' }}</p>
+          <!-- Dropdown mejorado -->
+          <div class="user-dropdown" :class="{ 'show': showUserMenu && isUserAuthenticated() }">
+            <div class="user-dropdown-header">
+              <p class="user-name">{{ usuarioActual?.nombre || 'User' }}</p>
+              <p class="user-email">{{ usuarioActual?.email || '' }}</p>
             </div>
             <div class="dropdown-divider"></div>
             <!-- Enlace al perfil de usuario -->
-            <a href="#" @click.prevent="navigateTo('/profile')" class="dropdown-item d-flex align-items-center py-2">
-              <i class="bi bi-person-gear me-2"></i>
+            <a href="#" @click.prevent="navigateTo('/profile')" class="dropdown-item">
+              <i class="bi bi-person-gear"></i>
               <span>Profile</span>
             </a>
             <!-- Botón de cerrar sesión -->
-            <button class="dropdown-item d-flex align-items-center py-2" @click="cerrarSesion">
-              <i class="bi bi-box-arrow-right me-2"></i>
+            <button class="dropdown-item" @click="cerrarSesion">
+              <i class="bi bi-box-arrow-right"></i>
               <span>Logout</span>
             </button>
           </div>
         </div>
+
+        <!-- Botón hamburguesa (solo móvil) -->
+        <button class="btn border-0 text-white d-lg-none ms-2" @click="toggleOffcanvas">
+          <i class="bi bi-list"></i>
+        </button>
       </div>
     </div>
   </nav>
 
-  <!-- Superposición del panel de búsqueda -->
+  <!-- Offcanvas para móvil -->
+  <div class="offcanvas-backdrop" v-if="showOffcanvas" @click="toggleOffcanvas"></div>
+  <div class="offcanvas offcanvas-start" :class="{ 'show': showOffcanvas }">
+    <div class="offcanvas-header">
+      <div class="d-flex align-items-center">
+        <img src="../assets/img/logo.png" alt="Travelle Logo" class="offcanvas-logo me-2" />
+        <h5 class="offcanvas-title mb-0">Travelle</h5>
+      </div>
+      <button type="button" class="btn-close" @click="toggleOffcanvas"></button>
+    </div>
+
+    <div class="offcanvas-body">
+      <nav class="nav flex-column">
+        <a href="#" @click.prevent="navigateTo('/paises')" class="nav-link py-3 border-bottom">
+          <i class="bi bi-globe me-3"></i>
+          Countries
+        </a>
+        <a href="#" @click.prevent="navigateTo('/favoritos')" class="nav-link py-3 border-bottom">
+          <i class="bi bi-heart me-3"></i>
+          Favorites
+        </a>
+        <a href="#" @click.prevent="navigateTo('/visitados')" class="nav-link py-3 border-bottom">
+          <i class="bi bi-check-circle me-3"></i>
+          Visited
+        </a>
+        <a href="#" @click.prevent="navigateTo('/mapa')" class="nav-link py-3 border-bottom">
+          <i class="bi bi-map me-3"></i>
+          Map
+        </a>
+        <a href="#" @click.prevent="navigateTo('/viajes')" class="nav-link py-3 border-bottom">
+          <i class="bi bi-suitcase me-3"></i>
+          My Trips
+        </a>
+      </nav>
+
+      <!-- Sección de usuario en offcanvas -->
+      <div class="mt-auto pt-4">
+        <div v-if="isUserAuthenticated()" class="user-section p-3 bg-light rounded">
+          <div class="d-flex align-items-center mb-3">
+            <div class="user-avatar me-3">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div>
+              <p class="fw-bold mb-0">{{ usuarioActual?.nombre || 'User' }}</p>
+              <p class="text-muted small mb-0">{{ usuarioActual?.email || '' }}</p>
+            </div>
+          </div>
+          <div class="d-grid gap-2">
+            <button class="btn btn-outline-primary btn-sm" @click="navigateTo('/profile')">
+              <i class="bi bi-person-gear me-2"></i>Profile
+            </button>
+            <button class="btn btn-outline-danger btn-sm" @click="cerrarSesion">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </button>
+          </div>
+        </div>
+        <div v-else class="text-center p-3">
+          <p class="text-muted mb-3">Sign in to access all features</p>
+          <button class="btn btn-primary" @click="showModal = true; toggleOffcanvas()">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Login / Register
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de búsqueda (sin cambios) -->
   <div v-if="showSearchPanel" class="search-overlay">
     <div class="search-panel">
       <div class="search-panel-header">
@@ -518,7 +605,6 @@ onUnmounted(() => {
                   placeholder="Type a destination, city or country"
                   @focus="showSuggestions = searchSuggestions.length > 0" />
 
-                <!-- Indicador de carga -->
                 <div v-if="isSearching" class="position-absolute top-50 end-0 translate-middle-y pe-3">
                   <div class="spinner-border spinner-border-sm" role="status" style="color: var(--color-primary);">
                     <span class="visually-hidden">Loading...</span>
@@ -535,7 +621,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Destinos populares -->
         <div>
           <h6 class="mb-2">Popular destinations</h6>
           <div class="d-flex flex-wrap gap-2">
@@ -548,7 +633,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Lista de sugerencias (fuera del panel para aparecer arriba) -->
     <div v-if="showSuggestions && searchSuggestions.length > 0" class="search-suggestions-floating">
       <div v-for="(sugerencia, index) in searchSuggestions" :key="index"
         class="suggestion-item p-2 border-bottom d-flex align-items-center justify-content-between"
@@ -566,7 +650,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Estrella de favoritos -->
         <button class="btn btn-link p-0"
           :class="{ 'opacity-100': esFavorito(sugerencia.id), 'opacity-25': !esFavorito(sugerencia.id) }"
           style="color: var(--color-accent);" @click.stop="toggleFavorito($event, sugerencia)">
@@ -576,29 +659,29 @@ onUnmounted(() => {
     </div>
   </div>
 
-  <!-- AuthModal fuera del encabezado para cubrir toda la pantalla -->
+  <!-- AuthModal -->
   <AuthModal :visible="showModal" @close="showModal = false" @login-success="handleLoginSuccess"
     @register-success="handleRegisterSuccess" />
 </template>
 
 <style scoped>
-/* Estilos personalizados que complementan Bootstrap */
+/* Logo */
 .logo {
   height: 80px;
   width: auto;
 }
 
+.offcanvas-logo {
+  height: 30px;
+  width: auto;
+}
+
+/* Navbar */
 .navbar {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
 }
 
-.navbar-hidden {
-  transform: translateY(-100%);
-  transition: transform 0.3s ease;
-}
-
-/* Estilos para mantener la barra de navegación horizontal en móviles */
 .navbar-nav-scroll {
   max-width: 100%;
   overflow-x: auto;
@@ -607,7 +690,6 @@ onUnmounted(() => {
   scrollbar-width: none;
 }
 
-/* Ocultar barra de desplazamiento para Chrome, Safari y Opera */
 .navbar-nav-scroll::-webkit-scrollbar {
   display: none;
 }
@@ -616,7 +698,6 @@ onUnmounted(() => {
   flex-wrap: nowrap;
 }
 
-/* Estilos para enlaces de navegación */
 .nav-link {
   color: var(--color-textWhite) !important;
   font-weight: 500;
@@ -628,7 +709,89 @@ onUnmounted(() => {
   color: var(--color-accent) !important;
 }
 
-/* Panel de búsqueda personalizado */
+/* Offcanvas */
+.offcanvas-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.offcanvas-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.offcanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100%;
+  background-color: white;
+  z-index: 1050;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.offcanvas.show {
+  transform: translateX(0);
+}
+
+.offcanvas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.offcanvas-title {
+  color: var(--color-primary);
+  font-weight: bold;
+}
+
+.offcanvas-body {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.offcanvas-body .nav-link {
+  color: #212529 !important;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.offcanvas-body .nav-link:hover {
+  background-color: #f8f9fa;
+  color: var(--color-primary) !important;
+}
+
+.offcanvas-body .nav-link i {
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
+/* User section */
+.user-avatar {
+  font-size: 2rem;
+  color: var(--color-primary);
+}
+
+/* Search panel (sin cambios) */
 .search-overlay {
   position: fixed;
   top: 0;
@@ -668,12 +831,10 @@ onUnmounted(() => {
   padding: 1.25rem;
 }
 
-/* Contenedor de búsqueda y sugerencias */
 .search-container {
   position: relative;
 }
 
-/* Nuevo estilo para sugerencias flotantes */
 .search-suggestions-floating {
   position: fixed;
   background-color: var(--color-backgroundCard);
@@ -699,24 +860,28 @@ onUnmounted(() => {
   border-bottom: none !important;
 }
 
-/* Añadir margen superior al contenido principal para compensar la barra de navegación fija */
-main {
-  margin-top: 80px;
+/* Responsive */
+@media (max-width: 767.98px) {
+  .search-panel {
+    max-width: 95%;
+    margin: 0 auto;
+  }
+
+  .logo {
+    height: 60px;
+  }
+
+  .search-suggestions-floating {
+    width: 90% !important;
+    left: 5% !important;
+  }
 }
 
-/* Toast personalizado */
-.toast {
-  z-index: 1100;
+/* Colors */
+.bg-primary {
+  background-color: var(--color-primary) !important;
 }
 
-/* Estilos para el modal de búsqueda */
-.form-control:focus,
-.form-select:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 0.2rem var(--color-background);
-}
-
-/* Botones con colores de la aplicación */
 .btn-primary {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
@@ -737,48 +902,90 @@ main {
   color: var(--color-accent);
 }
 
-/* Responsive */
-@media (max-width: 767.98px) {
-  .navbar-nav .nav-link {
-    padding: 0.5rem 0.75rem;
-  }
-
-  .search-panel {
-    max-width: 95%;
-    margin: 0 auto;
-  }
-
-  .logo {
-    height: 75px;
-  }
-
-  /* Iconos más grandes en móviles para mejor tacto */
-  .d-inline.d-md-none {
-    font-size: 1.2rem;
-  }
-
-  /* Ajustes para sugerencias en móviles */
-  .search-suggestions-floating {
-    width: 90% !important;
-    left: 5% !important;
-  }
+/* Estilos mejorados para el dropdown de usuario */
+.user-dropdown-container {
+  position: relative;
 }
 
-/* Consultas de medios para texto adaptativo */
-@media (min-width: 992px) {
-  .navbar-nav .nav-link {
-    font-size: 1rem;
-  }
+.user-icon-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
 }
 
-@media (min-width: 1200px) {
-  .navbar-nav .nav-link {
-    font-size: 1.1rem;
-  }
+.user-icon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Clase para barra de navegación de color primario */
-.bg-primary {
-  background-color: var(--color-primary) !important;
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 250px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  z-index: 1040;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  margin-top: 10px;
+  overflow: hidden;
 }
+
+.user-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.user-dropdown-header {
+  padding: 15px;
+  background-color: #f8f9fa;
+}
+
+.user-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: var(--color-primary);
+}
+
+.user-email {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin: 0;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: #e9ecef;
+  margin: 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  color: #212529;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-item i {
+  margin-right: 10px;
+  font-size: 1.1rem;
+  color: var(--color-primary);
+}
+
+/* Resto de los estilos sin cambios */
+/* ... */
 </style>

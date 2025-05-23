@@ -41,18 +41,6 @@ const destinosAleatorios = computed(() => destinos.value);
     padding-top: 5rem;
 }
 
-/* Estos estilos pueden ser eliminados o comentados
-.hero {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-h1 {
-    color: var(--color-primary);
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-}
-*/
 
 h2 {
     color: var(--color-primary);

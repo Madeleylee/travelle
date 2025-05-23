@@ -64,7 +64,7 @@
                         <div class="country-header">
                             <h2>{{ pais }}</h2>
                             <span class="place-count">{{ lugares.length }} {{ lugares.length === 1 ? 'place' : 'places'
-                                }}</span>
+                            }}</span>
                         </div>
 
                         <!-- Cuadrícula de lugares visitados -->
@@ -150,7 +150,7 @@
                             <h2>{{ period.label }}</h2>
                             <span class="place-count">{{ period.items.length }} {{ period.items.length === 1 ? 'place' :
                                 'places'
-                                }}</span>
+                            }}</span>
                         </div>
 
                         <!-- Cuadrícula de lugares visitados -->
@@ -1034,6 +1034,7 @@ watch(searchQuery, (newValue) => {
 @keyframes modal-appear {
     from {
         opacity: 0;
+
         transform: translateY(-20px);
     }
 

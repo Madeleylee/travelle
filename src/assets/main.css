@@ -1,39 +1,38 @@
-@import './reset.css';
-@import './variables.css';
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap');
+@import "./reset.css";
+@import "./variables.css";
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap");
 
 body {
-    font-family: 'Lato', sans-serif;
-    /* Fuente principal para el texto */
-    -webkit-font-smoothing: antialiased;
-    /* Suavizado de fuentes para navegadores webkit */
-    -moz-osx-font-smoothing: grayscale;
-    /* Suavizado de fuentes para Firefox en macOS */
-    color: var(--color-text);
-    /* Color del texto definido en variables CSS */
-    line-height: 1.6;
-    /* Altura de línea para mejorar la legibilidad */
-    background-color: var(--color-background);
-    /* Color de fondo definido en variables CSS */
+  font-family: "Lato", sans-serif;
+  /* Fuente principal para el texto */
+  -webkit-font-smoothing: antialiased;
+  /* Suavizado de fuentes para navegadores webkit */
+  -moz-osx-font-smoothing: grayscale;
+  /* Suavizado de fuentes para Firefox en macOS */
+  color: var(--color-text);
+  /* Color del texto definido en variables CSS */
+  line-height: 1.6;
+  /* Altura de línea para mejorar la legibilidad */
+  background-color: var(--color-background);
+  /* Color de fondo definido en variables CSS */
 }
 
 /* Estilos para el contenedor principal de la aplicación */
 #app {
-    min-height: 100vh;
-    /* Asegura que la aplicación ocupe al menos la altura completa de la ventana */
-    display: flex;
-    flex-direction: column;
-    /* Organiza el contenido en una columna */
+  min-height: 100vh;
+  /* Asegura que la aplicación ocupe al menos la altura completa de la ventana */
+  display: flex;
+  flex-direction: column;
+  /* Organiza el contenido en una columna */
 }
 
 /* Estilos para el contenido principal */
 .main-content {
-    flex: 1;
-    /* Permite que el contenido principal ocupe el espacio disponible */
-    padding-bottom: 60px;
-    /* Espacio inferior para evitar superposiciones con el footer */
-    padding-top: 120px;
-    /* Espacio superior para acomodar la barra de navegación */
+  flex: 1;
+  /* Permite que el contenido principal ocupe el espacio disponible */
+  padding-bottom: 60px;
+  /* Espacio inferior para evitar superposiciones con el footer */
+  padding-top: 80px; /* Espacio superior para acomodar la barra de navegación */
 }
 
 /* Estilos para encabezados */
@@ -43,143 +42,140 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: 'Playfair Display', serif;
-    /* Fuente elegante para encabezados */
-    font-weight: 700;
-    /* Peso de la fuente para encabezados */
-    line-height: 1.2;
-    /* Altura de línea para encabezados */
-    margin-bottom: 1rem;
-    /* Espacio inferior para separar de otros elementos */
+  font-family: "Playfair Display", serif;
+  /* Fuente elegante para encabezados */
+  font-weight: 700;
+  /* Peso de la fuente para encabezados */
+  line-height: 1.2;
+  /* Altura de línea para encabezados */
+  margin-bottom: 1rem;
+  /* Espacio inferior para separar de otros elementos */
 }
 
 h1 {
-    font-size: 3rem;
-    /* Tamaño grande para encabezados principales */
-    color: var(--color-primary);
-    /* Color principal definido en variables CSS */
+  font-size: 3rem;
+  /* Tamaño grande para encabezados principales */
+  color: var(--color-primary);
+  /* Color principal definido en variables CSS */
 }
 
 h2 {
-    font-size: 2.5rem;
-    /* Tamaño para encabezados secundarios */
-    color: var(--color-secondary);
-    /* Color secundario definido en variables CSS */
+  font-size: 2.5rem;
+  /* Tamaño para encabezados secundarios */
+  color: var(--color-secondary);
+  /* Color secundario definido en variables CSS */
 }
 
 h3 {
-    font-size: 2rem;
-    /* Tamaño para encabezados terciarios */
+  font-size: 2rem;
+  /* Tamaño para encabezados terciarios */
 }
 
 /* Estilos para párrafos */
 p {
-    margin-bottom: 1rem;
-    /* Espacio inferior para separar párrafos */
+  margin-bottom: 1rem;
+  /* Espacio inferior para separar párrafos */
 }
 
 /* Estilos para enlaces */
 a {
-    color: var(--color-primary);
-    /* Color principal para enlaces */
-    text-decoration: none;
-    /* Elimina el subrayado por defecto */
-    transition: color 0.3s;
-    /* Transición suave para cambios de color */
+  color: var(--color-primary);
+  /* Color principal para enlaces */
+  text-decoration: none;
+  /* Elimina el subrayado por defecto */
+  transition: color 0.3s;
+  /* Transición suave para cambios de color */
 }
 
 a:hover {
-    color: var(--color-accent);
-    /* Color de acento para enlaces al hacer hover */
+  color: var(--color-accent);
+  /* Color de acento para enlaces al hacer hover */
 }
 
 /* Estilos para botones */
 button {
-    font-family: 'Lato', sans-serif;
-    /* Fuente para botones */
-    cursor: pointer;
-    /* Cambia el cursor a una mano al pasar sobre el botón */
-    padding: 0.5rem 1rem;
-    /* Espacio interno del botón */
-    background-color: var(--color-background);
-    /* Color de fondo del botón */
-    border: 1px solid var(--color-primary);
-    /* Borde del botón */
-    border-radius: 4px;
-    /* Bordes redondeados */
-    transition: background-color 0.3s, color 0.3s;
-    /* Transiciones suaves para cambios de color */
+  font-family: "Lato", sans-serif;
+  /* Fuente para botones */
+  cursor: pointer;
+  /* Cambia el cursor a una mano al pasar sobre el botón */
+  padding: 0.5rem 1rem;
+  /* Espacio interno del botón */
+  background-color: var(--color-background);
+  /* Color de fondo del botón */
+  border: 1px solid var(--color-primary);
+  /* Borde del botón */
+  border-radius: 4px;
+  /* Bordes redondeados */
+  transition: background-color 0.3s, color 0.3s;
+  /* Transiciones suaves para cambios de color */
 }
 
 button:hover,
 button.active {
-    background-color: var(--color-primary);
-    /* Cambia el color de fondo al hacer hover o cuando está activo */
-    color: var(--color-textWhite);
-    /* Cambia el color del texto a blanco */
+  background-color: var(--color-primary);
+  /* Cambia el color de fondo al hacer hover o cuando está activo */
+  color: var(--color-textWhite);
+  /* Cambia el color del texto a blanco */
 }
 
 /* Estilos para contenedores */
 .container {
-    max-width: 1200px;
-    /* Ancho máximo del contenedor */
-    margin: 0 auto;
-    /* Centra el contenedor */
-    padding: 0 1rem;
-    /* Espacio interno a los lados */
+  max-width: 1200px;
+  /* Ancho máximo del contenedor */
+  margin: 0 auto;
+  /* Centra el contenedor */
+  padding: 0 1rem;
+  /* Espacio interno a los lados */
 }
 
 /* Estilos para cuadrículas */
 .grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    /* Tres columnas iguales */
-    gap: 2rem;
-    /* Espacio entre elementos de la cuadrícula */
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  /* Tres columnas iguales */
+  gap: 2rem;
+  /* Espacio entre elementos de la cuadrícula */
 }
 
 /* Media queries para ajustar el diseño en pantallas más pequeñas */
 @media (max-width: 1024px) {
-    .main-content {
-        padding-top: 180px;
-        /* Ajusta el espacio superior para pantallas medianas */
-    }
+  .main-content {
+    padding-top: 80px; /* Ajusta el espacio superior para pantallas medianas */
+  }
 
-    h1 {
-        font-size: 2.5rem;
-        /* Ajusta el tamaño de los encabezados principales */
-    }
+  h1 {
+    font-size: 2.5rem;
+    /* Ajusta el tamaño de los encabezados principales */
+  }
 
-    h2 {
-        font-size: 2rem;
-        /* Ajusta el tamaño de los encabezados secundarios */
-    }
+  h2 {
+    font-size: 2rem;
+    /* Ajusta el tamaño de los encabezados secundarios */
+  }
 
-    .grid {
-        grid-template-columns: repeat(2, 1fr);
-        /* Dos columnas para pantallas medianas */
-    }
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    /* Dos columnas para pantallas medianas */
+  }
 }
 
 @media (max-width: 768px) {
-    .main-content {
-        padding-top: 200px;
-        /* Ajusta el espacio superior para pantallas pequeñas */
-    }
+  .main-content {
+    padding-top: 80px; /* Ajusta el espacio superior para pantallas pequeñas */
+  }
 
-    h1 {
-        font-size: 2rem;
-        /* Ajusta el tamaño de los encabezados principales */
-    }
+  h1 {
+    font-size: 2rem;
+    /* Ajusta el tamaño de los encabezados principales */
+  }
 
-    h2 {
-        font-size: 1.5rem;
-        /* Ajusta el tamaño de los encabezados secundarios */
-    }
+  h2 {
+    font-size: 1.5rem;
+    /* Ajusta el tamaño de los encabezados secundarios */
+  }
 
-    .grid {
-        grid-template-columns: 1fr;
-        /* Una columna para pantallas pequeñas */
-    }
+  .grid {
+    grid-template-columns: 1fr;
+    /* Una columna para pantallas pequeñas */
+  }
 }
-
