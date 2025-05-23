@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 
+// Definimos las propiedades del componente
 const props = defineProps({
     lugarId: {
         type: [String, Number],
@@ -13,12 +14,16 @@ const props = defineProps({
     }
 });
 
+// Definimos los eventos que puede emitir este componente
 const emit = defineEmits(['toggle', 'login-required']);
 
+// Usamos el hook de autenticación para verificar si el usuario está logueado
 const { isUserAuthenticated } = useAuth();
+
+// Estado local para saber si el lugar es favorito o no
 const isFavorite = ref(false);
 
-// Verificar si el lugar está en favoritos
+// Función que verifica si un lugar ya está en la lista de favoritos del localStorage
 const checkIfFavorite = () => {
     try {
         const favoritos = JSON.parse(localStorage.getItem('favoritos') || '[]');
@@ -29,21 +34,21 @@ const checkIfFavorite = () => {
     }
 };
 
-// Inicializar estado
+// Inicializa el estado inicial del botón según si ya es favorito o no
 const initializeFavoriteStatus = () => {
     isFavorite.value = checkIfFavorite();
 };
 
 initializeFavoriteStatus();
 
-// Observar cambios en el ID del lugar
+// Observa cambios en el lugarId y actualiza el estado del favorito si cambia
 watch(() => props.lugarId, () => {
     initializeFavoriteStatus();
 });
 
-// Toggle favorite state
+// Alterna el estado de favorito (agregar/eliminar)
 const toggleFavorite = () => {
-    // If user is not authenticated, show login modal
+    // Si el usuario no está autenticado, emitimos evento para mostrar modal de login
     if (!isUserAuthenticated()) {
         emit('login-required');
         return;
@@ -54,14 +59,14 @@ const toggleFavorite = () => {
         const index = favoritos.findIndex(fav => String(fav.id) === String(props.lugarId));
 
         if (index >= 0) {
-            // Si ya es favorito, eliminarlo
+            // Ya es favorito, lo eliminamos
             console.log(`Removing place ID ${props.lugarId} from favorites`);
             favoritos.splice(index, 1);
             localStorage.setItem('favoritos', JSON.stringify(favoritos));
             isFavorite.value = false;
             emit('toggle', false);
         } else {
-            // Si no es favorito, agregarlo
+            // No es favorito, lo agregamos
             const nuevoFavorito = {
                 id: props.lugarId,
                 lugar: props.lugarInfo.nombre || 'Unnamed place',
@@ -80,7 +85,7 @@ const toggleFavorite = () => {
             emit('toggle', true);
         }
 
-        // Dispatch event so other components are notified
+        // Notificamos a otros componentes que los favoritos han cambiado
         window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (error) {
         console.error('Error toggling favorite:', error);
@@ -89,6 +94,7 @@ const toggleFavorite = () => {
 </script>
 
 <template>
+    <!-- Botón de favorito -->
     <button class="favorite-btn" :class="{ 'is-favorite': isFavorite }" @click.stop.prevent="toggleFavorite"
         :aria-label="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
         :title="isFavorite ? 'Remove from favorites' : 'Add to favorites'">

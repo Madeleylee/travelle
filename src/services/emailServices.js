@@ -57,38 +57,38 @@ export async function enviarCorreoRecuperacion(email, token) {
         to: email,
         subject: "Password Recovery - Travelle",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h1 style="color: #1e3a8a;">Travelle</h1>
-            </div>
-            
-            <h2 style="color: #1e3a8a; text-align: center;">Password Recovery</h2>
-            
-            <p>Hello,</p>
-            
-            <p>You requested to reset your password on Travelle. Click the button below to create a new password:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background-color: #1e3a8a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-                Reset Password
-              </a>
-            </div>
-            
-            <p>Or copy and paste the following link in your browser:</p>
-            <p style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; word-break: break-all;">
-              ${resetUrl}
-            </p>
-            
-            <p>This link will expire in 1 hour for security reasons.</p>
-            
-            <p>If you didn't request this change, you can ignore this email and your password will remain unchanged.</p>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
-              <p>This is an automated email, please do not reply to this message.</p>
-              <p>&copy; ${new Date().getFullYear()} Travelle. All rights reserved.</p>
-            </div>
-          </div>
-        `,
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #1e3a8a;">Travelle</h1>
+        </div>
+        
+        <h2 style="color: #1e3a8a; text-align: center;">Password Recovery</h2>
+        
+        <p>Hello,</p>
+        
+        <p>You requested to reset your password on Travelle. Click the button below to create a new password:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #1e3a8a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+            Reset Password
+          </a>
+        </div>
+        
+        <p>Or copy and paste the following link in your browser:</p>
+        <p style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; word-break: break-all;">
+          ${resetUrl}
+        </p>
+        
+        <p>This link will expire in 1 hour for security reasons.</p>
+        
+        <p>If you didn't request this change, you can ignore this email and your password will remain unchanged.</p>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
+          <p>This is an automated email, please do not reply to this message.</p>
+          <p>&copy; ${new Date().getFullYear()} Travelle. All rights reserved.</p>
+        </div>
+      </div>
+    `,
       }),
     })
 
@@ -159,7 +159,7 @@ export async function enviarCorreoNotificacion(email, subject, message) {
       }
     }
 
-    // For production, make the actual API call
+    // Para producción, realizar la llamada real a la API
     const response = await fetch("/api/send-email", {
       method: "POST",
       headers: {
@@ -169,21 +169,21 @@ export async function enviarCorreoNotificacion(email, subject, message) {
         to: email,
         subject,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h1 style="color: #1e3a8a;">Travelle</h1>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-              ${message}
-            </div>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
-              <p>This is an automated email, please do not reply to this message.</p>
-              <p>&copy; ${new Date().getFullYear()} Travelle. All rights reserved.</p>
-            </div>
-          </div>
-        `,
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #1e3a8a;">Travelle</h1>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          ${message}
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
+          <p>This is an automated email, please do not reply to this message.</p>
+          <p>&copy; ${new Date().getFullYear()} Travelle. All rights reserved.</p>
+        </div>
+      </div>
+    `,
       }),
     })
 

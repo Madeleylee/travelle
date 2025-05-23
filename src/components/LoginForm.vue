@@ -1,28 +1,33 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useAuth } from '@/composables/useAuth';
-import { useRouter, useRoute } from 'vue-router';
+import { useAuth } from '@/composables/useAuth'; // Hook personalizado para autenticación
+import { useRouter, useRoute } from 'vue-router'; // Para navegación y obtener parámetros
 
+// Usamos las funciones del hook de autenticación
 const { loginUsuario } = useAuth();
+
+// Obtenemos el router y la ruta actual
 const router = useRouter();
 const route = useRoute();
 
+// Variables reactivas para los campos del formulario
 const email = ref('');
 const password = ref('');
-const rememberMe = ref(false);
-const error = ref('');
-const loading = ref(false);
+const rememberMe = ref(false); // Opción "Recordarme"
+const error = ref(''); // Para mostrar mensajes de error
+const loading = ref(false); // Estado de carga durante el login
 
-// Obtener la ruta de redirección si existe
+// Ruta a donde se redirigirá después del login exitoso
 const redirectPath = ref('');
 
+// Al montar el componente, obtenemos la ruta de redirección si viene como query param
 onMounted(() => {
-    // Capturar la ruta de redirección de la query
     if (route.query.redirect) {
         redirectPath.value = route.query.redirect;
     }
 });
 
+// Función que maneja el inicio de sesión
 async function handleLogin() {
     error.value = '';
     loading.value = true;
@@ -33,7 +38,7 @@ async function handleLogin() {
         // Mostrar notificación de éxito
         const notification = document.createElement('div');
         notification.className = 'success-notification';
-        notification.textContent = `¡Bienvenido ${user.nombre}!`;
+        notification.textContent = `Welcome ${user.nombre}!`;
         document.body.appendChild(notification);
 
         // Eliminar notificación después de 3 segundos
@@ -41,23 +46,25 @@ async function handleLogin() {
             notification.remove();
         }, 3000);
 
-        // Redirigir al usuario a la página que intentaba visitar o al inicio
+        // Redirigir al usuario a la página deseada o al inicio
         if (redirectPath.value) {
             router.push(redirectPath.value);
         } else {
             router.push('/');
         }
     } catch (err) {
-        error.value = err.message || 'Credenciales incorrectas';
+        error.value = err.message || 'Invalid credentials';
     } finally {
         loading.value = false;
     }
 }
 
+// Navegar a recuperar contraseña
 function goToForgotPassword() {
     router.push('/recuperar-password');
 }
 
+// Navegar a registro
 function goToRegister() {
     router.push('/registro');
 }
@@ -65,40 +72,47 @@ function goToRegister() {
 
 <template>
     <form @submit.prevent="handleLogin" class="auth-form">
-        <h2>Iniciar sesión</h2>
+        <!-- Título -->
+        <h2>Sign in</h2>
 
+        <!-- Campo: Correo electrónico -->
         <div class="form-group">
-            <label for="email">Correo electrónico</label>
+            <label for="email">Email address</label>
             <input id="email" v-model="email" type="email" required />
         </div>
 
+        <!-- Campo: Contraseña -->
         <div class="form-group">
-            <label for="password">Contraseña</label>
+            <label for="password">Password</label>
             <input id="password" v-model="password" type="password" required />
         </div>
 
+        <!-- Recordarme / Enlace de recuperación -->
         <div class="form-options">
             <div class="remember-me">
                 <input id="remember" v-model="rememberMe" type="checkbox" />
-                <label for="remember" class="checkbox-label">Recordarme</label>
+                <label for="remember" class="checkbox-label">Remember me</label>
             </div>
 
             <button type="button" class="forgot-link" @click="goToForgotPassword">
-                ¿Olvidaste tu contraseña?
+                Forgot your password?
             </button>
         </div>
 
+        <!-- Botón de envío -->
         <button type="submit" :disabled="loading" class="submit-button">
             <span v-if="loading" class="spinner"></span>
-            <span v-else>Iniciar sesión</span>
+            <span v-else>Sign in</span>
         </button>
 
+        <!-- Mensaje de error -->
         <p v-if="error" class="error-message">{{ error }}</p>
 
+        <!-- Enlace a registro -->
         <div class="register-prompt">
-            ¿No tienes cuenta?
+            Don't have an account?
             <button type="button" class="register-link" @click="goToRegister">
-                Regístrate aquí
+                Register here
             </button>
         </div>
     </form>
@@ -233,7 +247,7 @@ input:focus {
     text-decoration: underline;
 }
 
-/* Estilo para la notificación de éxito */
+/* Notificación de éxito global */
 :global(.success-notification) {
     position: fixed;
     top: 20px;

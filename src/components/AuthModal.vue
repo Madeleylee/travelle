@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 import { useRouter } from 'vue-router';
 
+// Definimos las propiedades del componente
 const props = defineProps({
   visible: Boolean,
   redirectPath: {
@@ -10,6 +11,8 @@ const props = defineProps({
     default: ''
   }
 });
+
+// Definimos los eventos que puede emitir
 const emit = defineEmits(['close', 'login-success', 'register-success']);
 
 const router = useRouter();
@@ -22,13 +25,13 @@ const {
 } = useAuth();
 
 // Estado del modal
-const mode = ref('login');
-const loading = ref(false);
-const error = ref('');
-const success = ref(false);
-const successMessage = ref('');
+const mode = ref('login'); // Modo actual: login, register o recover
+const loading = ref(false); // Para mostrar spinner durante acciones
+const error = ref(''); // Para almacenar mensajes de error
+const success = ref(false); // Si la acción fue exitosa
+const successMessage = ref(''); // Mensaje de éxito
 
-// Campos de formulario
+// Campos del formulario
 const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
@@ -36,12 +39,12 @@ const nombre = ref('');
 const username = ref('');
 
 // Estados de validación
-const usernameChecking = ref(false);
-const usernameAvailable = ref(null);
-const usernameError = ref('');
-const passwordStrength = ref(0); // 0-4: 0=vacío, 1=débil, 2=medio, 3=bueno, 4=fuerte
+const usernameChecking = ref(false); // Verificando si el nombre de usuario existe
+const usernameAvailable = ref(null); // Disponibilidad del nombre de usuario
+const usernameError = ref(''); // Error en nombre de usuario
+const passwordStrength = ref(0); // Fuerza de la contraseña (0-4)
 
-// Validaciones
+// Validaciones computadas
 const isValidEmail = computed(() => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return !email.value || emailRegex.test(email.value);
@@ -59,10 +62,10 @@ const passwordsMatch = computed(() => {
 const passwordStrengthText = computed(() => {
   if (!password.value) return '';
   switch (passwordStrength.value) {
-    case 1: return 'Débil';
-    case 2: return 'Media';
-    case 3: return 'Buena';
-    case 4: return 'Fuerte';
+    case 1: return 'Weak';
+    case 2: return 'Medium';
+    case 3: return 'Good';
+    case 4: return 'Strong';
     default: return '';
   }
 });
@@ -78,6 +81,7 @@ const passwordStrengthClass = computed(() => {
   }
 });
 
+// Validación de formularios
 const isLoginFormValid = computed(() => {
   return email.value && password.value && isValidEmail.value;
 });
@@ -92,69 +96,58 @@ const isRegisterFormValid = computed(() => {
     isValidUsername.value &&
     passwordsMatch.value &&
     usernameAvailable.value === true &&
-    passwordStrength.value >= 2; // Requerir al menos una contraseña de fuerza media
+    passwordStrength.value >= 2;
 });
 
 const isRecoverFormValid = computed(() => {
   return email.value && isValidEmail.value;
 });
 
-// Función para verificar disponibilidad del nombre de usuario
+// Verifica si el nombre de usuario está disponible
 async function checkUsernameAvailability() {
   if (!username.value || !isValidUsername.value) {
     usernameAvailable.value = null;
     usernameError.value = '';
     return;
   }
-
   usernameChecking.value = true;
   usernameAvailable.value = null;
   usernameError.value = '';
-
   try {
     const exists = await verificarUsernameExistente(username.value);
     usernameAvailable.value = !exists;
     if (exists) {
-      usernameError.value = 'Este nombre de usuario ya está en uso';
+      usernameError.value = 'This username is already taken';
     }
   } catch (err) {
-    console.error('Error al verificar nombre de usuario:', err);
-    usernameError.value = 'Error al verificar disponibilidad';
+    console.error('Error checking username:', err);
+    usernameError.value = 'Error checking availability';
   } finally {
     usernameChecking.value = false;
   }
 }
 
-// Función para evaluar la fuerza de la contraseña
+// Evalúa la fuerza de la contraseña
 function evaluatePasswordStrength(pass) {
   if (!pass) {
     passwordStrength.value = 0;
     return;
   }
-
   let score = 0;
-
-  // Longitud mínima
   if (pass.length >= 8) score++;
-
-  // Complejidad
-  if (/[A-Z]/.test(pass)) score++; // Mayúsculas
-  if (/[0-9]/.test(pass)) score++; // Números
-  if (/[^A-Za-z0-9]/.test(pass)) score++; // Caracteres especiales
-
-  // Penalización por patrones comunes
+  if (/[A-Z]/.test(pass)) score++;
+  if (/[0-9]/.test(pass)) score++;
+  if (/[^A-Za-z0-9]/.test(pass)) score++;
   if (/^(123|abc|qwerty|password|admin|user)/i.test(pass)) score = Math.max(1, score - 2);
-
-  // Limitar el score entre 1-4
   passwordStrength.value = Math.max(1, Math.min(4, score));
 }
 
-// Función para cerrar el modal
+// Cierra el modal
 function closeModal() {
   emit('close');
 }
 
-// Cambiar de modo
+// Cambia entre modos: login, register, recover
 function changeMode(newMode) {
   mode.value = newMode;
   error.value = '';
@@ -162,114 +155,89 @@ function changeMode(newMode) {
   successMessage.value = '';
 }
 
-// Iniciar sesión
+// Inicia sesión
 async function login() {
   if (!isLoginFormValid.value) return;
-
   error.value = '';
   loading.value = true;
-
   try {
     const user = await loginUsuario(email.value, password.value);
     success.value = true;
-    successMessage.value = `¡Bienvenido ${user.nombre}!`;
-
-    // Emitir evento de inicio de sesión exitoso
+    successMessage.value = `Welcome back, ${user.nombre}!`;
     emit('login-success', user);
-
-    // Cerrar modal después de un breve retraso
     setTimeout(() => {
       emit('close');
-
-      // Si hay una ruta de redirección, navegar a ella
       if (props.redirectPath) {
         router.push(props.redirectPath);
       }
     }, 1500);
   } catch (err) {
-    error.value = err.message || 'Credenciales incorrectas';
+    error.value = err.message || 'Invalid credentials';
   } finally {
     loading.value = false;
   }
 }
 
-
-// Registrar usuario
+// Registra un nuevo usuario
 async function register() {
   if (!isRegisterFormValid.value) return;
-
   error.value = '';
   loading.value = true;
-
   try {
-    // Verificar si el email ya existe
     const emailExists = await verificarEmailExistente(email.value);
     if (emailExists) {
-      error.value = 'El correo electrónico ya está registrado';
+      error.value = 'Email already registered';
       loading.value = false;
       return;
     }
-
-    // Verificar si el nombre de usuario ya existe (doble verificación)
     const usernameExists = await verificarUsernameExistente(username.value);
     if (usernameExists) {
-      error.value = 'El nombre de usuario ya está en uso';
+      error.value = 'Username already taken';
       loading.value = false;
       return;
     }
-
-    // Registrar usuario
     const user = await registrarUsuario({
       username: username.value,
       name: nombre.value,
       email: email.value,
       password: password.value
     });
-
     success.value = true;
-    successMessage.value = '¡Registro exitoso! Bienvenido a nuestra comunidad.';
-
-    // Emitir evento de registro exitoso
+    successMessage.value = 'Registration successful!';
     emit('register-success', user);
-
-    // CAMBIO AQUÍ: Cerrar el modal en lugar de cambiar al modo de inicio de sesión
     setTimeout(() => {
-      emit('close'); // Cerrar el modal completamente
+      emit('close');
     }, 2000);
   } catch (err) {
-    error.value = err.message || 'Error al registrar usuario';
+    error.value = err.message || 'Registration error';
   } finally {
     loading.value = false;
   }
 }
 
-// Recuperar contraseña
+// Recupera contraseña
 async function recover() {
   if (!isRecoverFormValid.value) return;
-
   error.value = '';
   loading.value = true;
-
   try {
     await solicitarRecuperacion(email.value);
     success.value = true;
-    successMessage.value = 'Si el correo existe en nuestra base de datos, recibirás un enlace para restablecer tu contraseña.';
-
-    // Cambiar a modo login después de un breve retraso
+    successMessage.value = 'If this email is registered, you will receive a recovery link.';
     setTimeout(() => {
       mode.value = 'login';
       success.value = false;
       resetForm();
     }, 3000);
   } catch (err) {
-    error.value = 'Ha ocurrido un error. Por favor, inténtalo más tarde.';
+    error.value = 'An error occurred. Please try again later.';
     console.error(err);
   } finally {
     loading.value = false;
   }
 }
 
-// Resetear formulario
+// Reinicia los campos del formulario
 function resetForm() {
   email.value = '';
   password.value = '';
@@ -282,20 +250,18 @@ function resetForm() {
   passwordStrength.value = 0;
 }
 
-// Resetear formulario al cambiar de modo
+// Reinicia formulario al cambiar de modo
 function handleModeChange(newMode) {
   resetForm();
   changeMode(newMode);
 }
 
-// Watchers para validación en tiempo real
+// Observadores para validación en tiempo real
 watch(username, (newValue) => {
   if (newValue && isValidUsername.value) {
-    // Debounce para no hacer demasiadas peticiones
     const timeoutId = setTimeout(() => {
       checkUsernameAvailability();
     }, 500);
-
     return () => clearTimeout(timeoutId);
   } else {
     usernameAvailable.value = null;
@@ -307,7 +273,7 @@ watch(password, (newValue) => {
   evaluatePasswordStrength(newValue);
 });
 
-// Resetear a modo login cuando se abre el modal
+// Reinicia al modo login cuando se abre
 watch(() => props.visible, (newValue) => {
   if (newValue) {
     mode.value = 'login';
@@ -318,21 +284,19 @@ watch(() => props.visible, (newValue) => {
 </script>
 
 <template>
+  <!-- Modal backdrop -->
   <div v-if="visible" class="modal-backdrop" @click.self="closeModal">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content bg-light p-3 rounded-4">
-        <!-- Botón de cierre en la esquina superior derecha -->
+        <!-- Botón de cerrar -->
         <div class="modal-header border-0 p-0">
           <button type="button" class="btn-close position-absolute top-0 end-0 m-3 z-3" @click="closeModal"
-            aria-label="Close">
-          </button>
+            aria-label="Close"></button>
         </div>
-
         <div class="modal-body p-4 pt-2">
           <!-- Modo Login -->
           <div v-if="mode === 'login'">
-            <h3 class="text-center mb-4 fw-bold text-primary">Iniciar sesión</h3>
-
+            <h3 class="text-center mb-4 fw-bold text-primary">Sign in</h3>
             <div v-if="success" class="text-center py-3">
               <div class="d-flex justify-content-center mb-3">
                 <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
@@ -342,47 +306,40 @@ watch(() => props.visible, (newValue) => {
               </div>
               <p class="mb-0">{{ successMessage }}</p>
             </div>
-
             <form v-else @submit.prevent="login">
               <div class="mb-3">
                 <input v-model="email" type="email" class="form-control form-control-lg"
                   :class="{ 'is-invalid': email && !isValidEmail }" placeholder="Email" required />
                 <div v-if="email && !isValidEmail" class="invalid-feedback">
-                  Email inválido
+                  Invalid email
                 </div>
               </div>
-
               <div class="mb-3">
-                <input v-model="password" type="password" class="form-control form-control-lg" placeholder="Contraseña"
+                <input v-model="password" type="password" class="form-control form-control-lg" placeholder="Password"
                   required />
               </div>
-
               <div v-if="error" class="alert alert-danger py-2 text-center" role="alert">
                 {{ error }}
               </div>
-
               <button type="submit"
                 class="btn btn-primary btn-lg w-100 d-flex justify-content-center align-items-center"
                 :disabled="!isLoginFormValid || loading">
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"
                   aria-hidden="true"></span>
-                <span>Entrar</span>
+                <span>Sign in</span>
               </button>
             </form>
-
             <div class="mt-4 text-center">
-              <a href="#" class="text-decoration-none" @click.prevent="handleModeChange('register')">¿No tienes cuenta?
-                Regístrate</a>
+              <a href="#" class="text-decoration-none" @click.prevent="handleModeChange('register')">Don't have an
+                account? Register</a>
               <div class="my-2">|</div>
-              <a href="#" class="text-decoration-none" @click.prevent="handleModeChange('recover')">¿Olvidaste tu
-                contraseña?</a>
+              <a href="#" class="text-decoration-none" @click.prevent="handleModeChange('recover')">Forgot password?</a>
             </div>
           </div>
 
           <!-- Modo Registro -->
           <div v-else-if="mode === 'register'">
-            <h3 class="text-center mb-4 fw-bold text-primary">Registro</h3>
-
+            <h3 class="text-center mb-4 fw-bold text-primary">Create Account</h3>
             <div v-if="success" class="text-center py-3">
               <div class="d-flex justify-content-center mb-3">
                 <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
@@ -392,49 +349,44 @@ watch(() => props.visible, (newValue) => {
               </div>
               <p class="mb-0">{{ successMessage }}</p>
             </div>
-
             <form v-else @submit.prevent="register">
               <div class="mb-3">
-                <input v-model="nombre" type="text" class="form-control form-control-lg" placeholder="Tu nombre"
+                <input v-model="nombre" type="text" class="form-control form-control-lg" placeholder="Your full name"
                   required />
               </div>
-
               <div class="mb-3">
                 <input v-model="username" type="text" class="form-control form-control-lg" :class="{
                   'is-invalid': (username && !isValidUsername) || usernameError,
                   'is-valid': username && isValidUsername && usernameAvailable === true
-                }" placeholder="Nombre de usuario" required />
+                }" placeholder="Username" required />
                 <div v-if="username && !isValidUsername" class="invalid-feedback">
-                  El nombre de usuario debe tener entre 3 y 20 caracteres (letras, números y guiones bajos)
+                  Username must be 3–20 characters (letters, numbers, underscores)
                 </div>
                 <div v-else-if="usernameError" class="invalid-feedback">
                   {{ usernameError }}
                 </div>
                 <div v-else-if="usernameChecking" class="text-muted small mt-1">
                   <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                  Verificando disponibilidad...
+                  Checking availability...
                 </div>
                 <div v-else-if="usernameAvailable === true" class="valid-feedback">
-                  Nombre de usuario disponible
+                  Username available
                 </div>
               </div>
-
               <div class="mb-3">
                 <input v-model="email" type="email" class="form-control form-control-lg"
                   :class="{ 'is-invalid': email && !isValidEmail }" placeholder="Email" required />
                 <div v-if="email && !isValidEmail" class="invalid-feedback">
-                  Email inválido
+                  Invalid email
                 </div>
               </div>
-
               <div class="mb-3">
-                <input v-model="password" type="password" class="form-control form-control-lg" placeholder="Contraseña"
+                <input v-model="password" type="password" class="form-control form-control-lg" placeholder="Password"
                   required />
-
-                <!-- Indicador de fuerza de contraseña -->
+                <!-- Strength indicator -->
                 <div v-if="password" class="mt-2">
                   <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="small">Seguridad:</span>
+                    <span class="small">Security:</span>
                     <span class="small" :class="{
                       'text-danger': passwordStrength === 1,
                       'text-warning': passwordStrength === 2,
@@ -450,47 +402,42 @@ watch(() => props.visible, (newValue) => {
                   </div>
                   <div class="small text-muted mt-1">
                     <ul class="ps-3 mb-0">
-                      <li :class="{ 'text-success': password.length >= 8 }">Al menos 8 caracteres</li>
-                      <li :class="{ 'text-success': /[A-Z]/.test(password) }">Al menos una mayúscula</li>
-                      <li :class="{ 'text-success': /[0-9]/.test(password) }">Al menos un número</li>
-                      <li :class="{ 'text-success': /[^A-Za-z0-9]/.test(password) }">Al menos un carácter especial</li>
+                      <li :class="{ 'text-success': password.length >= 8 }">At least 8 characters</li>
+                      <li :class="{ 'text-success': /[A-Z]/.test(password) }">At least one uppercase letter</li>
+                      <li :class="{ 'text-success': /[0-9]/.test(password) }">At least one number</li>
+                      <li :class="{ 'text-success': /[^A-Za-z0-9]/.test(password) }">At least one special character</li>
                     </ul>
                   </div>
                 </div>
               </div>
-
               <div class="mb-3">
                 <input v-model="confirmPassword" type="password" class="form-control form-control-lg" :class="{
                   'is-invalid': confirmPassword && !passwordsMatch,
                   'is-valid': confirmPassword && passwordsMatch && password
-                }" placeholder="Confirmar contraseña" required />
+                }" placeholder="Confirm password" required />
                 <div v-if="confirmPassword && !passwordsMatch" class="invalid-feedback">
-                  Las contraseñas no coinciden
+                  Passwords do not match
                 </div>
                 <div v-else-if="confirmPassword && passwordsMatch && password" class="valid-feedback">
-                  Las contraseñas coinciden
+                  Passwords match
                 </div>
               </div>
-
               <div v-if="error" class="alert alert-danger py-2 text-center" role="alert">
                 {{ error }}
               </div>
-
               <button type="submit"
                 class="btn btn-primary btn-lg w-100 d-flex justify-content-center align-items-center"
                 :disabled="!isRegisterFormValid || loading">
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"
                   aria-hidden="true"></span>
-                <span>Registrarse</span>
+                <span>Create Account</span>
               </button>
             </form>
-
           </div>
 
           <!-- Modo Recuperar Contraseña -->
           <div v-else-if="mode === 'recover'">
-            <h3 class="text-center mb-4 fw-bold text-primary">Recuperar contraseña</h3>
-
+            <h3 class="text-center mb-4 fw-bold text-primary">Reset Password</h3>
             <div v-if="success" class="text-center py-3">
               <div class="d-flex justify-content-center mb-3">
                 <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
@@ -500,32 +447,28 @@ watch(() => props.visible, (newValue) => {
               </div>
               <p class="mb-0">{{ successMessage }}</p>
             </div>
-
             <form v-else @submit.prevent="recover">
               <div class="mb-3">
                 <input v-model="email" type="email" class="form-control form-control-lg"
-                  :class="{ 'is-invalid': email && !isValidEmail }" placeholder="Email registrado" required />
+                  :class="{ 'is-invalid': email && !isValidEmail }" placeholder="Registered email" required />
                 <div v-if="email && !isValidEmail" class="invalid-feedback">
-                  Email inválido
+                  Invalid email
                 </div>
               </div>
-
               <div v-if="error" class="alert alert-danger py-2 text-center" role="alert">
                 {{ error }}
               </div>
-
               <button type="submit"
                 class="btn btn-primary btn-lg w-100 d-flex justify-content-center align-items-center"
                 :disabled="!isRecoverFormValid || loading">
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"
                   aria-hidden="true"></span>
-                <span>Enviar enlace</span>
+                <span>Send Reset Link</span>
               </button>
             </form>
-
             <div class="mt-4 text-center">
-              <a href="#" class="text-decoration-none" @click.prevent="handleModeChange('login')">¿Recordaste tu
-                contraseña? Inicia sesión</a>
+              <a href="#" class="text-decoration-none" @click.prevent="handleModeChange('login')">Remembered your
+                password? Sign in</a>
             </div>
           </div>
         </div>
@@ -554,7 +497,6 @@ watch(() => props.visible, (newValue) => {
   margin: 1.75rem auto;
 }
 
-/* Asegurar que el botón de cierre esté por encima de otros elementos */
 .btn-close {
   z-index: 10;
   opacity: 0.8;
@@ -563,12 +505,5 @@ watch(() => props.visible, (newValue) => {
 
 .btn-close:hover {
   opacity: 1;
-}
-
-/* Estilos para el spinner de carga */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

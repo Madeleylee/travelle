@@ -1,16 +1,19 @@
 <template>
+  <!-- Pantalla de carga mientras se obtienen los datos -->
   <div v-if="cargando" class="loading-container">
     <div class="loading-spinner"></div>
-    <p>Cargando detalles del viaje...</p>
+    <p>Loading trip details...</p>
   </div>
 
+  <!-- Pantalla de error si hay problemas al cargar los datos -->
   <div v-else-if="error" class="error-container">
     <p>{{ error }}</p>
-    <button @click="cargarLista" class="btn-retry">Intentar de nuevo</button>
+    <button @click="cargarLista" class="btn-retry">Try again</button>
   </div>
 
+  <!-- Contenido principal cuando los datos están cargados -->
   <div v-else-if="lista" class="trip-detail-container">
-    <!-- Cabecera -->
+    <!-- Cabecera con información del viaje -->
     <header class="trip-header">
       <div class="trip-header-content">
         <div class="trip-title-section">
@@ -22,7 +25,7 @@
           </div>
           <div class="trip-actions">
             <button @click="editarLista" class="btn-icon-text">
-              <font-awesome-icon icon="edit" /> Editar
+              <font-awesome-icon icon="edit" /> Edit
             </button>
           </div>
         </div>
@@ -39,10 +42,10 @@
       </div>
     </header>
 
-    <!-- Progreso -->
+    <!-- Sección de progreso del viaje -->
     <div class="trip-progress-container">
       <div class="progress-header">
-        <h2>Progreso del viaje</h2>
+        <h2>Trip Progress</h2>
         <div class="progress-percentage">{{ calcularPorcentajeCompletado() }}%</div>
       </div>
       <div class="progress-bar">
@@ -55,26 +58,26 @@
       <div class="progress-stats">
         <div class="stat">
           <div class="stat-value">{{ itemsCompletados }}</div>
-          <div class="stat-label">Completados</div>
+          <div class="stat-label">Completed</div>
         </div>
         <div class="stat">
           <div class="stat-value">{{ itemsPendientes }}</div>
-          <div class="stat-label">Pendientes</div>
+          <div class="stat-label">Pending</div>
         </div>
         <div class="stat">
           <div class="stat-value">{{ diasRestantes }}</div>
-          <div class="stat-label">{{ diasRestantes === 1 ? 'Día' : 'Días' }} restantes</div>
+          <div class="stat-label">{{ diasRestantes === 1 ? 'Day' : 'Days' }} left</div>
         </div>
       </div>
     </div>
 
-    <!-- Lista de elementos -->
+    <!-- Contenedor de elementos del viaje -->
     <div class="items-container">
       <div class="items-header">
         <div class="items-header-top">
-          <h2>¿Qué necesitas para tu viaje?</h2>
+          <h2>What do you need for your trip?</h2>
           <button @click="mostrarModalCrearItem" class="btn-add-item">
-            <font-awesome-icon icon="plus" /> Añadir
+            <font-awesome-icon icon="plus" /> Add
           </button>
         </div>
 
@@ -82,7 +85,7 @@
         <div class="categories-filter">
           <button @click="mostrarTodasCategorias = true; categoriaSeleccionada = ''" class="category-pill"
             :class="{ 'category-selected': mostrarTodasCategorias }">
-            <font-awesome-icon icon="list" /> Todos
+            <font-awesome-icon icon="list" /> All
           </button>
           <button v-for="cat in categorias" :key="cat.id" @click="seleccionarCategoria(cat.id)" class="category-pill"
             :class="{ 'category-selected': categoriaSeleccionada === cat.id }">
@@ -91,17 +94,17 @@
         </div>
       </div>
 
-      <!-- Elementos -->
+      <!-- Mensaje cuando no hay elementos -->
       <div v-if="itemsFiltrados.length === 0" class="empty-items">
         <div class="empty-illustration">
           <font-awesome-icon icon="suitcase-rolling" />
         </div>
-        <p>No hay elementos {{ !mostrarTodasCategorias && categoriaSeleccionada ? `en la categoría
-          ${obtenerNombreCategoria(categoriaSeleccionada)}` : 'en tu lista' }}</p>
-        <p class="empty-hint">Haz clic en el botón <strong>"Añadir"</strong> en la parte superior para comenzar a crear
-          tu lista.</p>
+        <p>No items {{ !mostrarTodasCategorias && categoriaSeleccionada ? `in the
+          ${obtenerNombreCategoria(categoriaSeleccionada)} category` : 'in your list' }}</p>
+        <p class="empty-hint">Click the <strong>"Add"</strong> button at the top to start creating your list.</p>
       </div>
 
+      <!-- Lista de elementos -->
       <div v-else class="items-list">
         <div v-for="item in itemsFiltrados" :key="item.id" class="item-card"
           :class="{ 'item-completed': item.completado }">
@@ -123,10 +126,10 @@
             </div>
           </div>
           <div class="item-actions">
-            <button @click.stop="editarItem(item)" class="btn-icon" title="Editar">
+            <button @click.stop="editarItem(item)" class="btn-icon" title="Edit">
               <font-awesome-icon icon="edit" />
             </button>
-            <button @click.stop="eliminarItem(item)" class="btn-icon" title="Eliminar">
+            <button @click.stop="eliminarItem(item)" class="btn-icon" title="Delete">
               <font-awesome-icon icon="trash" />
             </button>
           </div>
@@ -135,11 +138,11 @@
     </div>
   </div>
 
-  <!-- Modal para crear/editar item -->
+  <!-- Modal para crear/editar elemento -->
   <div v-if="mostrarModal" class="modal-overlay" @click="cerrarModal">
     <div class="modal-container" @click.stop>
       <div class="modal-header">
-        <h2>{{ modoEdicion ? 'Editar elemento' : 'Añadir a tu lista' }}</h2>
+        <h2>{{ modoEdicion ? 'Edit Item' : 'Add to your list' }}</h2>
         <button @click="cerrarModal" class="btn-close">
           <font-awesome-icon icon="times" />
         </button>
@@ -147,13 +150,13 @@
       <div class="modal-body">
         <form @submit.prevent="guardarItem">
           <div class="form-group">
-            <label for="texto">¿Qué necesitas llevar?</label>
+            <label for="texto">What do you need to pack?</label>
             <input type="text" id="texto" v-model="itemActual.texto" required
-              placeholder="Ej. Pasaporte, cargador, cámara..." class="form-input" autofocus />
+              placeholder="E.g. Passport, charger, camera..." class="form-input" autofocus />
           </div>
 
           <div class="form-group">
-            <label>Categoría</label>
+            <label>Category</label>
             <div class="category-selector">
               <div v-for="cat in categoriasList" :key="cat.id" @click="itemActual.categoria = cat.id"
                 class="category-option" :class="{ 'category-option-selected': itemActual.categoria === cat.id }">
@@ -164,22 +167,22 @@
           </div>
 
           <div class="form-group">
-            <label for="notas">Notas adicionales (opcional)</label>
-            <textarea id="notas" v-model="itemActual.notas" placeholder="Añade detalles importantes..."
+            <label for="notas">Additional notes (optional)</label>
+            <textarea id="notas" v-model="itemActual.notas" placeholder="Add important details..."
               class="form-textarea"></textarea>
           </div>
 
           <div class="form-group">
             <label class="checkbox-label">
               <input type="checkbox" v-model="itemActual.completado" />
-              <span>Ya tengo este elemento</span>
+              <span>I already have this item</span>
             </label>
           </div>
 
           <div class="form-actions">
-            <button type="button" @click="cerrarModal" class="btn-secondary">Cancelar</button>
+            <button type="button" @click="cerrarModal" class="btn-secondary">Cancel</button>
             <button type="submit" class="btn-primary">
-              {{ modoEdicion ? 'Guardar cambios' : 'Añadir a mi lista' }}
+              {{ modoEdicion ? 'Save Changes' : 'Add to my list' }}
             </button>
           </div>
         </form>
@@ -191,7 +194,7 @@
   <div v-if="mostrarModalLista" class="modal-overlay" @click="cerrarModalLista">
     <div class="modal-container" @click.stop>
       <div class="modal-header">
-        <h2>Editar viaje</h2>
+        <h2>Edit Trip</h2>
         <button @click="cerrarModalLista" class="btn-close">
           <font-awesome-icon icon="times" />
         </button>
@@ -199,33 +202,33 @@
       <div class="modal-body">
         <form @submit.prevent="guardarLista">
           <div class="form-group">
-            <label for="nombre">Nombre del viaje</label>
-            <input type="text" id="nombre" v-model="listaEditada.nombre" required placeholder="Ej. Vacaciones de verano"
+            <label for="nombre">Trip Name</label>
+            <input type="text" id="nombre" v-model="listaEditada.nombre" required placeholder="E.g. Summer Vacation"
               class="form-input" />
           </div>
           <div class="form-group">
-            <label for="destino">Destino</label>
-            <input type="text" id="destino" v-model="listaEditada.destino" required placeholder="Ej. Barcelona, España"
+            <label for="destino">Destination</label>
+            <input type="text" id="destino" v-model="listaEditada.destino" required placeholder="E.g. Barcelona, Spain"
               class="form-input" />
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="fechaInicio">Fecha de inicio</label>
+              <label for="fechaInicio">Start Date</label>
               <input type="date" id="fechaInicio" v-model="listaEditada.fechaInicio" required class="form-input" />
             </div>
             <div class="form-group">
-              <label for="fechaFin">Fecha de fin</label>
+              <label for="fechaFin">End Date</label>
               <input type="date" id="fechaFin" v-model="listaEditada.fechaFin" required class="form-input" />
             </div>
           </div>
           <div class="form-group">
-            <label for="descripcion">Descripción (opcional)</label>
-            <textarea id="descripcion" v-model="listaEditada.descripcion" placeholder="Describe tu viaje..."
+            <label for="descripcion">Description (optional)</label>
+            <textarea id="descripcion" v-model="listaEditada.descripcion" placeholder="Describe your trip..."
               class="form-textarea"></textarea>
           </div>
           <div class="form-actions">
-            <button type="button" @click="cerrarModalLista" class="btn-secondary">Cancelar</button>
-            <button type="submit" class="btn-primary">Guardar cambios</button>
+            <button type="button" @click="cerrarModalLista" class="btn-secondary">Cancel</button>
+            <button type="submit" class="btn-primary">Save Changes</button>
           </div>
         </form>
       </div>
@@ -250,50 +253,51 @@
 </template>
 
 <script setup>
+// Importaciones de Vue y composables necesarios
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useTripLists } from '@/composables/useTripLists';
 import { safeGoBack } from '@/utils/navegation';
 
-// Router
+// Obtener el router y la ruta actual
 const route = useRoute();
 const router = useRouter();
 
-// Estado
-const lista = ref(null);
-const cargando = ref(true);
-const error = ref(null);
-const mostrarModal = ref(false);
-const mostrarModalLista = ref(false);
-const modoEdicion = ref(false);
-const itemActual = ref({
+// Obtener funciones del composable useTripLists
+const {
+  obtenerLista,        // Función para obtener una lista por ID
+  actualizarLista,     // Función para actualizar una lista
+  agregarItem,         // Función para añadir un item a la lista
+  actualizarItem,      // Función para actualizar un item existente
+  eliminarItem: eliminarItemLista,  // Función para eliminar un item
+  toggleCompletado,    // Función para marcar/desmarcar un item como completado
+  categorias: categoriasList,  // Lista de categorías disponibles
+  obtenerCategoria     // Función para obtener información de una categoría
+} = useTripLists();
+
+// Variables de estado para gestionar la interfaz
+const lista = ref(null);                // Almacena los datos de la lista actual
+const cargando = ref(true);             // Controla el estado de carga
+const error = ref(null);                // Almacena mensajes de error
+const mostrarModal = ref(false);        // Controla la visibilidad del modal de item
+const mostrarModalLista = ref(false);   // Controla la visibilidad del modal de lista
+const modoEdicion = ref(false);         // Indica si estamos editando o creando un item
+const itemActual = ref({                // Datos del item que se está editando/creando
   texto: '',
   categoria: 'otros',
   notas: '',
   completado: false
 });
-const listaEditada = ref({});
-const mostrarTodasCategorias = ref(true);
-const categoriaSeleccionada = ref('');
-const notifications = ref([]);
+const listaEditada = ref({});           // Datos de la lista que se está editando
+const mostrarTodasCategorias = ref(true);  // Indica si mostrar todas las categorías
+const categoriaSeleccionada = ref('');     // Categoría seleccionada para filtrar
+const notifications = ref([]);             // Almacena las notificaciones
 
 // Control de notificaciones de guardado automático
 let lastSaveNotification = 0;
 const NOTIFICATION_COOLDOWN = 3000; // 3 segundos entre notificaciones
 
-// Composables
-const {
-  obtenerLista,
-  actualizarLista,
-  agregarItem,
-  actualizarItem,
-  eliminarItem: eliminarItemLista,
-  toggleCompletado,
-  categorias: categoriasList,
-  obtenerCategoria
-} = useTripLists();
-
-// Cargar lista al montar el componente
+// Función para cargar la lista desde el almacenamiento
 const cargarLista = async () => {
   cargando.value = true;
   error.value = null;
@@ -302,21 +306,21 @@ const cargarLista = async () => {
     // Verificar que el ID existe en la ruta
     const id = route.params.id;
     if (!id) {
-      throw new Error('ID de lista no proporcionado');
+      throw new Error('Trip ID not provided');
     }
 
-    console.log("Cargando lista con ID:", id);
+    console.log("Loading trip with ID:", id);
 
     // Obtener la lista
     const resultado = obtenerLista(id);
 
     if (!resultado) {
-      console.error("Lista no encontrada con ID:", id);
-      throw new Error('No se encontró la lista de viaje');
+      console.error("Trip not found with ID:", id);
+      throw new Error('Trip not found');
     }
 
     lista.value = resultado;
-    console.log("Lista cargada:", lista.value);
+    console.log("Trip loaded:", lista.value);
 
     // Asegurarse de que items sea un array
     if (!lista.value.items) {
@@ -324,18 +328,19 @@ const cargarLista = async () => {
     }
 
   } catch (err) {
-    console.error('Error al cargar lista:', err);
-    error.value = 'No se pudo cargar la lista de viaje. Por favor, intenta de nuevo.';
+    console.error('Error loading trip:', err);
+    error.value = 'Could not load trip details. Please try again.';
   } finally {
     cargando.value = false;
   }
 }
 
+// Ejecutar al montar el componente
 onMounted(() => {
   cargarLista();
 });
 
-// Limpiar al desmontar
+// Limpiar recursos al desmontar el componente
 onUnmounted(() => {
   // Limpiar cualquier recurso si es necesario
 });
@@ -349,28 +354,31 @@ watch(
       if (now - lastSaveNotification > NOTIFICATION_COOLDOWN) {
         showNotification({
           type: 'success',
-          icon: 'user-check',
-          title: 'Guardado automático',
-          message: 'Tus cambios se guardan automáticamente'
+          icon: 'check-circle',
+          title: 'Auto-saved',
+          message: 'Your changes are saved automatically'
         });
         lastSaveNotification = now;
       }
     }
   },
-  { deep: true }
+  { deep: true }  // Observar cambios profundos en el objeto
 );
 
-// Computados
+// Propiedades computadas
+// Número de items completados
 const itemsCompletados = computed(() => {
   if (!lista.value || !lista.value.items) return 0;
   return lista.value.items.filter(item => item.completado).length;
 });
 
+// Número de items pendientes
 const itemsPendientes = computed(() => {
   if (!lista.value || !lista.value.items) return 0;
   return lista.value.items.filter(item => !item.completado).length;
 });
 
+// Días restantes para el viaje
 const diasRestantes = computed(() => {
   if (!lista.value || !lista.value.fechaInicio) return 0;
 
@@ -380,20 +388,20 @@ const diasRestantes = computed(() => {
   const fechaInicio = new Date(lista.value.fechaInicio);
   fechaInicio.setHours(0, 0, 0, 0);
 
-
   if (fechaInicio < hoy) return 0;
 
   return Math.ceil((fechaInicio - hoy) / (1000 * 60 * 60 * 24));
 });
 
+// Lista de categorías con iconos
 const categorias = computed(() => {
-  // Convertir los iconos de texto a objetos de icono para Font Awesome
   return categoriasList.map(cat => ({
     ...cat,
     icon: cat.icon // Asumimos que los iconos ya están en el formato correcto
   }));
 });
 
+// Items filtrados según la categoría seleccionada
 const itemsFiltrados = computed(() => {
   if (!lista.value || !lista.value.items) return [];
 
@@ -405,20 +413,23 @@ const itemsFiltrados = computed(() => {
 });
 
 // Métodos
+// Calcular el porcentaje de items completados
 function calcularPorcentajeCompletado() {
   if (!lista.value || !lista.value.items || lista.value.items.length === 0) return 0;
   return Math.round((itemsCompletados.value / lista.value.items.length) * 100);
 }
 
+// Formatear fecha para mostrar en formato DD/MM/YYYY
 function formatearFecha(fecha) {
   if (!fecha) return '';
-  return new Date(fecha).toLocaleDateString('es-ES', {
+  return new Date(fecha).toLocaleDateString('en-US', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   });
 }
 
+// Mostrar modal para crear un nuevo item
 function mostrarModalCrearItem() {
   modoEdicion.value = false;
 
@@ -437,39 +448,41 @@ function mostrarModalCrearItem() {
   mostrarModal.value = true;
 }
 
+// Mostrar modal para editar un item existente
 function editarItem(item) {
   modoEdicion.value = true;
   itemActual.value = { ...item };
   mostrarModal.value = true;
 }
 
+// Guardar un item (nuevo o editado)
 async function guardarItem() {
   if (!lista.value) return;
 
   try {
     if (!itemActual.value.texto.trim()) {
-      alert("El texto del elemento es obligatorio");
+      alert("Item text is required");
       return;
     }
 
     if (modoEdicion.value && itemActual.value.id) {
       // Actualizar item existente
-      console.log("Actualizando item:", itemActual.value);
+      console.log("Updating item:", itemActual.value);
       const resultado = actualizarItem(lista.value.id, itemActual.value.id, itemActual.value);
       if (!resultado) {
-        throw new Error("No se pudo actualizar el elemento");
+        throw new Error("Could not update item");
       }
 
       // Mostrar notificación
       showNotification({
         type: 'success',
         icon: 'check-circle',
-        title: 'Elemento actualizado',
-        message: 'El elemento se ha actualizado correctamente'
+        title: 'Item updated',
+        message: 'Item has been updated successfully'
       });
     } else {
       // Crear nuevo item
-      console.log("Creando nuevo item:", itemActual.value);
+      console.log("Creating new item:", itemActual.value);
       const resultado = agregarItem(
         lista.value.id,
         itemActual.value.texto,
@@ -478,101 +491,104 @@ async function guardarItem() {
         itemActual.value.notas // Añadir las notas como parámetro
       );
       if (!resultado) {
-        throw new Error("No se pudo crear el elemento");
+        throw new Error("Could not create item");
       }
 
       // Mostrar notificación
       showNotification({
         type: 'success',
         icon: 'check-circle',
-        title: 'Elemento añadido',
-        message: 'El elemento se ha añadido correctamente a tu lista'
+        title: 'Item added',
+        message: 'Item has been added to your list'
       });
     }
 
     cerrarModal();
     await cargarLista();
   } catch (err) {
-    console.error('Error al guardar item:', err);
+    console.error('Error saving item:', err);
 
     // Mostrar notificación de error
     showNotification({
       type: 'error',
       icon: 'exclamation-circle',
       title: 'Error',
-      message: 'Ocurrió un error al guardar el elemento. Por favor, intenta de nuevo.'
+      message: 'An error occurred while saving the item. Please try again.'
     });
   }
 }
 
+// Eliminar un item de la lista
 async function eliminarItem(item) {
   if (!lista.value || !item.id) return;
 
-  if (!confirm("¿Estás seguro de que deseas eliminar este elemento?")) {
+  if (!confirm("Are you sure you want to delete this item?")) {
     return;
   }
 
   try {
-    console.log("Eliminando item:", item.id);
+    console.log("Deleting item:", item.id);
     const resultado = eliminarItemLista(lista.value.id, item.id);
     if (!resultado) {
-      throw new Error("No se pudo eliminar el elemento");
+      throw new Error("Could not delete item");
     }
 
     // Mostrar notificación
     showNotification({
       type: 'info',
       icon: 'trash',
-      title: 'Elemento eliminado',
-      message: 'El elemento se ha eliminado correctamente'
+      title: 'Item deleted',
+      message: 'Item has been deleted successfully'
     });
 
     await cargarLista();
   } catch (err) {
-    console.error('Error al eliminar item:', err);
+    console.error('Error deleting item:', err);
 
     // Mostrar notificación de error
     showNotification({
       type: 'error',
       icon: 'exclamation-circle',
       title: 'Error',
-      message: 'Ocurrió un error al eliminar el elemento. Por favor, intenta de nuevo.'
+      message: 'An error occurred while deleting the item. Please try again.'
     });
   }
 }
 
+// Marcar/desmarcar un item como completado
 async function toggleItemCompletado(item) {
   if (!lista.value) return;
 
   try {
-    console.log("Cambiando estado de item:", item.id);
+    console.log("Toggling item status:", item.id);
     const resultado = toggleCompletado(lista.value.id, item.id);
     if (!resultado) {
-      throw new Error("No se pudo cambiar el estado del elemento");
+      throw new Error("Could not change item status");
     }
 
     // Mostrar notificación
     showNotification({
       type: 'success',
       icon: 'check-circle',
-      title: 'Estado actualizado',
-      message: item.completado ? 'Elemento marcado como pendiente' : 'Elemento marcado como completado'
+      title: 'Status updated',
+      message: item.completado ? 'Item marked as pending' : 'Item marked as completed'
     });
 
     await cargarLista();
   } catch (err) {
-    console.error('Error al actualizar estado del item:', err);
+    console.error('Error updating item status:', err);
 
     // Mostrar notificación de error
     showNotification({
       type: 'error',
       icon: 'exclamation-circle',
       title: 'Error',
-      message: 'Ocurrió un error al actualizar el estado del elemento. Por favor, intenta de nuevo.'
+      message: 'An error occurred while updating the item status. Please try again.'
     });
   }
 }
 
+// Seleccionar una categoría para filtrar
 function seleccionarCategoria(categoria) {
   mostrarTodasCategorias.value = false;
   if (categoriaSeleccionada.value === categoria) {
@@ -583,16 +599,19 @@ function seleccionarCategoria(categoria) {
   }
 }
 
+// Obtener el nombre de una categoría a partir de su ID
 function obtenerNombreCategoria(categoriaId) {
   const categoria = obtenerCategoria(categoriaId);
-  return categoria ? categoria.nombre : 'Sin categoría';
+  return categoria ? categoria.nombre : 'No category';
 }
 
+// Obtener el icono de una categoría a partir de su ID
 function obtenerIconoCategoria(categoriaId) {
   const categoria = obtenerCategoria(categoriaId);
   return categoria ? categoria.icon : 'box';
 }
 
+// Mostrar modal para editar la lista
 function editarLista() {
   if (!lista.value) return;
 
@@ -600,62 +619,67 @@ function editarLista() {
   mostrarModalLista.value = true;
 }
 
+// Guardar cambios en la lista
 async function guardarLista() {
   if (!lista.value) return;
 
   try {
     if (!listaEditada.value.nombre.trim()) {
-      alert("El nombre del viaje es obligatorio");
+      alert("Trip name is required");
       return;
     }
 
     if (!listaEditada.value.destino.trim()) {
-      alert("El destino es obligatorio");
+      alert("Destination is required");
       return;
     }
 
-    console.log("Actualizando lista:", listaEditada.value);
+    console.log("Updating trip:", listaEditada.value);
     const resultado = actualizarLista(lista.value.id, listaEditada.value);
     if (!resultado) {
-      throw new Error("No se pudo actualizar la lista");
+      throw new Error("Could not update trip");
     }
 
     // Mostrar notificación
     showNotification({
       type: 'success',
       icon: 'check-circle',
-      title: 'Viaje actualizado',
-      message: 'Los detalles del viaje se han actualizado correctamente'
+      title: 'Trip updated',
+      message: 'Trip details have been updated successfully'
     });
 
     cerrarModalLista();
     await cargarLista();
   } catch (err) {
-    console.error('Error al guardar lista:', err);
+    console.error('Error saving trip:', err);
 
     // Mostrar notificación de error
     showNotification({
       type: 'error',
       icon: 'exclamation-circle',
       title: 'Error',
-      message: 'Ocurrió un error al guardar los cambios. Por favor, intenta de nuevo.'
+      message: 'An error occurred while saving changes. Please try again.'
     });
   }
 }
 
+// Cerrar el modal de item
 function cerrarModal() {
   mostrarModal.value = false;
 }
 
+// Cerrar el modal de lista
 function cerrarModalLista() {
   mostrarModalLista.value = false;
 }
 
+// Volver a la vista anterior
 function volverAtras() {
   safeGoBack(router, { name: 'TripLists' });
 }
 
 // Sistema de notificaciones
+// Mostrar una notificación
 function showNotification(notification) {
   notifications.value.push({
     ...notification,
@@ -668,19 +692,21 @@ function showNotification(notification) {
   }, 5000);
 }
 
+// Eliminar una notificación
 function removeNotification(index) {
   notifications.value.splice(index, 1);
 }
 </script>
 
 <style scoped>
-/* Estilos generales */
+/* Estilos generales del contenedor */
 .trip-detail-container {
-  font-family: 'Roboto', sans-serif;
-  max-width: 1000px;
+  font-family: 'Poppins', sans-serif;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px 80px;
+  padding: 2rem 1.5rem 5rem;
   color: #333;
+  background-color: #f8f9fa;
 }
 
 /* Estados de carga y error */
@@ -690,18 +716,19 @@ function removeNotification(index) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 50px 0;
+  min-height: 70vh;
   text-align: center;
+  padding: 2rem;
 }
 
 .loading-spinner {
-  border: 4px solid #f3f4f6;
-  border-top: 4px solid #3498db;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top: 4px solid var(--color-primary);
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   animation: spin 1s linear infinite;
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
 }
 
 @keyframes spin {
@@ -715,32 +742,37 @@ function removeNotification(index) {
 }
 
 .btn-retry {
-  margin-top: 20px;
-  background-color: #3498db;
+  margin-top: 1.5rem;
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .btn-retry:hover {
-  background-color: #2980b9;
+  background-color: var(--color-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Cabecera */
 .trip-header {
-  padding: 20px 0;
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 30px;
+  background-color: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .trip-header-content {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 1rem;
 }
 
 .trip-title-section {
@@ -748,22 +780,22 @@ function removeNotification(index) {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 1rem;
 }
 
 .title-with-back {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 1rem;
 }
 
 .btn-back {
   background: none;
   border: none;
-  color: #3498db;
-  font-size: 20px;
+  color: var(--color-primary);
+  font-size: 1.25rem;
   cursor: pointer;
-  padding: 5px;
+  padding: 0.5rem;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -774,13 +806,13 @@ function removeNotification(index) {
 }
 
 .btn-back:hover {
-  background-color: #f0f9ff;
+  background-color: rgba(var(--color-primary-rgb), 0.1);
   transform: translateX(-3px);
 }
 
 .trip-title {
-  font-size: 32px;
-  color: #3498db;
+  font-size: 2rem;
+  color: var(--color-primary);
   margin: 0;
   font-weight: 700;
 }
@@ -788,175 +820,185 @@ function removeNotification(index) {
 .trip-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  color: #666;
-  font-size: 16px;
+  gap: 1.5rem;
+  color: #6c757d;
+  font-size: 1rem;
 }
 
 .trip-destination,
 .trip-dates {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
-.trip-destination i,
-.trip-dates i {
-  color: #3498db;
+.trip-destination svg,
+.trip-dates svg {
+  color: var(--color-primary);
 }
 
 .trip-actions {
   display: flex;
-  gap: 10px;
+  gap: 0.75rem;
 }
 
 .btn-icon-text {
   background-color: #f8f9fa;
   color: #555;
   border: 1px solid #ddd;
-  padding: 8px 15px;
-  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
   cursor: pointer;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   transition: all 0.2s;
 }
 
 .btn-icon-text:hover {
   background-color: #e9ecef;
   color: #333;
+  transform: translateY(-2px);
 }
 
-.btn-icon-text i {
-  font-size: 14px;
+.btn-icon-text svg {
+  font-size: 0.875rem;
 }
 
 /* Progreso */
 .trip-progress-container {
-  background-color: #f8f9fa;
-  border-radius: 12px;
-  padding: 25px;
-  margin-bottom: 35px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background-color: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .progress-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
 }
 
 .progress-header h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 1.5rem;
   color: #333;
   font-weight: 600;
 }
 
 .progress-percentage {
-  font-size: 28px;
+  font-size: 2rem;
   font-weight: bold;
-  color: #3498db;
+  color: var(--color-primary);
 }
 
 .progress-bar {
-  height: 12px;
+  height: 10px;
   background-color: #e9ecef;
-  border-radius: 6px;
+  border-radius: 5px;
   overflow: hidden;
-  margin-bottom: 25px;
+  margin-bottom: 2rem;
 }
 
 .progress-fill {
   height: 100%;
-  background-color: #2ecc71;
+  background-color: var(--color-primary);
   transition: width 0.5s ease-in-out;
 }
 
 .progress-low {
-  background-color: #e74c3c;
+  background-color: #dc3545;
 }
 
 .progress-medium {
-  background-color: #f39c12;
+  background-color: #ffc107;
 }
 
 .progress-high {
-  background-color: #2ecc71;
+  background-color: #28a745;
 }
 
 .progress-stats {
-  display: flex;
-  justify-content: space-around;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
   text-align: center;
 }
 
 .stat {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
+  background-color: #f8f9fa;
+  padding: 1.25rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
 }
 
 .stat:hover {
   background-color: #e9ecef;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 2rem;
   font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #666;
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-weight: 500;
 }
 
 /* Lista de elementos */
 .items-container {
-  position: relative;
+  background-color: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .items-header {
-  margin-bottom: 25px;
+  margin-bottom: 2rem;
 }
 
 .items-header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
 }
 
 .items-header h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 1.5rem;
   color: #333;
   font-weight: 600;
 }
 
 .btn-add-item {
-  background-color: #3498db;
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.75rem;
   transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(var(--color-primary-rgb), 0.2);
 }
 
 .btn-add-item:hover {
-  background-color: #2980b9;
+  background-color: var(--color-accent);
   transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(var(--color-primary-rgb), 0.3);
 }
 
 .btn-add-item:active {
@@ -967,86 +1009,85 @@ function removeNotification(index) {
 .categories-filter {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 25px;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
 }
 
 .category-pill {
   background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  padding: 8px 15px;
-  font-size: 14px;
+  border: 1px solid #e9ecef;
+  border-radius: 2rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
+  font-weight: 500;
 }
 
 .category-pill:hover {
   background-color: #e9ecef;
+  transform: translateY(-2px);
 }
 
-.category-pill i {
-  font-size: 14px;
+.category-pill svg {
+  font-size: 0.875rem;
 }
 
 .category-selected {
-  background-color: #3498db;
-  border-color: #3498db;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
   color: white;
+  box-shadow: 0 4px 6px rgba(var(--color-primary-rgb), 0.2);
 }
 
 .category-selected:hover {
-  background-color: #2980b9;
+  background-color: var(--color-accent);
 }
 
 /* Lista vacía */
 .empty-items {
   text-align: center;
-  padding: 40px 0;
-  color: #666;
+  padding: 3rem 2rem;
+  color: #6c757d;
   background-color: #f8f9fa;
-  border-radius: 12px;
-  margin-top: 20px;
+  border-radius: 0.75rem;
+  margin-top: 1.5rem;
 }
 
 .empty-illustration {
-  font-size: 60px;
-  color: #bbb;
-  margin-bottom: 20px;
+  font-size: 4rem;
+  color: #dee2e6;
+  margin-bottom: 1.5rem;
 }
 
 .empty-items p {
-  font-size: 18px;
-  margin-bottom: 20px;
+  font-size: 1.125rem;
+  margin-bottom: 1rem;
 }
 
 .empty-hint {
-  font-size: 14px;
-  color: #777;
-  margin-top: 10px;
-}
-
-.empty-items button {
-  margin-top: 15px;
+  font-size: 0.875rem;
+  color: #adb5bd;
+  margin-top: 0.75rem;
 }
 
 /* Lista de elementos */
 .items-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 1rem;
 }
 
 .item-card {
   display: flex;
   align-items: flex-start;
-  background-color: white;
+  background-color: #f8f9fa;
   border: 1px solid #e9ecef;
-  border-radius: 10px;
-  padding: 18px;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
   transition: all 0.3s;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
@@ -1054,20 +1095,21 @@ function removeNotification(index) {
 .item-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  background-color: white;
 }
 
 .item-completed {
-  background-color: #f8f9fa;
-  border-color: #e9ecef;
+  background-color: #f0f9f0;
+  border-color: #d1e7dd;
 }
 
 .item-completed .item-text {
   text-decoration: line-through;
-  color: #aaa;
+  color: #adb5bd;
 }
 
 .item-checkbox {
-  margin-right: 15px;
+  margin-right: 1rem;
   padding-top: 2px;
 }
 
@@ -1079,7 +1121,7 @@ function removeNotification(index) {
   display: inline-block;
   width: 24px;
   height: 24px;
-  border: 2px solid #ddd;
+  border: 2px solid #ced4da;
   border-radius: 6px;
   position: relative;
   cursor: pointer;
@@ -1087,12 +1129,12 @@ function removeNotification(index) {
 }
 
 .item-checkbox label:hover {
-  border-color: #3498db;
+  border-color: var(--color-primary);
 }
 
 .item-checkbox input[type="checkbox"]:checked+label {
-  background-color: #3498db;
-  border-color: #3498db;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .item-checkbox input[type="checkbox"]:checked+label::after {
@@ -1113,8 +1155,8 @@ function removeNotification(index) {
 }
 
 .item-text {
-  font-size: 18px;
-  margin-bottom: 8px;
+  font-size: 1.125rem;
+  margin-bottom: 0.5rem;
   font-weight: 500;
   color: #333;
 }
@@ -1122,26 +1164,27 @@ function removeNotification(index) {
 .item-details {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .item-category {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background-color: #e9f7fe;
-  color: #3498db;
-  font-size: 13px;
-  padding: 4px 10px;
-  border-radius: 15px;
+  gap: 0.375rem;
+  background-color: rgba(var(--color-primary-rgb), 0.1);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-weight: 500;
 }
 
 .item-notes {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: #777;
-  font-size: 13px;
+  gap: 0.375rem;
+  color: #6c757d;
+  font-size: 0.875rem;
   max-width: 300px;
   white-space: nowrap;
   overflow: hidden;
@@ -1150,43 +1193,51 @@ function removeNotification(index) {
 
 .item-actions {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.item-card:hover .item-actions {
+  opacity: 1;
 }
 
 .btn-icon {
   background: none;
   border: none;
   cursor: pointer;
-  color: #aaa;
-  padding: 6px;
-  border-radius: 6px;
+  color: #adb5bd;
+  padding: 0.375rem;
+  border-radius: 0.375rem;
   transition: all 0.2s;
 }
 
 .btn-icon:hover {
-  background-color: #f8f9fa;
+  background-color: #e9ecef;
   color: #333;
 }
 
 /* Botones principales */
 .btn-primary {
-  background-color: #3498db;
+  background-color: var(--color-primary);
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
   cursor: pointer;
-  font-weight: 500;
-  display: flex;
+  font-weight: 600;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.5rem;
   transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(var(--color-primary-rgb), 0.2);
 }
 
 .btn-primary:hover {
-  background-color: #2980b9;
+  background-color: var(--color-accent);
   transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(var(--color-primary-rgb), 0.3);
 }
 
 .btn-primary:active {
@@ -1195,22 +1246,22 @@ function removeNotification(index) {
 
 .btn-secondary {
   background-color: #f8f9fa;
-  color: #555;
-  border: 1px solid #ddd;
-  padding: 12px 24px;
-  border-radius: 8px;
+  color: #495057;
+  border: 1px solid #e9ecef;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
   cursor: pointer;
   font-weight: 500;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.5rem;
   transition: all 0.2s;
 }
 
 .btn-secondary:hover {
   background-color: #e9ecef;
-  color: #333;
+  color: #212529;
 }
 
 /* Modales */
@@ -1220,12 +1271,16 @@ function removeNotification(index) {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
+  /* Aumentado para estar por encima del header */
   animation: fadeIn 0.2s ease-out;
+  backdrop-filter: blur(3px);
+  padding: 1rem;
+  /* Añadido padding para móviles */
 }
 
 @keyframes fadeIn {
@@ -1240,13 +1295,16 @@ function removeNotification(index) {
 
 .modal-container {
   background-color: white;
-  border-radius: 12px;
-  width: 90%;
+  border-radius: 1rem;
+  width: 100%;
   max-width: 550px;
-  max-height: 90vh;
+  max-height: calc(100vh - 2rem);
+  /* Asegurar que no exceda la altura de la pantalla */
   overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   animation: slideUp 0.3s ease-out;
+  margin: auto;
+  /* Centrar el modal */
 }
 
 @keyframes slideUp {
@@ -1262,7 +1320,7 @@ function removeNotification(index) {
 }
 
 .modal-header {
-  padding: 20px 25px;
+  padding: 1.5rem 1.5rem 1rem;
   border-bottom: 1px solid #e9ecef;
   display: flex;
   justify-content: space-between;
@@ -1271,8 +1329,8 @@ function removeNotification(index) {
 
 .modal-header h2 {
   margin: 0;
-  font-size: 22px;
-  color: #333;
+  font-size: 1.5rem;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -1280,10 +1338,10 @@ function removeNotification(index) {
   background: none;
   border: none;
   cursor: pointer;
-  color: #aaa;
-  font-size: 20px;
-  width: 30px;
-  height: 30px;
+  color: #adb5bd;
+  font-size: 1.25rem;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1293,20 +1351,20 @@ function removeNotification(index) {
 
 .btn-close:hover {
   background-color: #f8f9fa;
-  color: #333;
+  color: #495057;
 }
 
 .modal-body {
-  padding: 25px;
+  padding: 1.5rem;
 }
 
 .form-group {
-  margin-bottom: 25px;
+  margin-bottom: 1.5rem;
 }
 
 .form-row {
   display: flex;
-  gap: 20px;
+  gap: 1.5rem;
 }
 
 .form-row .form-group {
@@ -1315,41 +1373,42 @@ function removeNotification(index) {
 
 label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #333;
-  font-size: 16px;
+  color: #495057;
+  font-size: 1rem;
 }
 
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.75rem;
   cursor: pointer;
   font-weight: normal;
-  color: #555;
+  color: #495057;
 }
 
 .checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: #3498db;
+  accent-color: var(--color-primary);
 }
 
 .form-input,
 .form-textarea {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 0.2s;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s;
 }
 
 .form-input:focus,
 .form-textarea:focus {
-  border-color: #3498db;
+  border-color: var(--color-primary);
   outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
 }
 
 .form-textarea {
@@ -1360,15 +1419,15 @@ label {
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 15px;
-  margin-top: 30px;
+  gap: 1rem;
+  margin-top: 2rem;
 }
 
 /* Selector de categorías */
 .category-selector {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 0.75rem;
 }
 
 .category-option {
@@ -1376,36 +1435,38 @@ label {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 15px 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  gap: 0.5rem;
+  padding: 1rem 0.75rem;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .category-option:hover {
   background-color: #f8f9fa;
+  transform: translateY(-2px);
 }
 
-.category-option i {
-  font-size: 20px;
-  color: #777;
+.category-option svg {
+  font-size: 1.25rem;
+  color: #6c757d;
 }
 
 .category-option span {
-  font-size: 14px;
-  color: #555;
+  font-size: 0.875rem;
+  color: #495057;
+  text-align: center;
 }
 
 .category-option-selected {
-  background-color: #e9f7fe;
-  border-color: #3498db;
+  background-color: rgba(var(--color-primary-rgb), 0.1);
+  border-color: var(--color-primary);
 }
 
-.category-option-selected i,
+.category-option-selected svg,
 .category-option-selected span {
-  color: #3498db;
+  color: var(--color-primary);
 }
 
 /* Sistema de notificaciones */
@@ -1423,12 +1484,12 @@ label {
 .notification {
   display: flex;
   align-items: flex-start;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   animation: slideInRight 0.3s ease-out;
   background-color: white;
-  border-left: 4px solid #3498db;
+  border-left: 4px solid var(--color-primary);
 }
 
 @keyframes slideInRight {
@@ -1444,43 +1505,43 @@ label {
 }
 
 .notification.success {
-  border-left-color: #2ecc71;
+  border-left-color: #28a745;
 }
 
 .notification.error {
-  border-left-color: #e74c3c;
+  border-left-color: #dc3545;
 }
 
 .notification.info {
-  border-left-color: #3498db;
+  border-left-color: var(--color-primary);
 }
 
 .notification.warning {
-  border-left-color: #f39c12;
+  border-left-color: #ffc107;
 }
 
 .notification-icon {
-  margin-right: 15px;
-  font-size: 20px;
+  margin-right: 0.75rem;
+  font-size: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .notification.success .notification-icon {
-  color: #2ecc71;
+  color: #28a745;
 }
 
 .notification.error .notification-icon {
-  color: #e74c3c;
+  color: #dc3545;
 }
 
 .notification.info .notification-icon {
-  color: #3498db;
+  color: var(--color-primary);
 }
 
 .notification.warning .notification-icon {
-  color: #f39c12;
+  color: #ffc107;
 }
 
 .notification-content {
@@ -1489,32 +1550,42 @@ label {
 
 .notification-title {
   font-weight: 600;
-  margin-bottom: 5px;
-  color: #333;
+  margin-bottom: 0.25rem;
+  color: #212529;
 }
 
 .notification-message {
-  font-size: 14px;
-  color: #666;
+  font-size: 0.875rem;
+  color: #6c757d;
 }
 
 .notification-close {
   background: none;
   border: none;
-  color: #aaa;
+  color: #adb5bd;
   cursor: pointer;
-  padding: 5px;
-  margin-left: 10px;
-  font-size: 14px;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
   transition: color 0.2s;
 }
 
 .notification-close:hover {
-  color: #333;
+  color: #495057;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+  .trip-detail-container {
+    padding: 1.5rem 1rem 5rem;
+  }
+
+  .trip-header,
+  .trip-progress-container,
+  .items-container {
+    padding: 1.5rem;
+  }
+
   .trip-title-section {
     flex-direction: column;
     align-items: flex-start;
@@ -1522,12 +1593,13 @@ label {
 
   .trip-actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-end;
+    margin-top: 1rem;
   }
 
   .progress-stats {
-    flex-direction: column;
-    gap: 15px;
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .category-selector {
@@ -1544,22 +1616,33 @@ label {
     right: 20px;
     max-width: none;
   }
+
+  .btn-add-item {
+    padding: 0.5rem 1rem;
+  }
 }
 
 @media (max-width: 480px) {
+
+  .trip-header,
+  .trip-progress-container,
+  .items-container {
+    padding: 1.25rem;
+  }
+
   .category-selector {
     grid-template-columns: 1fr;
   }
 
   .item-details {
     flex-direction: column;
-    gap: 5px;
+    gap: 0.5rem;
   }
 
   .items-header-top {
     flex-direction: column;
     align-items: flex-start;
-    gap: 15px;
+    gap: 1rem;
   }
 
   .btn-add-item {
@@ -1568,6 +1651,79 @@ label {
 
   .title-with-back {
     width: 100%;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  .modal-container {
+    width: 95%;
+  }
+}
+
+/* Estilos específicos para modales en móvil */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.5rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+    /* Espacio para evitar el header */
+  }
+
+  .modal-container {
+    max-height: calc(100vh - 4rem);
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .modal-header {
+    padding: 1rem 1rem 0.75rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .form-actions button {
+    width: 100%;
+    padding: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 0.25rem;
+    padding-top: 1.5rem;
+  }
+
+  .modal-container {
+    max-height: calc(100vh - 3rem);
+    border-radius: 0.75rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .category-selector {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .category-option {
+    padding: 0.75rem 0.5rem;
   }
 }
 </style>

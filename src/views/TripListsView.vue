@@ -1,4 +1,5 @@
 <script setup>
+// Importaciones de Vue y composables necesarios
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTripLists } from '@/composables/useTripLists';
@@ -6,15 +7,16 @@ import { useAuth } from '@/composables/useAuth';
 import AuthModal from '@/components/AuthModal.vue';
 import { checkTripsAndNotify } from '@/services/tripNotificationService';
 
+// Inicialización del router y composables
 const router = useRouter();
 const { isUserAuthenticated } = useAuth();
 const {
-    tripLists,
-    listasOrdenadas,
-    listasProximas,
-    isLoading,
-    crearLista,
-    cargarListas
+    tripLists,        // Lista completa de viajes
+    listasOrdenadas,  // Listas ordenadas por fecha
+    listasProximas,   // Listas de viajes próximos
+    isLoading,        // Estado de carga
+    crearLista,       // Función para crear una nueva lista
+    cargarListas      // Función para cargar listas desde el almacenamiento
 } = useTripLists();
 
 // Estado para el modal de autenticación
@@ -36,6 +38,7 @@ const formErrors = ref({});
 const filtroActual = ref('proximos'); // 'todos', 'proximos', 'pasados'
 
 // Listas filtradas según el filtro actual
+// Calcula dinámicamente qué listas mostrar basado en el filtro seleccionado
 const listasFiltradas = computed(() => {
     const hoy = new Date();
 
@@ -49,14 +52,15 @@ const listasFiltradas = computed(() => {
 });
 
 // Verificar si hay listas
+// Se usa para mostrar el estado vacío cuando no hay viajes
 const hayListas = computed(() => {
     return listasFiltradas.value.length > 0;
 });
 
-// Formatear fecha para mostrar
+// Formatear fecha para mostrar en formato DD/MM/YYYY
 function formatearFecha(fecha) {
     if (!fecha) return '';
-    return new Date(fecha).toLocaleDateString('es-ES', {
+    return new Date(fecha).toLocaleDateString('en-US', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
@@ -64,19 +68,21 @@ function formatearFecha(fecha) {
 }
 
 // Calcular días restantes para un viaje
+// Devuelve un texto descriptivo según la proximidad del viaje
 function diasRestantes(fechaInicio) {
     const hoy = new Date();
     const inicio = new Date(fechaInicio);
     const diferencia = inicio - hoy;
     const dias = Math.ceil(diferencia / (1000 * 60 * 60 * 24));
 
-    if (dias < 0) return 'Viaje pasado';
-    if (dias === 0) return '¡Hoy!';
-    if (dias === 1) return 'Mañana';
-    return `En ${dias} días`;
+    if (dias < 0) return 'Past trip';
+    if (dias === 0) return 'Today!';
+    if (dias === 1) return 'Tomorrow';
+    return `In ${dias} days`;
 }
 
 // Calcular porcentaje de completado
+// Se usa para mostrar la barra de progreso de cada viaje
 function porcentajeCompletado(lista) {
     if (!lista.items || lista.items.length === 0) return 0;
 
@@ -85,6 +91,7 @@ function porcentajeCompletado(lista) {
 }
 
 // Abrir modal para crear nueva lista
+// Si el usuario no está autenticado, muestra el modal de login primero
 function abrirModalNuevaLista() {
     if (!isUserAuthenticated()) {
         showAuthModal.value = true;
@@ -104,27 +111,28 @@ function abrirModalNuevaLista() {
 }
 
 // Validar formulario
+// Verifica que todos los campos requeridos estén completos y sean válidos
 function validarFormulario() {
     formErrors.value = {};
     let isValid = true;
 
     if (!nuevaLista.value.nombre.trim()) {
-        formErrors.value.nombre = 'El nombre es obligatorio';
+        formErrors.value.nombre = 'Name is required';
         isValid = false;
     }
 
     if (!nuevaLista.value.destino.trim()) {
-        formErrors.value.destino = 'El destino es obligatorio';
+        formErrors.value.destino = 'Destination is required';
         isValid = false;
     }
 
     if (!nuevaLista.value.fechaInicio) {
-        formErrors.value.fechaInicio = 'La fecha de inicio es obligatoria';
+        formErrors.value.fechaInicio = 'Start date is required';
         isValid = false;
     }
 
     if (!nuevaLista.value.fechaFin) {
-        formErrors.value.fechaFin = 'La fecha de fin es obligatoria';
+        formErrors.value.fechaFin = 'End date is required';
         isValid = false;
     }
 
@@ -133,7 +141,7 @@ function validarFormulario() {
         const fin = new Date(nuevaLista.value.fechaFin);
 
         if (fin < inicio) {
-            formErrors.value.fechaFin = 'La fecha de fin no puede ser anterior a la fecha de inicio';
+            formErrors.value.fechaFin = 'End date cannot be earlier than start date';
             isValid = false;
         }
     }
@@ -142,6 +150,7 @@ function validarFormulario() {
 }
 
 // Crear nueva lista
+// Valida el formulario y llama a la función crearLista del composable
 async function crearNuevaLista() {
     if (!validarFormulario()) return;
 
@@ -165,22 +174,23 @@ async function crearNuevaLista() {
             }, 100);
         } else {
             console.error("Error al crear lista: la función crearLista devolvió null o undefined");
-            alert("No se pudo crear el viaje. Por favor, intenta de nuevo.");
+            alert("Could not create the trip. Please try again.");
         }
     } catch (error) {
         console.error("Error al crear nueva lista:", error);
-        alert("Ocurrió un error al crear el viaje. Por favor, intenta de nuevo.");
+        alert("An error occurred while creating the trip. Please try again.");
     }
 }
 
 // Ir a la vista de detalle de una lista
+// Verifica que la lista exista antes de navegar
 function verLista(id) {
     try {
         // Verificar que la lista existe antes de navegar
         const listaExistente = listasOrdenadas.value.find(l => l.id === id);
         if (!listaExistente) {
             console.error('Lista no encontrada:', id);
-            alert("No se encontró la lista seleccionada.");
+            alert("The selected list was not found.");
             return;
         }
 
@@ -188,11 +198,12 @@ function verLista(id) {
         router.push({ name: 'TripListDetail', params: { id } });
     } catch (error) {
         console.error("Error al navegar a la lista:", error);
-        alert("Ocurrió un error al abrir la lista. Por favor, intenta de nuevo.");
+        alert("An error occurred while opening the list. Please try again.");
     }
 }
 
 // Manejar inicio de sesión exitoso
+// Cierra el modal de autenticación y abre el modal de nueva lista
 function handleLoginSuccess() {
     showAuthModal.value = false;
     // Mostrar el modal de nueva lista después de iniciar sesión
@@ -202,14 +213,18 @@ function handleLoginSuccess() {
 }
 
 // Cambiar el filtro actual
+// Actualiza la vista para mostrar todos, próximos o pasados
 function cambiarFiltro(filtro) {
     filtroActual.value = filtro;
 }
 
 // Verificar viajes y enviar notificaciones si es necesario
+// Esta función es la que activa el envío de correos electrónicos
 async function verificarViajesYNotificar() {
     if (isUserAuthenticated()) {
         try {
+            // Esta llamada verifica las fechas de los viajes y envía
+            // correos de recordatorio o felicitación según corresponda
             await checkTripsAndNotify();
             // No mostramos notificación en la UI para no interrumpir la experiencia del usuario
             console.log('Verificación de viajes completada');
@@ -220,6 +235,7 @@ async function verificarViajesYNotificar() {
 }
 
 // Recargar listas
+// Actualiza el estado isLoading durante la carga
 async function recargarListas() {
     try {
         isLoading.value = true;
@@ -232,6 +248,7 @@ async function recargarListas() {
     }
 }
 
+// Hook de ciclo de vida: Se ejecuta cuando el componente se monta
 onMounted(async () => {
     // Recargar listas al montar el componente
     await recargarListas();
@@ -241,6 +258,7 @@ onMounted(async () => {
         showAuthModal.value = true;
     } else {
         // Verificar viajes y enviar notificaciones si es necesario
+        // Esta es la llamada que activa el envío de correos
         verificarViajesYNotificar();
     }
 });
@@ -249,44 +267,54 @@ onMounted(async () => {
 <template>
     <div class="trip-lists-container">
         <div class="container py-4">
-            <!-- Encabezado con ilustración -->
-            <div class="header-container mb-5">
-                <div class="text-center">
-                    <div class="illustration-container mb-3">
-                        <div class="illustration-icon">
-                            <i class="bi bi-suitcase-fill"></i>
-                        </div>
-                    </div>
-                    <h1 class="display-5 fw-bold">Mis Viajes</h1>
-                    <p class="lead text-muted">Organiza tus viajes y no olvides nada importante</p>
-                    <!-- Filtros de viajes -->
-                    <div class="trip-filters">
-                        <button class="filter-btn" :class="{ active: filtroActual === 'todos' }"
+            <!-- Cabecera de la página con título y contador de viajes -->
+            <div class="countries-header">
+                <h1>My Trips</h1>
+                <p v-if="listasFiltradas.length > 0">Organize your {{ listasFiltradas.length }} trips</p>
+            </div>
+
+            <!-- Sección de filtros -->
+            <div class="favorites-filters">
+                <!-- Buscador de viajes (similar al buscador de países) -->
+                <div class="search-filter">
+                    <i class="bi bi-search"></i>
+                    <input type="text" placeholder="Search by trip name..." class="form-control" />
+                </div>
+
+                <!-- Filtro por tipo de viaje (similar al filtro por continente) -->
+                <div class="continent-filters">
+                    <span class="filter-label">Filter by status:</span>
+                    <div class="continent-buttons">
+                        <!-- Botones para cada tipo de viaje con iconos -->
+                        <button class="continent-btn" :class="{ active: filtroActual === 'todos' }"
                             @click="cambiarFiltro('todos')">
-                            <i class="bi bi-grid-3x3-gap-fill me-1"></i> Todos
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                            All
                         </button>
-                        <button class="filter-btn" :class="{ active: filtroActual === 'proximos' }"
+                        <button class="continent-btn" :class="{ active: filtroActual === 'proximos' }"
                             @click="cambiarFiltro('proximos')">
-                            <i class="bi bi-calendar-check me-1"></i> Próximos
+                            <i class="bi bi-calendar-check"></i>
+                            Upcoming
                         </button>
-                        <button class="filter-btn" :class="{ active: filtroActual === 'pasados' }"
+                        <button class="continent-btn" :class="{ active: filtroActual === 'pasados' }"
                             @click="cambiarFiltro('pasados')">
-                            <i class="bi bi-calendar-x me-1"></i> Pasados
+                            <i class="bi bi-calendar-x"></i>
+                            Past
                         </button>
                     </div>
                 </div>
-
-                <!-- Nuevo botón de agregar viaje -->
-                <button class="btn-add-trip" @click="abrirModalNuevaLista">
-                    <span class="btn-text">Nuevo Viaje</span>
-                    <span class="btn-icon"><i class="bi bi-plus-lg"></i></span>
-                </button>
             </div>
+
+            <!-- Botón flotante para agregar nuevo viaje -->
+            <button class="btn-add-trip" @click="abrirModalNuevaLista">
+                <span class="btn-text">New Trip</span>
+                <span class="btn-icon"><i class="bi bi-plus-lg"></i></span>
+            </button>
 
             <!-- Spinner de carga -->
             <div v-if="isLoading" class="text-center py-5">
                 <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Cargando...</span>
+                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
 
@@ -296,19 +324,19 @@ onMounted(async () => {
                     <div class="empty-illustration mb-4">
                         <i class="bi bi-suitcase display-1"></i>
                     </div>
-                    <h3 v-if="filtroActual === 'todos'">No tienes viajes</h3>
-                    <h3 v-else-if="filtroActual === 'proximos'">No tienes viajes próximos</h3>
-                    <h3 v-else>No tienes viajes pasados</h3>
+                    <h3 v-if="filtroActual === 'todos'">You don't have any trips</h3>
+                    <h3 v-else-if="filtroActual === 'proximos'">You don't have upcoming trips</h3>
+                    <h3 v-else>You don't have past trips</h3>
 
                     <p class="text-muted mb-4" v-if="filtroActual === 'todos' || filtroActual === 'proximos'">
-                        Crea tu primer viaje para empezar a organizar
+                        Create your first trip to start organizing
                     </p>
                     <p class="text-muted mb-4" v-else>
-                        Tus viajes pasados aparecerán aquí
+                        Your past trips will appear here
                     </p>
 
                     <button class="btn btn-primary btn-lg" @click="abrirModalNuevaLista">
-                        <i class="bi bi-plus-lg me-2"></i> Nuevo Viaje
+                        <i class="bi bi-plus-lg me-2"></i> New Trip
                     </button>
                 </div>
             </div>
@@ -319,13 +347,13 @@ onMounted(async () => {
                     <div class="trip-card-header">
                         <div class="trip-date">
                             <span class="trip-day">{{ new Date(lista.fechaInicio).getDate() }}</span>
-                            <span class="trip-month">{{ new Date(lista.fechaInicio).toLocaleString('es-ES', {
+                            <span class="trip-month">{{ new Date(lista.fechaInicio).toLocaleString('en-US', {
                                 month:
                                     'short'
                             }) }}</span>
                         </div>
                         <div class="trip-badge"
-                            :class="diasRestantes(lista.fechaInicio) === '¡Hoy!' ? 'trip-badge-today' : ''">
+                            :class="diasRestantes(lista.fechaInicio) === 'Today!' ? 'trip-badge-today' : ''">
                             {{ diasRestantes(lista.fechaInicio) }}
                         </div>
                     </div>
@@ -367,33 +395,33 @@ onMounted(async () => {
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Nuevo Viaje</h5>
+                        <h5 class="modal-title">New Trip</h5>
                         <button type="button" class="btn-close" @click="showNewListModal = false"></button>
                     </div>
                     <div class="modal-body">
                         <form @submit.prevent="crearNuevaLista">
                             <div class="mb-3">
-                                <label for="nombreViaje" class="form-label">¿A dónde vas?</label>
+                                <label for="nombreViaje" class="form-label">Where are you going?</label>
                                 <input type="text" class="form-control form-control-lg"
                                     :class="{ 'is-invalid': formErrors.nombre }" id="nombreViaje"
-                                    v-model="nuevaLista.nombre" placeholder="Ej: Vacaciones en Barcelona" autofocus>
+                                    v-model="nuevaLista.nombre" placeholder="Ex: Vacation in Barcelona" autofocus>
                                 <div class="invalid-feedback">{{ formErrors.nombre }}</div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="destinoViaje" class="form-label">Destino</label>
+                                <label for="destinoViaje" class="form-label">Destination</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
                                     <input type="text" class="form-control"
                                         :class="{ 'is-invalid': formErrors.destino }" id="destinoViaje"
-                                        v-model="nuevaLista.destino" placeholder="Ej: Barcelona, España">
+                                        v-model="nuevaLista.destino" placeholder="Ex: Barcelona, Spain">
                                 </div>
                                 <div class="invalid-feedback">{{ formErrors.destino }}</div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="fechaInicio" class="form-label">Fecha de Inicio</label>
+                                    <label for="fechaInicio" class="form-label">Start Date</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
                                         <input type="date" class="form-control"
@@ -404,7 +432,7 @@ onMounted(async () => {
                                 </div>
 
                                 <div class="col-md-6 mb-3">
-                                    <label for="fechaFin" class="form-label">Fecha de Fin</label>
+                                    <label for="fechaFin" class="form-label">End Date</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
                                         <input type="date" class="form-control"
@@ -417,8 +445,8 @@ onMounted(async () => {
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-link" @click="showNewListModal = false">Cancelar</button>
-                        <button type="button" class="btn btn-primary" @click="crearNuevaLista">Crear Viaje</button>
+                        <button type="button" class="btn btn-link" @click="showNewListModal = false">Cancel</button>
+                        <button type="button" class="btn btn-primary" @click="crearNuevaLista">Create Trip</button>
                     </div>
                 </div>
             </div>
@@ -431,6 +459,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* Estilos para el contenedor principal */
 .trip-lists-container {
     min-height: 80vh;
     padding-top: 2rem;
@@ -438,7 +467,7 @@ onMounted(async () => {
     background-color: #f8f9fa;
 }
 
-/* Ilustración */
+/* Estilos para la ilustración del encabezado */
 .illustration-container {
     display: flex;
     justify-content: center;
@@ -456,29 +485,28 @@ onMounted(async () => {
     border-radius: 50%;
 }
 
-/* Contenedor del encabezado */
+/* Estilos para el contenedor del encabezado */
 .header-container {
     position: relative;
     padding-top: 1rem;
 }
 
-/* Botón de agregar viaje */
+/* Estilos para el botón de agregar viaje */
 .btn-add-trip {
-    position: absolute;
-    top: 0;
-    right: 0;
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
     display: flex;
     align-items: center;
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     color: white;
     border: none;
-    border-radius: 12px;
-    padding: 0.75rem 1.25rem;
+    border-radius: 50px;
+    padding: 0.75rem 1.5rem;
     font-weight: 600;
     box-shadow: 0 4px 15px rgba(var(--color-primary-rgb), 0.3);
     transition: all 0.3s ease;
-    overflow: hidden;
-    z-index: 10;
+    z-index: 100;
 }
 
 .btn-add-trip:hover {
@@ -505,20 +533,25 @@ onMounted(async () => {
     border-radius: 50%;
 }
 
-/* Responsive para el botón */
+/* Responsive para el botón - Versión móvil solo con "+" */
 @media (max-width: 767px) {
     .btn-add-trip {
-        position: relative;
-        margin-top: 1rem;
-        width: auto;
-        display: inline-flex;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        padding: 0;
         justify-content: center;
     }
 
-    .header-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    .btn-text {
+        display: none;
+    }
+
+    .btn-icon {
+        width: 100%;
+        height: 100%;
+        background-color: transparent;
+        font-size: 1.5rem;
     }
 }
 
@@ -748,5 +781,165 @@ onMounted(async () => {
     padding: 3rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
     text-align: center;
+}
+
+/* Estilos para la cabecera de la página (estilo Countries) */
+.countries-header {
+    margin-bottom: 2.5rem;
+    text-align: center;
+    position: relative;
+}
+
+/* Estilos para el título principal */
+.countries-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-primary, #3a506b);
+    font-weight: 700;
+    position: relative;
+    display: inline-block;
+}
+
+/* Línea decorativa debajo del título */
+.countries-header h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background-color: var(--color-accent, #ff6b6b);
+    border-radius: 2px;
+}
+
+/* Estilos para el párrafo de la cabecera */
+.countries-header p {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin-top: 1rem;
+}
+
+/* Estilos para el contenedor de filtros */
+.favorites-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+    background-color: #f8f9fa;
+    padding: 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Estilos para el filtro de búsqueda */
+.search-filter {
+    flex: 1;
+    position: relative;
+}
+
+/* Posicionamiento del icono de búsqueda */
+.search-filter i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+/* Estilos para el campo de búsqueda */
+.search-filter input {
+    padding: 0.75rem 1rem 0.75rem 40px;
+    border-radius: 30px;
+    border: 1px solid #e0e0e0;
+    width: 100%;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+/* Estilos para el campo de búsqueda cuando está enfocado */
+.search-filter input:focus {
+    outline: none;
+    border-color: var(--color-primary, #3a506b);
+    box-shadow: 0 0 0 3px rgba(58, 80, 107, 0.1);
+}
+
+/* Estilos para los filtros de continente */
+.continent-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Etiqueta para el filtro de continentes */
+.filter-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Contenedor para los botones de continente */
+.continent-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Estilos para los botones de continente */
+.continent-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: 1px solid #e0e0e0;
+    background-color: white;
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Estilos para los iconos en los botones de continente */
+.continent-btn i {
+    font-size: 0.85rem;
+}
+
+/* Efecto hover para los botones de continente */
+.continent-btn:hover {
+    background-color: #f0f0f0;
+    border-color: #d0d0d0;
+}
+
+/* Estilos para el botón de continente activo/seleccionado */
+.continent-btn.active {
+    background-color: var(--color-primary, #3a506b);
+    color: white;
+    border-color: var(--color-primary, #3a506b);
+}
+
+/* Ajustes responsivos para el header estilo Countries */
+@media (max-width: 768px) {
+    .countries-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .countries-header p {
+        font-size: 1rem;
+    }
+
+    .favorites-filters {
+        padding: 1rem;
+    }
+
+    .continent-buttons {
+        gap: 0.4rem;
+    }
+
+    .continent-btn {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.8rem;
+    }
 }
 </style>

@@ -198,8 +198,6 @@ onMounted(async () => {
     </div>
 </template>
 
-
-
 <style scoped>
 /* Estilos para la página de países */
 .countries-page {
@@ -209,8 +207,9 @@ onMounted(async () => {
 /* Estilos para la cuadrícula de países */
 .countries-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    justify-content: center;
 }
 
 /* Estilos para las tarjetas de países */
@@ -226,7 +225,7 @@ onMounted(async () => {
 
 /* Contenedor para la bandera del país */
 .country-flag {
-    height: 120px;
+    height: 200px;
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -265,7 +264,7 @@ onMounted(async () => {
 .countries-header h1 {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
-    color: var(--color-primary);
+    color: var(--color-primary, #3a506b);
     font-weight: 700;
     position: relative;
     display: inline-block;
@@ -280,7 +279,7 @@ onMounted(async () => {
     transform: translateX(-50%);
     width: 80px;
     height: 4px;
-    background-color: var(--color-accent);
+    background-color: var(--color-accent, #ff6b6b);
     border-radius: 2px;
 }
 
@@ -331,7 +330,7 @@ onMounted(async () => {
 /* Estilos para el campo de búsqueda cuando está enfocado */
 .search-filter input:focus {
     outline: none;
-    border-color: var(--color-primary);
+    border-color: var(--color-primary, #3a506b);
     box-shadow: 0 0 0 3px rgba(58, 80, 107, 0.1);
 }
 
@@ -385,9 +384,9 @@ onMounted(async () => {
 
 /* Estilos para el botón de continente activo/seleccionado */
 .continent-btn.active {
-    background-color: var(--color-primary);
+    background-color: var(--color-primary, #3a506b);
     color: white;
-    border-color: var(--color-primary);
+    border-color: var(--color-primary, #3a506b);
 }
 
 /* Estilos para el footer de la tarjeta donde está el botón Explore */
@@ -417,76 +416,30 @@ onMounted(async () => {
     overflow: hidden;
 }
 
-/* Efecto hover para el botón Explore */
 .explore-btn:hover {
-  background-color: var(--color-accent);
+    background-color: var(--color-accent);
 }
 
-
 /* Estilos responsivos para pantallas medianas */
-@media (max-width: 767.98px) {
+@media (max-width: 1024px) {
     .countries-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .countries-grid {
+        grid-template-columns: 1fr;
     }
 
     .country-flag {
-        height: 100px;
-    }
-
-    .card-body {
-        padding: 0.75rem;
-    }
-
-    .card-title {
-        font-size: 1rem;
-    }
-
-    .card-footer {
-        padding: 0.5rem 0.75rem;
-    }
-
-    .continent-btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.85rem;
-    }
-
-    .explore-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.85rem;
+        height: 200px;
     }
 }
 
-/* Estilos responsivos para pantallas pequeñas */
 @media (max-width: 576px) {
-    .countries-container {
-        padding: 1.5rem 0.75rem;
-    }
-
-    .countries-header h1 {
-        font-size: 1.8rem;
-    }
-
-    .countries-header p {
-        font-size: 1rem;
-    }
-
-    .favorites-filters {
-        padding: 1rem;
-    }
-
-    .continent-buttons {
-        gap: 0.4rem;
-    }
-
-    .continent-btn {
-        padding: 0.35rem 0.7rem;
-        font-size: 0.8rem;
-    }
-
-    .explore-btn {
-        padding: 0.4rem 0.7rem;
-        font-size: 0.8rem;
+    .countries-grid {
+        grid-template-columns: 1fr;
     }
 }
 </style>

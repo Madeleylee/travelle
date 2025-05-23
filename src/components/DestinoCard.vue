@@ -3,10 +3,12 @@ import { defineProps, onMounted, ref } from 'vue';
 import { getCiudadPorLugarId } from '@/composables/useDatabase';
 import FavoriteButton from '@/components/FavoriteButton.vue';
 import AuthModal from '@/components/AuthModal.vue';
-// Actualizar las importaciones para incluir el botón de visitado y el modal de detalles
+
+// Importamos nuevos componentes para lugares visitados y detalles de visita
 import VisitedButton from '@/components/VisitedButton.vue';
 import VisitDetailsModal from '@/components/VisitDetailsModal.vue';
 
+// Definimos las propiedades del componente
 const props = defineProps({
     destino: {
         type: Object,
@@ -22,20 +24,19 @@ const props = defineProps({
     }
 });
 
+// Variables reactivas
 const nombreCiudad = ref('');
-const showModal = ref(false);
-// Añadir nuevas variables reactivas para el modal de detalles de visita
-const showVisitDetailsModal = ref(false);
+const showModal = ref(false); // Para el modal de inicio de sesión
+const showVisitDetailsModal = ref(false); // Para el modal de detalles de visita
 
-// When mounted, get the city name from the database
+// Al montar el componente, obtenemos el nombre de la ciudad si no viene por props
 onMounted(async () => {
-    // Solo obtener la ciudad si no se proporciona como prop
     if (!nombreCiudad.value) {
         nombreCiudad.value = await getCiudadPorLugarId(props.destino.id_lugar);
     }
 });
 
-// Prepare place info for the favorites component
+// Preparamos la información del lugar para usarla en favoritos y visitados
 const lugarInfo = {
     nombre: props.destino.nombre,
     nombreCiudad: nombreCiudad.value,
@@ -45,26 +46,25 @@ const lugarInfo = {
     imagen1: props.destino.imagen1
 };
 
-// Handle favorite toggle
+// Maneja el evento cuando un lugar se agrega o quita de favoritos
 const handleFavoriteToggle = (isFavorite) => {
     const action = isFavorite ? 'added to' : 'removed from';
     showNotification(`${props.destino.nombre} ${action} favorites`);
 };
 
-// Show login modal
+// Muestra el modal de inicio de sesión
 const showLoginModal = () => {
     showModal.value = true;
 };
 
-// Handle successful login
+// Maneja el éxito al iniciar sesión
 const handleLoginSuccess = () => {
     showModal.value = false;
     showNotification('You can now add places to your favorites!');
 };
 
-// Show notification
+// Muestra una notificación al usuario
 const showNotification = (message) => {
-    // Create notification element with Bootstrap classes
     const notification = document.createElement('div');
     notification.className = 'toast position-fixed top-0 end-0 m-3 show';
     notification.setAttribute('role', 'alert');
@@ -84,7 +84,7 @@ const showNotification = (message) => {
 
     document.body.appendChild(notification);
 
-    // Remove notification after 3 seconds
+    // Elimina la notificación después de 3 segundos
     setTimeout(() => {
         notification.classList.remove('show');
         setTimeout(() => {
@@ -93,19 +93,18 @@ const showNotification = (message) => {
     }, 3000);
 };
 
-// Añadir función para mostrar el modal de detalles de visita
+// Muestra el modal de detalles de visita
 const showVisitDetails = () => {
     showVisitDetailsModal.value = true;
 };
 
-// Añadir función para manejar cuando se guarda una visita
+// Maneja cuando se guarda una visita
 const handleVisitSaved = (data) => {
     showVisitDetailsModal.value = false;
     showNotification(`${props.destino.nombre} marked as visited on ${new Date(data.fecha).toLocaleDateString()}`);
 };
 
-// Añadir la función handleVisitToggle en el script
-// Handle visit toggle
+// Maneja el evento cuando un lugar se marca o desmarca como visitado
 const handleVisitToggle = (isVisited) => {
     const action = isVisited ? 'marked as visited' : 'removed from visited places';
     showNotification(`${props.destino.nombre} ${action}`);
@@ -113,21 +112,23 @@ const handleVisitToggle = (isVisited) => {
 </script>
 
 <template>
+    <!-- Tarjeta del destino -->
     <div class="card h-100 shadow-sm destino-card">
         <div class="position-relative">
+            <!-- Imagen del destino -->
             <img v-if="destino.imagen1" :src="destino.imagen1" :alt="destino.nombre"
                 class="card-img-top destino-imagen">
             <img v-else src="../assets/img/logo.png" :alt="destino.nombre" class="card-img-top destino-imagen">
 
-            <!-- Favorite button -->
+            <!-- Botón de favorito -->
             <FavoriteButton :lugar-id="destino.id_lugar" :lugar-info="lugarInfo" @toggle="handleFavoriteToggle"
                 @login-required="showLoginModal" />
 
-            <!-- Visited button -->
+            <!-- Botón de visitado -->
             <VisitedButton :lugar-id="destino.id_lugar" :lugar-info="lugarInfo" @toggle="handleVisitToggle"
                 @login-required="showLoginModal" @show-details="showVisitDetails" />
 
-            <!-- Price tag -->
+            <!-- Etiqueta de precio -->
             <div class="price-tag">
                 <span v-if="destino.precio === 0">Free</span>
                 <span v-else>{{ destino.precio }}€</span>
@@ -135,9 +136,10 @@ const handleVisitToggle = (isVisited) => {
         </div>
 
         <div class="card-body d-flex flex-column">
+            <!-- Título del destino -->
             <h5 class="card-title fw-bold">{{ destino.nombre }}</h5>
 
-            <!-- Rating with stars -->
+            <!-- Calificación con estrellas -->
             <div class="rating mb-2">
                 <div class="stars">
                     <template v-for="n in 5" :key="n">
@@ -147,12 +149,12 @@ const handleVisitToggle = (isVisited) => {
                 <span class="rating-value">{{ destino.valoracion }}</span>
             </div>
 
-            <!-- Location -->
+            <!-- Ubicación del destino -->
             <p class="card-text location" v-if="nombreCiudad">
                 <i class="bi bi-geo-alt"></i> {{ nombreCiudad }}, {{ nombrePais }}
             </p>
 
-            <!-- Only show the link when we have the city -->
+            <!-- Enlace a detalles del destino -->
             <router-link v-if="nombreCiudad" :to="{
                 name: 'Destino',
                 params: {
@@ -166,16 +168,16 @@ const handleVisitToggle = (isVisited) => {
         </div>
     </div>
 
-    <!-- Login Modal -->
+    <!-- Modal de inicio de sesión -->
     <AuthModal :visible="showModal" @close="showModal = false" @login-success="handleLoginSuccess" />
 
-    <!-- Visit details modal -->
+    <!-- Modal de detalles de visita -->
     <VisitDetailsModal :visible="showVisitDetailsModal" :lugar-id="destino.id_lugar" :existing-data="{}"
         @close="showVisitDetailsModal = false" @saved="handleVisitSaved" @login-required="showLoginModal" />
 </template>
 
 <style scoped>
-/* Enhanced styles for destination cards */
+/* Estilos mejorados para las tarjetas de destino */
 .destino-card {
     transition: transform 0.3s, box-shadow 0.3s;
     background-color: var(--color-backgroundCard, white);
@@ -227,7 +229,7 @@ const handleVisitToggle = (isVisited) => {
     transform: translateY(-2px);
 }
 
-/* Price tag */
+/* Etiqueta de precio */
 .price-tag {
     position: absolute;
     bottom: 10px;
@@ -241,7 +243,7 @@ const handleVisitToggle = (isVisited) => {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Rating stars */
+/* Estrellas de calificación */
 .rating {
     display: flex;
     align-items: center;
@@ -264,7 +266,7 @@ const handleVisitToggle = (isVisited) => {
     color: #6c757d;
 }
 
-/* Location */
+/* Ubicación */
 .location {
     font-size: 0.85rem;
     color: #6c757d;
@@ -276,7 +278,7 @@ const handleVisitToggle = (isVisited) => {
     font-size: 0.8rem;
 }
 
-/* Media queries to adjust image height on smaller screens */
+/* Media queries para pantallas pequeñas */
 @media (max-width: 1024px) {
     .destino-imagen {
         height: 160px;

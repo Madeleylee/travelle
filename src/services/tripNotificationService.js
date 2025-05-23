@@ -211,42 +211,42 @@ async function enviarFelicitacionViaje(emailServices, email, lista) {
     return { success: false, error: "Lista inválida" }
   }
 
-  const subject = `¡Feliz viaje a ${lista.destino}! 🎉✈️`
+  const subject = `Happy trip to ${lista.destino}! 🎉✈️`
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
       <div style="text-align: center; margin-bottom: 20px;">
         <h1 style="color: #1e3a8a;">Travelle</h1>
       </div>
       
-      <h2 style="color: #1e3a8a; text-align: center;">¡Feliz viaje a ${lista.destino}! 🎉✈️</h2>
+      <h2 style="color: #1e3a8a; text-align: center;">Happy trip to ${lista.destino}! 🎉✈️</h2>
       
-      <p>¡Hoy es el gran día! Tu viaje a ${lista.destino} comienza hoy.</p>
+      <p>Today is the big day! Your trip to ${lista.destino} starts today.</p>
       
-      <p>Nos alegra ver que tienes todo listo para tu aventura. Has completado todos los elementos de tu lista de viaje.</p>
+      <p>We're glad to see that you have everything ready for your adventure. You've completed all the items on your trip list.</p>
       
       <div style="background-color: #f0f7ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <p style="margin: 0; font-weight: bold;">Detalles del viaje:</p>
-        <p style="margin: 5px 0;">🌍 Destino: ${lista.destino}</p>
-        <p style="margin: 5px 0;">📅 Fechas: ${formatearFecha(lista.fechaInicio)} - ${formatearFecha(
+        <p style="margin: 0; font-weight: bold;">Trip details:</p>
+        <p style="margin: 5px 0;">🌍 Destination: ${lista.destino}</p>
+        <p style="margin: 5px 0;">📅 Dates: ${formatearFecha(lista.fechaInicio)} - ${formatearFecha(
     lista.fechaFin,
   )}</p>
       </div>
       
-      <p>Te deseamos un viaje increíble lleno de experiencias maravillosas. ¡Disfruta cada momento!</p>
+      <p>We wish you an amazing trip full of wonderful experiences. Enjoy every moment!</p>
       
       <div style="text-align: center; margin: 30px 0;">
         <a href="${window.location.origin}/viajes/${lista.id
     }" style="background-color: #1e3a8a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-          Ver mi lista de viaje
+          View my trip list
         </a>
       </div>
       
-      <p>¡Buen viaje!</p>
-      <p>El equipo de Travelle</p>
+      <p>Have a great trip!</p>
+      <p>The Travelle Team</p>
       
       <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
-        <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-        <p>&copy; ${new Date().getFullYear()} Travelle. Todos los derechos reservados.</p>
+        <p>This is an automated email, please do not reply to this message.</p>
+        <p>&copy; ${new Date().getFullYear()} Travelle. All rights reserved.</p>
       </div>
     </div>
   `
@@ -269,45 +269,45 @@ async function enviarRecordatorioUrgente(emailServices, email, lista, porcentaje
   }
 
   const itemsPendientes = lista.items.filter((item) => !item.completado)
-  const subject = `¡URGENTE! Elementos pendientes para tu viaje a ${lista.destino} HOY ⚠️`
+  const subject = `URGENT! Pending items for your trip to ${lista.destino} TODAY ⚠️`
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
       <div style="text-align: center; margin-bottom: 20px;">
         <h1 style="color: #1e3a8a;">Travelle</h1>
       </div>
       
-      <h2 style="color: #e53e3e; text-align: center;">¡Tu viaje a ${lista.destino} es HOY!</h2>
+      <h2 style="color: #e53e3e; text-align: center;">Your trip to ${lista.destino} is TODAY!</h2>
       
-      <p>¡Hoy es el día de tu viaje a ${lista.destino}! Sin embargo, notamos que aún tienes elementos pendientes en tu lista.</p>
+      <p>Today is the day of your trip to ${lista.destino}! However, we noticed that you still have pending items on your list.</p>
       
       <div style="background-color: #fff5f5; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #e53e3e;">
-        <p style="margin: 0; font-weight: bold;">Estado de tu lista:</p>
-        <p style="margin: 5px 0;">✅ Completado: ${Math.round(porcentajeCompletado)}%</p>
-        <p style="margin: 5px 0;">⏰ Elementos pendientes: ${itemsPendientes.length}</p>
+        <p style="margin: 0; font-weight: bold;">List status:</p>
+        <p style="margin: 5px 0;">✅ Completed: ${Math.round(porcentajeCompletado)}%</p>
+        <p style="margin: 5px 0;">⏰ Pending items: ${itemsPendientes.length}</p>
       </div>
       
-      <p style="font-weight: bold;">Elementos pendientes:</p>
+      <p style="font-weight: bold;">Pending items:</p>
       <ul style="background-color: #f7fafc; padding: 15px; border-radius: 5px;">
         ${itemsPendientes
       .slice(0, 5)
       .map((item) => `<li>${item.texto}</li>`)
       .join("")}
-        ${itemsPendientes.length > 5 ? `<li>... y ${itemsPendientes.length - 5} elementos más</li>` : ""}
+        ${itemsPendientes.length > 5 ? `<li>... and ${itemsPendientes.length - 5} more items</li>` : ""}
       </ul>
       
       <div style="text-align: center; margin: 30px 0;">
         <a href="${window.location.origin}/viajes/${lista.id
     }" style="background-color: #e53e3e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-          Completar mi lista ahora
+          Complete my list now
         </a>
       </div>
       
-      <p>¡Te deseamos un excelente viaje!</p>
-      <p>El equipo de Travelle</p>
+      <p>We wish you an excellent trip!</p>
+      <p>The Travelle Team</p>
       
       <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
-        <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-        <p>&copy; ${new Date().getFullYear()} Travelle. Todos los derechos reservados.</p>
+        <p>This is an automated email, please do not reply to this message.</p>
+        <p>&copy; ${new Date().getFullYear()} Travelle. All rights reserved.</p>
       </div>
     </div>
   `
@@ -330,46 +330,46 @@ async function enviarRecordatorioUnDiaAntes(emailServices, email, lista, porcent
   }
 
   const itemsPendientes = lista.items.filter((item) => !item.completado)
-  const subject = `Recordatorio: Tu viaje a ${lista.destino} es MAÑANA 🧳`
+  const subject = `Reminder: Your trip to ${lista.destino} is TOMORROW 🧳`
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
       <div style="text-align: center; margin-bottom: 20px;">
         <h1 style="color: #1e3a8a;">Travelle</h1>
       </div>
       
-      <h2 style="color: #dd6b20; text-align: center;">¡Tu viaje a ${lista.destino} es MAÑANA!</h2>
+      <h2 style="color: #dd6b20; text-align: center;">Your trip to ${lista.destino} is TOMORROW!</h2>
       
-      <p>¡Solo falta un día para tu viaje a ${lista.destino
-    }! Hemos notado que aún tienes elementos pendientes en tu lista.</p>
+      <p>Only one day left until your trip to ${lista.destino
+    }! We've noticed that you still have pending items on your list.</p>
       
       <div style="background-color: #fffaf0; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #dd6b20;">
-        <p style="margin: 0; font-weight: bold;">Estado de tu lista:</p>
-        <p style="margin: 5px 0;">✅ Completado: ${Math.round(porcentajeCompletado)}%</p>
-        <p style="margin: 5px 0;">⏰ Elementos pendientes: ${itemsPendientes.length}</p>
+        <p style="margin: 0; font-weight: bold;">List status:</p>
+        <p style="margin: 5px 0;">✅ Completed: ${Math.round(porcentajeCompletado)}%</p>
+        <p style="margin: 5px 0;">⏰ Pending items: ${itemsPendientes.length}</p>
       </div>
       
-      <p style="font-weight: bold;">Elementos pendientes:</p>
+      <p style="font-weight: bold;">Pending items:</p>
       <ul style="background-color: #f7fafc; padding: 15px; border-radius: 5px;">
         ${itemsPendientes
       .slice(0, 5)
       .map((item) => `<li>${item.texto}</li>`)
       .join("")}
-        ${itemsPendientes.length > 5 ? `<li>... y ${itemsPendientes.length - 5} elementos más</li>` : ""}
+        ${itemsPendientes.length > 5 ? `<li>... and ${itemsPendientes.length - 5} more items</li>` : ""}
       </ul>
       
       <div style="text-align: center; margin: 30px 0;">
         <a href="${window.location.origin}/viajes/${lista.id
     }" style="background-color: #dd6b20; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-          Completar mi lista ahora
+          Complete my list now
         </a>
       </div>
       
-      <p>¡Te deseamos un excelente viaje!</p>
-      <p>El equipo de Travelle</p>
+      <p>We wish you an excellent trip!</p>
+      <p>The Travelle Team</p>
       
       <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
-        <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-        <p>&copy; ${new Date().getFullYear()} Travelle. Todos los derechos reservados.</p>
+        <p>This is an automated email, please do not reply to this message.</p>
+        <p>&copy; ${new Date().getFullYear()} Travelle. All rights reserved.</p>
       </div>
     </div>
   `
@@ -392,46 +392,46 @@ async function enviarRecordatorioTresDiasAntes(emailServices, email, lista, porc
   }
 
   const itemsPendientes = lista.items.filter((item) => !item.completado)
-  const subject = `Recordatorio: Faltan 3 días para tu viaje a ${lista.destino} 📝`
+  const subject = `Reminder: 3 days until your trip to ${lista.destino} 📝`
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
       <div style="text-align: center; margin-bottom: 20px;">
         <h1 style="color: #1e3a8a;">Travelle</h1>
       </div>
       
-      <h2 style="color: #3182ce; text-align: center;">¡Faltan 3 días para tu viaje a ${lista.destino}!</h2>
+      <h2 style="color: #3182ce; text-align: center;">3 days until your trip to ${lista.destino}!</h2>
       
-      <p>Tu viaje a ${lista.destino
-    } está cada vez más cerca. Hemos notado que aún tienes elementos pendientes en tu lista.</p>
+      <p>Your trip to ${lista.destino
+    } is getting closer. We've noticed that you still have pending items on your list.</p>
       
       <div style="background-color: #ebf8ff; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #3182ce;">
-        <p style="margin: 0; font-weight: bold;">Estado de tu lista:</p>
-        <p style="margin: 5px 0;">✅ Completado: ${Math.round(porcentajeCompletado)}%</p>
-        <p style="margin: 5px 0;">⏰ Elementos pendientes: ${itemsPendientes.length}</p>
+        <p style="margin: 0; font-weight: bold;">List status:</p>
+        <p style="margin: 5px 0;">✅ Completed: ${Math.round(porcentajeCompletado)}%</p>
+        <p style="margin: 5px 0;">⏰ Pending items: ${itemsPendientes.length}</p>
       </div>
       
-      <p style="font-weight: bold;">Elementos pendientes:</p>
+      <p style="font-weight: bold;">Pending items:</p>
       <ul style="background-color: #f7fafc; padding: 15px; border-radius: 5px;">
         ${itemsPendientes
       .slice(0, 5)
       .map((item) => `<li>${item.texto}</li>`)
       .join("")}
-        ${itemsPendientes.length > 5 ? `<li>... y ${itemsPendientes.length - 5} elementos más</li>` : ""}
+        ${itemsPendientes.length > 5 ? `<li>... and ${itemsPendientes.length - 5} more items</li>` : ""}
       </ul>
       
       <div style="text-align: center; margin: 30px 0;">
         <a href="${window.location.origin}/viajes/${lista.id
     }" style="background-color: #3182ce; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-          Completar mi lista ahora
+          Complete my list now
         </a>
       </div>
       
-      <p>¡Te deseamos un excelente viaje!</p>
-      <p>El equipo de Travelle</p>
+      <p>We wish you an excellent trip!</p>
+      <p>The Travelle Team</p>
       
       <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
-        <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-        <p>&copy; ${new Date().getFullYear()} Travelle. Todos los derechos reservados.</p>
+        <p>This is an automated email, please do not reply to this message.</p>
+        <p>&copy; ${new Date().getFullYear()} Travelle. All rights reserved.</p>
       </div>
     </div>
   `
@@ -446,7 +446,7 @@ async function enviarRecordatorioTresDiasAntes(emailServices, email, lista, porc
  */
 function formatearFecha(fecha) {
   if (!fecha) return ""
-  return new Date(fecha).toLocaleDateString("es-ES", {
+  return new Date(fecha).toLocaleDateString("en-US", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -458,6 +458,7 @@ export function debugListas() {
   console.log("Iniciando depuración de listas...")
 
   const { isUserAuthenticated, getUsuarioActual } = useAuth()
+  const tripListsInstance = useTripLists() // Move hook call to the top level
 
   try {
     if (!isUserAuthenticated()) {
@@ -490,7 +491,6 @@ export function debugListas() {
     console.log(`Usuario autenticado con ID: ${userId}, email: ${usuario.email}`)
 
     // Crear una nueva instancia para evitar problemas de referencia
-    const tripListsInstance = useTripLists()
 
     // Cargar las listas y esperar a que se complete
     console.log("Cargando listas de viaje...")
