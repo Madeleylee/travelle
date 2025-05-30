@@ -1,0 +1,1 @@
+ALTER TABLE RecuperacionContrasena ADD COLUMN intentos INTEGER DEFAULT 0;

@@ -28,7 +28,8 @@ CREATE INDEX IF NOT EXISTS idx_recuperacion_token ON RecuperacionContrasena(toke
 -- Tabla de Países
 CREATE TABLE IF NOT EXISTS Paises (
   id_pais INTEGER PRIMARY KEY AUTOINCREMENT,
-  nombre TEXT NOT NULL UNIQUE
+  nombre TEXT NOT NULL UNIQUE,
+  bandera TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_paises_nombre ON Paises(nombre);
@@ -94,31 +95,12 @@ CREATE TABLE IF NOT EXISTS Estados_Viaje (
 CREATE TABLE IF NOT EXISTS Favoritos (
   id_usuario INTEGER,
   id_lugar INTEGER,
-  fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id_usuario, id_lugar),
   FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
   FOREIGN KEY (id_lugar) REFERENCES Lugares(id_lugar) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_favoritos_fecha ON Favoritos(fecha_agregado);
 CREATE INDEX IF NOT EXISTS idx_favoritos_lugar ON Favoritos(id_lugar);
-
--- Tabla de Reseñas
-CREATE TABLE IF NOT EXISTS Resenas (
-  id_resena INTEGER PRIMARY KEY AUTOINCREMENT,
-  id_usuario INTEGER NOT NULL,
-  id_lugar INTEGER NOT NULL,
-  calificacion INTEGER NOT NULL CHECK(calificacion BETWEEN 1 AND 5),
-  comentario TEXT,
-  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
-  FOREIGN KEY (id_lugar) REFERENCES Lugares(id_lugar) ON DELETE CASCADE,
-  UNIQUE(id_usuario, id_lugar)
-);
-
-CREATE INDEX IF NOT EXISTS idx_resenas_usuario ON Resenas(id_usuario);
-CREATE INDEX IF NOT EXISTS idx_resenas_lugar ON Resenas(id_lugar);
-CREATE INDEX IF NOT EXISTS idx_resenas_calificacion ON Resenas(calificacion);
 
 -- Tabla de Viajes
 CREATE TABLE IF NOT EXISTS Viajes (
@@ -184,32 +166,36 @@ CREATE INDEX IF NOT EXISTS idx_visitas_manual_fecha ON Visitas_Manual(fecha_visi
 -- ==========================================
 
 -- Estados de Viaje
-INSERT INTO Estados_Viaje (nombre) VALUES 
-('Planeado'), ('En Progreso'), ('Completado'), ('Cancelado');
+INSERT OR IGNORE INTO Estados_Viaje (nombre) VALUES
+('Planned'), ('In Progress'), ('Completed'), ('Cancelled');
 
 -- Categorías
-INSERT INTO Categorias (nombre) VALUES 
-('Playa'), ('Montaña'), ('Ciudad'), ('Museo'),
-('Parque Natural'), ('Monumento Histórico'), ('Gastronomía'),
-('Historia'), ('Naturaleza'), ('Arte'), ('Religión');
+INSERT OR IGNORE INTO Categorias (nombre) VALUES
+('Beach'), ('Mountain'), ('City'), ('Museum'),
+('Natural Park'), ('Historical Monument'), ('Gastronomy'),
+('History'), ('Nature'), ('Art'), ('Religion');
 
 -- Países
-INSERT INTO Paises (nombre) VALUES 
-('España'), ('Italia'), ('Francia'), ('Alemania'), ('Reino Unido');
+INSERT OR IGNORE INTO Paises (nombre, bandera) VALUES
+('Spain', 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1747434978/Travelle/banderas/flagSpain.jpg'),
+('Italy', 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1747436871/Travelle/banderas/flagItaly.jpg'),
+('France','https://res.cloudinary.com/dxhxsxijx/image/upload/v1747436891/Travelle/banderas/FlagFrance.jpg' ),
+('Germany', 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1747436956/Travelle/banderas/flagGermany.jpg'),
+('United Kingdom', 'https://res.cloudinary.com/dxhxsxijx/image/upload/v1747436853/Travelle/banderas/flagUK.jpg');
 
 -- Ciudades
-INSERT INTO Ciudades (nombre, id_pais) VALUES 
+INSERT OR IGNORE INTO Ciudades (nombre, id_pais) VALUES
 ('Madrid', 1),
 ('Barcelona', 1),
 ('Granada', 1),
-('Roma', 2),
-('Florencia', 2),
-('París', 3),
-('Berlín', 4),
-('Londres', 5);
+('Rome', 2),
+('Florence', 2),
+('Paris', 3),
+('Berlin', 4),
+('London', 5);
 
 -- Lugares
-INSERT INTO Lugares (nombre, descripcion, precio, valoracion, latitud, longitud, imagen1, imagen2, imagen3, id_ciudad) VALUES
+INSERT OR IGNORE INTO Lugares (nombre, descripcion, precio, valoracion, latitud, longitud, imagen1, imagen2, imagen3, id_ciudad) VALUES
 ('La Alhambra', 'Impresionante complejo palaciego y fortaleza de la época musulmana.', 14.0, 4.8, 37.1760783, -3.5881413,
  'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731884455/Travelle/espana/alhambra/img1.jpg',
  'https://res.cloudinary.com/dxhxsxijx/image/upload/v1731884454/Travelle/espana/alhambra/img2.jpg',
@@ -261,7 +247,7 @@ INSERT INTO Lugares (nombre, descripcion, precio, valoracion, latitud, longitud,
  'https://res.cloudinary.com/dxhxsxijx/image/upload/v1740408385/Travelle/alemania/puertaBrandeburgo/ug8ovkjczzbeh8cwscna.jpg', 7);
 
 -- Relaciones Lugares-Categorías
-INSERT INTO Lugares_Categorias (id_lugar, id_categoria) VALUES
+INSERT OR IGNORE INTO Lugares_Categorias (id_lugar, id_categoria) VALUES
 (1, 6), -- Alhambra - Monumento Histórico
 (1, 8), -- Alhambra - Historia
 (2, 9), -- Generalife - Naturaleza
