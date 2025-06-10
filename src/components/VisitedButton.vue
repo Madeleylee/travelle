@@ -26,7 +26,6 @@ const checkIfVisited = async () => {
     try {
         isVisitedState.value = await isVisited(props.lugarId);
     } catch (error) {
-        console.error('Error al verificar lugar visitado:', error);
         isVisitedState.value = false;
     }
 };
@@ -69,7 +68,6 @@ const toggleVisited = async () => {
             }
         }
     } catch (error) {
-        console.error('Error toggling visited state:', error);
     } finally {
         loading.value = false;
     }

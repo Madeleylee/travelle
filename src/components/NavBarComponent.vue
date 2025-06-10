@@ -111,7 +111,6 @@ async function buscarSugerencias(texto) {
       }, 50);
     }
   } catch (error) {
-    console.error('Error searching for suggestions:', error);
     searchSuggestions.value = [];
   } finally {
     isSearching.value = false;
@@ -349,7 +348,6 @@ onMounted(async () => {
   try {
     paises.value = await getPaisesConCiudades();
   } catch (error) {
-    console.error('Error loading countries:', error);
     paises.value = [];
   }
 
@@ -624,7 +622,7 @@ onUnmounted(() => {
         <div>
           <h6 class="mb-2">Popular destinations</h6>
           <div class="d-flex flex-wrap gap-2">
-            <button v-for="(tag, index) in ['Paris', 'Rome', 'Barcelona', 'New York', 'Tokyo']" :key="index"
+            <button v-for="(tag, index) in ['Paris', 'Rome', 'Barcelona', 'Berlin', 'Alicante']" :key="index"
               class="btn btn-sm btn-light rounded-pill px-3 py-1" @click="searchText = tag; buscarPorFiltros()">
               {{ tag }}
             </button>

@@ -120,7 +120,6 @@ async function checkUsernameAvailability() {
       usernameError.value = 'This username is already taken';
     }
   } catch (err) {
-    console.error('Error checking username:', err);
     usernameError.value = 'Error checking availability';
   } finally {
     usernameChecking.value = false;
@@ -231,7 +230,6 @@ async function recover() {
     }, 3000);
   } catch (err) {
     error.value = 'An error occurred. Please try again later.';
-    console.error(err);
   } finally {
     loading.value = false;
   }

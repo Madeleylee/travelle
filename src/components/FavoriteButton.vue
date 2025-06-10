@@ -29,7 +29,6 @@ const checkIfFavorite = () => {
         const favoritos = JSON.parse(localStorage.getItem('favoritos') || '[]');
         return favoritos.some(fav => String(fav.id) === String(props.lugarId));
     } catch (error) {
-        console.error('Error al verificar favorito:', error);
         return false;
     }
 };
@@ -60,7 +59,6 @@ const toggleFavorite = () => {
 
         if (index >= 0) {
             // Ya es favorito, lo eliminamos
-            console.log(`Removing place ID ${props.lugarId} from favorites`);
             favoritos.splice(index, 1);
             localStorage.setItem('favoritos', JSON.stringify(favoritos));
             isFavorite.value = false;
@@ -78,7 +76,6 @@ const toggleFavorite = () => {
                 fechaAgregado: new Date().toISOString()
             };
 
-            console.log('Adding new favorite:', nuevoFavorito);
             favoritos.push(nuevoFavorito);
             localStorage.setItem('favoritos', JSON.stringify(favoritos));
             isFavorite.value = true;
@@ -88,7 +85,6 @@ const toggleFavorite = () => {
         // Notificamos a otros componentes que los favoritos han cambiado
         window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (error) {
-        console.error('Error toggling favorite:', error);
     }
 };
 </script>

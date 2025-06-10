@@ -104,7 +104,6 @@ const saveVisit = async () => {
             closeModal();
         }
     } catch (error) {
-        console.error('Error saving visit:', error);
     } finally {
         loading.value = false;
     }

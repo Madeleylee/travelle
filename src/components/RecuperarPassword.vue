@@ -20,7 +20,6 @@ async function handleRecover() {
         submitted.value = true;
     } catch (err) {
         error.value = 'Ha ocurrido un error. Por favor, inténtalo más tarde.';
-        console.error(err);
     } finally {
         loading.value = false;
     }

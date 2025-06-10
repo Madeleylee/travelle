@@ -95,7 +95,6 @@ async function handleSubmit() {
             error.value = result.error || 'Ha ocurrido un error al restablecer la contraseña.';
         }
     } catch (err) {
-        console.error('Error al restablecer contraseña:', err);
         error.value = 'Ha ocurrido un error. Por favor, inténtalo más tarde.';
     } finally {
         loading.value = false;
@@ -128,7 +127,6 @@ onMounted(async () => {
             tokenError.value = true;
         }
     } catch (err) {
-        console.error('Error al verificar token:', err);
         tokenError.value = true;
     } finally {
         loading.value = false;

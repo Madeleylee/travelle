@@ -142,7 +142,6 @@ onMounted(async () => {
     try {
         paises.value = await getPaisesConCiudades();
     } catch (error) {
-        console.error('Error loading countries:', error);
         paises.value = [];
     }
 
@@ -168,17 +167,14 @@ onMounted(async () => {
                             plan your adventures, and keep track of your experiences around the world.</p>
                     </div>
                     <div class="social-links">
-                        <a href="#" class="social-link" aria-label="Facebook">
+                        <a href="https://www.facebook.com/share/16GkRyPLvj/" class="social-link" aria-label="Facebook">
                             <i class="bi bi-facebook"></i>
                         </a>
-                        <a href="#" class="social-link" aria-label="Twitter">
+                        <a href="https://www.facebook.com/share/16GkRyPLvj/" class="social-link" aria-label="Twitter">
                             <i class="bi bi-twitter"></i>
                         </a>
-                        <a href="#" class="social-link" aria-label="Instagram">
+                        <a href="https://www.facebook.com/share/16GkRyPLvj/" class="social-link" aria-label="Instagram">
                             <i class="bi bi-instagram"></i>
-                        </a>
-                        <a href="#" class="social-link" aria-label="Pinterest">
-                            <i class="bi bi-pinterest"></i>
                         </a>
                     </div>
                 </div>
@@ -193,7 +189,7 @@ onMounted(async () => {
                             </router-link>
                         </li>
                         <li>
-                            <router-link to="/destinos" class="text-accent">
+                            <router-link to="/paises" class="text-accent">
                                 View all destinations <i class="bi bi-arrow-right"></i>
                             </router-link>
                         </li>
@@ -211,11 +207,9 @@ onMounted(async () => {
                                 </li>
                                 <li><router-link to="/favoritos"><i class="bi bi-star me-2"></i>My
                                         Favorites</router-link></li>
-                                <li><router-link to="/planificador"><i class="bi bi-journal-check me-2"></i>Plan
+                                <li><router-link to="/viajes"><i class="bi bi-journal-check me-2"></i>Plan
                                         Trip</router-link></li>
                                 <li><router-link to="/visitados"><i class="bi bi-check-circle me-2"></i>Visited
-                                        Places</router-link></li>
-                                <li><router-link to="/cercanos"><i class="bi bi-geo-alt me-2"></i>Nearby
                                         Places</router-link></li>
                             </ul>
                         </div>
@@ -232,8 +226,6 @@ onMounted(async () => {
                                             class="bi bi-cookie me-2"></i>Cookies Policy</a></li>
                                 <li><router-link to="/contacto"><i class="bi bi-envelope me-2"></i>Contact</router-link>
                                 </li>
-                                <li><router-link to="/ayuda"><i
-                                            class="bi bi-question-circle me-2"></i>Help</router-link></li>
                             </ul>
                         </div>
                     </div>
