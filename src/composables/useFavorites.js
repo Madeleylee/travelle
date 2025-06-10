@@ -17,7 +17,6 @@ export function useFavorites() {
 
         try {
             if (!isUserAuthenticated()) {
-                console.log("Usuario no autenticado. No se pueden cargar favoritos.")
                 favoritos.value = []
                 isLoading.value = false
                 return
@@ -25,13 +24,10 @@ export function useFavorites() {
 
             const usuario = getUsuarioActual()
             if (!usuario || !usuario.id) {
-                console.log("No se encontró ID de usuario.")
                 favoritos.value = []
                 isLoading.value = false
                 return
             }
-
-            console.log("Cargando favoritos para usuario ID:", usuario.id)
 
             const result = await turso.execute({
                 sql: `
@@ -47,11 +43,8 @@ export function useFavorites() {
                 args: [usuario.id],
             })
 
-            console.log("Resultado de la consulta:", result)
             favoritos.value = result.rows
-            console.log("Favoritos cargados:", favoritos.value)
         } catch (err) {
-            console.error("Error al cargar favoritos:", err)
             error.value = "Error al cargar favoritos. Por favor, intenta nuevamente."
             favoritos.value = []
         } finally {
@@ -76,7 +69,6 @@ export function useFavorites() {
 
             return result.rows.length > 0
         } catch (err) {
-            console.error("Error al verificar favorito:", err)
             return false
         }
     }
@@ -84,28 +76,24 @@ export function useFavorites() {
     // Agregar un lugar a favoritos
     const addFavorite = async (lugarId) => {
         if (!isUserAuthenticated()) {
-            console.log("Usuario no autenticado. No se puede agregar a favoritos.")
             return false
         }
 
         const usuario = getUsuarioActual()
         if (!usuario || !usuario.id) {
-            console.log("No se encontró ID de usuario.")
+
             return false
         }
 
         try {
-            console.log(`Agregando lugar ID ${lugarId} a favoritos para usuario ID ${usuario.id}`)
-
             await turso.execute({
                 sql: `INSERT OR IGNORE INTO Favoritos (id_usuario, id_lugar) VALUES (?, ?)`,
                 args: [usuario.id, lugarId],
             })
 
-            console.log("Lugar agregado a favoritos correctamente")
+
             return true
         } catch (err) {
-            console.error("Error al agregar favorito:", err)
             error.value = "Error al agregar favorito"
             return false
         }
@@ -123,17 +111,12 @@ export function useFavorites() {
         }
 
         try {
-            console.log(`Eliminando lugar ID ${lugarId} de favoritos para usuario ID ${usuario.id}`)
-
             await turso.execute({
                 sql: `DELETE FROM Favoritos WHERE id_usuario = ? AND id_lugar = ?`,
                 args: [usuario.id, lugarId],
             })
-
-            console.log("Lugar eliminado de favoritos correctamente")
             return true
         } catch (err) {
-            console.error("Error al eliminar favorito:", err)
             error.value = "Error al eliminar favorito"
             return false
         }
@@ -142,7 +125,6 @@ export function useFavorites() {
     // Toggle favorito (agregar o eliminar)
     const toggleFavorite = async (lugarId) => {
         const esFavorito = await isFavorite(lugarId)
-        console.log(`Toggle favorito: ${lugarId}, es favorito: ${esFavorito}`)
 
         if (esFavorito) {
             const result = await removeFavorite(lugarId)

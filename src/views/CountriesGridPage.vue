@@ -108,9 +108,7 @@ onMounted(async () => {
     try {
         isLoading.value = true;
         paises.value = await getPaisesConCiudades();
-        console.log('Países cargados:', paises.value);
     } catch (error) {
-        console.error('Error al cargar países:', error);
         paises.value = [];
     } finally {
         isLoading.value = false;

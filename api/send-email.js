@@ -52,7 +52,6 @@ export default async function handler(req, res) {
             messageId: info.messageId,
         })
     } catch (error) {
-        console.error("Error sending email:", error)
         return res.status(500).json({
             success: false,
             error: error.message || "Error sending email",

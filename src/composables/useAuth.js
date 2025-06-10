@@ -17,7 +17,6 @@ try {
         isAuthenticated.value = true
     }
 } catch (error) {
-    console.error("Error al cargar usuario:", error)
 }
 
 export function useAuth() {
@@ -104,7 +103,6 @@ export function useAuth() {
 
             return userWithoutPassword
         } catch (error) {
-            console.error("Error en login:", error)
             throw error
         }
     }
@@ -126,7 +124,6 @@ export function useAuth() {
 
             return result.rows.length > 0
         } catch (error) {
-            console.error("Error al verificar email:", error)
             throw error
         }
     }
@@ -141,7 +138,6 @@ export function useAuth() {
 
             return result.rows.length > 0
         } catch (error) {
-            console.error("Error al verificar nombre de usuario:", error)
             throw error
         }
     }
@@ -193,7 +189,6 @@ export function useAuth() {
 
             return true
         } catch (error) {
-            console.error("Error al registrar usuario:", error)
             throw error
         }
     }
@@ -238,17 +233,15 @@ export function useAuth() {
                 const result = await enviarCorreoRecuperacion(email, token)
 
                 if (!result.success) {
-                    console.error("Error sending recovery email:", result.error)
+                    throw new Error("Error al enviar correo de recuperación")
                 }
 
                 return { success: true }
             } catch (emailError) {
-                console.error("Error al enviar correo de recuperación:", emailError)
                 //  devolviendo éxito para no revelar si el email existe
                 return { success: true }
             }
         } catch (error) {
-            console.error("Error al solicitar recuperación:", error)
             throw error
         }
     }
@@ -290,7 +283,6 @@ export function useAuth() {
              <p>If this wasn't you, we recommend changing your password immediately.</p>`,
                     )
                 } catch (emailError) {
-                    console.error("Error sending security notification:", emailError)
                 }
 
                 // Invalidar el token
@@ -310,7 +302,6 @@ export function useAuth() {
 
             return { valid: true, userId: id_usuario, email }
         } catch (error) {
-            console.error("Error al verificar token:", error)
             throw error
         }
     }
@@ -354,13 +345,11 @@ export function useAuth() {
            <p>If you did not request this change, please contact our support team immediately.</p>`,
                 )
             } catch (emailError) {
-                console.error("Error sending password reset notification:", emailError)
+
             }
 
             return { success: true }
         } catch (error) {
-            console.error("Error al restablecer contraseña:", error)
-            throw error
         }
     }
 
@@ -368,11 +357,9 @@ export function useAuth() {
     function debugUsuario() {
         try {
             if (!user.value) {
-                console.log("No hay usuario autenticado")
                 return { autenticado: false }
             }
 
-            console.log("Objeto usuario completo:", JSON.stringify(user.value))
 
             // Verificar si existe id o id_usuario
             const tieneId = user.value.hasOwnProperty("id")
@@ -387,7 +374,6 @@ export function useAuth() {
                 usuario: user.value,
             }
         } catch (error) {
-            console.error("Error al depurar usuario:", error)
             return { error: error.message }
         }
     }

@@ -13,10 +13,10 @@ const importEmailService = async () => {
   try {
     return await import("@/services/emailServices")
   } catch (error) {
-    console.error("Error al importar emailServices:", error)
+
     return {
       enviarCorreoNotificacion: async () => {
-        console.error("Función de envío de correo no disponible")
+
         return { success: false, error: "Servicio de correo no disponible" }
       },
     }
@@ -25,7 +25,7 @@ const importEmailService = async () => {
 
 // Modificar la función checkTripsAndNotify para mejorar la carga de listas
 export async function checkTripsAndNotify() {
-  console.log("Iniciando verificación de viajes para notificaciones...")
+
 
   // Verificar si el usuario está autenticado
   const { isUserAuthenticated, getUsuarioActual } = useAuth()
@@ -33,7 +33,6 @@ export async function checkTripsAndNotify() {
 
   const isAuthenticated = isUserAuthenticated()
   if (!isAuthenticated) {
-    console.log("Usuario no autenticado, no se enviarán notificaciones")
     return { success: false, reason: "user-not-authenticated" }
   }
 
@@ -42,7 +41,6 @@ export async function checkTripsAndNotify() {
 
     // Verificación más robusta del usuario
     if (!usuario) {
-      console.error("Usuario no disponible al verificar notificaciones")
       return { success: false, reason: "user-not-available" }
     }
 
@@ -50,27 +48,22 @@ export async function checkTripsAndNotify() {
     const userId = usuario.id || usuario.id_usuario
 
     if (!userId) {
-      console.error("ID de usuario no disponible al verificar notificaciones", usuario)
       // Mostrar el objeto usuario completo para depuración
-      console.log("Objeto usuario:", JSON.stringify(usuario))
       return { success: false, reason: "user-id-not-available" }
     }
 
-    console.log(`Usuario autenticado con ID: ${userId}, email: ${usuario.email}`)
+
 
     // Obtener las listas de viaje - Crear una nueva instancia para evitar problemas de referencia
 
     // Cargar las listas de viaje - Esperar a que se complete la carga
-    console.log("Cargando listas de viaje...")
+
     const listas = await tripListsInstance.cargarListas()
 
     // Verificar si hay listas disponibles
     if (!tripListsInstance.listasOrdenadas.value || tripListsInstance.listasOrdenadas.value.length === 0) {
-      console.log("No hay listas de viaje disponibles para verificar")
       return { success: true, reason: "no-lists-available" }
     }
-
-    console.log(`Se encontraron ${tripListsInstance.listasOrdenadas.value.length} listas de viaje`)
 
     // Obtener la fecha actual (sin hora)
     const hoy = new Date()
@@ -87,11 +80,8 @@ export async function checkTripsAndNotify() {
     for (const lista of tripListsInstance.listasOrdenadas.value) {
       // Verificar si la lista tiene fechaInicio
       if (!lista || !lista.fechaInicio) {
-        console.log(`Lista sin fecha de inicio, omitiendo`)
         continue
       }
-
-      console.log(`Verificando lista: ${lista.nombre} - Destino: ${lista.destino} - Fecha: ${lista.fechaInicio}`)
 
       // Convertir la fecha de inicio a objeto Date y eliminar la hora
       const fechaInicio = new Date(lista.fechaInicio)
@@ -99,7 +89,6 @@ export async function checkTripsAndNotify() {
 
       // Calcular la diferencia en días
       const diferenciaDias = Math.floor((fechaInicio - hoy) / (1000 * 60 * 60 * 24))
-      console.log(`Diferencia en días: ${diferenciaDias}`)
 
       // Verificar si es el día del viaje
       const esDiaViaje = diferenciaDias === 0
@@ -112,13 +101,9 @@ export async function checkTripsAndNotify() {
 
       // Si es el día del viaje o días previos, verificar el estado de la lista
       if (esDiaViaje || esTresDiasAntes || esUnDiaAntes) {
-        console.log(
-          `Lista elegible para notificación: ${esDiaViaje ? "Día del viaje" : esUnDiaAntes ? "1 día antes" : "3 días antes"}`,
-        )
 
         // Verificar si la lista tiene items
         if (!lista || !lista.items || !Array.isArray(lista.items)) {
-          console.log(`Lista sin items o no es un array, omitiendo`)
           continue
         }
 
@@ -126,10 +111,6 @@ export async function checkTripsAndNotify() {
         const totalItems = lista.items.length
         const itemsCompletados = lista.items.filter((item) => item.completado).length
         const porcentajeCompletado = totalItems > 0 ? (itemsCompletados / totalItems) * 100 : 100
-
-        console.log(
-          `Estado de la lista: ${itemsCompletados}/${totalItems} completados (${Math.round(porcentajeCompletado)}%)`,
-        )
 
         // Obtener el servicio de correo
         const emailServices = await importEmailService()
@@ -139,21 +120,17 @@ export async function checkTripsAndNotify() {
           if (porcentajeCompletado === 100) {
             // Enviar felicitación por tener todo listo
             try {
-              console.log(`Enviando felicitación de viaje a ${usuario.email}`)
               await enviarFelicitacionViaje(emailServices, usuario.email, lista)
               results.congratulationsSent++
             } catch (error) {
-              console.error("Error al enviar felicitación de viaje:", error)
               results.errors++
             }
           } else {
             // Enviar recordatorio urgente
             try {
-              console.log(`Enviando recordatorio urgente a ${usuario.email}`)
               await enviarRecordatorioUrgente(emailServices, usuario.email, lista, porcentajeCompletado)
               results.remindersSent++
             } catch (error) {
-              console.error("Error al enviar recordatorio urgente:", error)
               results.errors++
             }
           }
@@ -161,36 +138,30 @@ export async function checkTripsAndNotify() {
         // Si es 1 día antes y no está completo
         else if (esUnDiaAntes && porcentajeCompletado < 100) {
           try {
-            console.log(`Enviando recordatorio de un día antes a ${usuario.email}`)
             await enviarRecordatorioUnDiaAntes(emailServices, usuario.email, lista, porcentajeCompletado)
             results.remindersSent++
           } catch (error) {
-            console.error("Error al enviar recordatorio de un día antes:", error)
             results.errors++
           }
         }
         // Si es 3 días antes y no está completo
         else if (esTresDiasAntes && porcentajeCompletado < 100) {
           try {
-            console.log(`Enviando recordatorio de tres días antes a ${usuario.email}`)
             await enviarRecordatorioTresDiasAntes(emailServices, usuario.email, lista, porcentajeCompletado)
             results.remindersSent++
           } catch (error) {
-            console.error("Error al enviar recordatorio de tres días antes:", error)
             results.errors++
           }
         }
       }
     }
 
-    console.log("Verificación de viajes completada", results)
     return {
       success: true,
       results,
       listsChecked: tripListsInstance.listasOrdenadas.value.length,
     }
   } catch (error) {
-    console.error("Error al verificar viajes y enviar notificaciones:", error)
     return {
       success: false,
       error: error.message,
@@ -207,7 +178,6 @@ export async function checkTripsAndNotify() {
  */
 async function enviarFelicitacionViaje(emailServices, email, lista) {
   if (!lista || !lista.destino) {
-    console.error("Lista inválida para enviar felicitación")
     return { success: false, error: "Lista inválida" }
   }
 
@@ -264,7 +234,6 @@ async function enviarFelicitacionViaje(emailServices, email, lista) {
  */
 async function enviarRecordatorioUrgente(emailServices, email, lista, porcentajeCompletado) {
   if (!lista || !lista.items) {
-    console.error("Lista inválida para enviar recordatorio urgente")
     return { success: false, error: "Lista inválida" }
   }
 
@@ -325,7 +294,6 @@ async function enviarRecordatorioUrgente(emailServices, email, lista, porcentaje
  */
 async function enviarRecordatorioUnDiaAntes(emailServices, email, lista, porcentajeCompletado) {
   if (!lista || !lista.items) {
-    console.error("Lista inválida para enviar recordatorio de un día antes")
     return { success: false, error: "Lista inválida" }
   }
 
@@ -387,7 +355,6 @@ async function enviarRecordatorioUnDiaAntes(emailServices, email, lista, porcent
  */
 async function enviarRecordatorioTresDiasAntes(emailServices, email, lista, porcentajeCompletado) {
   if (!lista || !lista.items) {
-    console.error("Lista inválida para enviar recordatorio de tres días antes")
     return { success: false, error: "Lista inválida" }
   }
 
@@ -455,21 +422,20 @@ function formatearFecha(fecha) {
 
 // Modificar la función debugListas para mejorar la depuración
 export function debugListas() {
-  console.log("Iniciando depuración de listas...")
 
   const { isUserAuthenticated, getUsuarioActual } = useAuth()
   const tripListsInstance = useTripLists() // Move hook call to the top level
 
   try {
     if (!isUserAuthenticated()) {
-      console.log("Usuario no autenticado")
+
       return { autenticado: false }
     }
 
     const usuario = getUsuarioActual()
 
     if (!usuario) {
-      console.log("Usuario no disponible")
+
       return { autenticado: true, usuarioValido: false, error: "usuario-no-disponible" }
     }
 
@@ -477,9 +443,7 @@ export function debugListas() {
     const userId = usuario.id || usuario.id_usuario
 
     if (!userId) {
-      console.log("ID de usuario no disponible", usuario)
       // Mostrar el objeto usuario completo para depuración
-      console.log("Objeto usuario completo:", JSON.stringify(usuario))
       return {
         autenticado: true,
         usuarioValido: false,
@@ -488,12 +452,9 @@ export function debugListas() {
       }
     }
 
-    console.log(`Usuario autenticado con ID: ${userId}, email: ${usuario.email}`)
 
     // Crear una nueva instancia para evitar problemas de referencia
 
-    // Cargar las listas y esperar a que se complete
-    console.log("Cargando listas de viaje...")
 
     // Devolver una promesa para poder usar async/await
     return new Promise((resolve) => {
@@ -501,10 +462,9 @@ export function debugListas() {
         .cargarListas()
         .then(() => {
           const listasOrdenadas = tripListsInstance.listasOrdenadas.value
-          console.log(`Se encontraron ${listasOrdenadas ? listasOrdenadas.length : 0} listas de viaje`)
 
           if (listasOrdenadas && listasOrdenadas.length > 0) {
-            console.log("Primera lista:", listasOrdenadas[0])
+
           }
 
           resolve({
@@ -523,7 +483,6 @@ export function debugListas() {
           })
         })
         .catch((error) => {
-          console.error("Error al cargar listas:", error)
           resolve({
             autenticado: true,
             usuarioValido: true,
@@ -535,14 +494,12 @@ export function debugListas() {
         })
     })
   } catch (error) {
-    console.error("Error en debugListas:", error)
     return { error: error.message }
   }
 }
 
 // Añadir una función para verificar y reparar el localStorage
 export function verificarYRepararLocalStorage() {
-  console.log("Verificando y reparando localStorage...")
 
   const { isUserAuthenticated, getUsuarioActual } = useAuth()
 
@@ -582,15 +539,12 @@ export function verificarYRepararLocalStorage() {
             if (Array.isArray(parsedData) && parsedData.length > 0) {
               datosEncontrados = parsedData
               claveEncontrada = clave
-              console.log(`Datos encontrados en clave: ${clave}`)
               break
             }
           } catch (e) {
-            console.log(`Error al parsear datos en clave ${clave}:`, e)
           }
         }
       } catch (e) {
-        console.log(`Error al acceder a clave ${clave}:`, e)
       }
     }
 
@@ -602,9 +556,7 @@ export function verificarYRepararLocalStorage() {
       if (claveEncontrada !== claveCorrecta) {
         try {
           localStorage.setItem(claveCorrecta, JSON.stringify(datosEncontrados))
-          console.log(`Datos copiados de ${claveEncontrada} a ${claveCorrecta}`)
         } catch (e) {
-          console.error("Error al copiar datos a la clave correcta:", e)
           return {
             success: false,
             reason: "error-al-copiar-datos",
@@ -627,14 +579,12 @@ export function verificarYRepararLocalStorage() {
     const claveCorrecta = `tripLists_${userId}`
     try {
       localStorage.setItem(claveCorrecta, JSON.stringify([]))
-      console.log(`No se encontraron datos. Se creó una estructura vacía en ${claveCorrecta}`)
       return {
         success: true,
         message: "Se creó una estructura vacía",
         clave: claveCorrecta,
       }
     } catch (e) {
-      console.error("Error al crear estructura vacía:", e)
       return {
         success: false,
         reason: "error-al-crear-estructura",
@@ -642,7 +592,6 @@ export function verificarYRepararLocalStorage() {
       }
     }
   } catch (error) {
-    console.error("Error en verificarYRepararLocalStorage:", error)
     return {
       success: false,
       reason: "error-general",

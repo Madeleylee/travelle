@@ -13,6 +13,7 @@ import NotFound from "../views/NotFoundView.vue"
 import TripLists from "../views/TripListsView.vue"
 import TripListDetail from "../views/TripListDetailView.vue"
 import Map from "../views/MapView.vue"
+import Contact from "../views/Contact.vue"
 
 /*Componentes de registro */
 import LoginForm from "../components/LoginForm.vue"
@@ -75,6 +76,11 @@ const routes = [
     name: "Paises",
     component: Paises,
   },
+  {
+    path: "/contacto",
+    name: "contacto",
+    component: Contact,
+  },
   // Rutas protegidas
   {
     path: "/favoritos",
@@ -94,6 +100,7 @@ const routes = [
     component: Visitados,
     meta: { requiresAuth: true },
   },
+
   // Nuevas rutas para listas de viaje
   {
     path: "/viajes",

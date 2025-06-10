@@ -27,7 +27,6 @@ export function useTripLists() {
         return new Promise((resolve) => {
             try {
                 if (!isUserAuthenticated()) {
-                    console.log("Usuario no autenticado, no se cargarán listas")
                     tripLists.value = []
                     isLoading.value = false
                     resolve([])
@@ -37,7 +36,6 @@ export function useTripLists() {
                 const usuario = getUsuarioActual()
 
                 if (!usuario) {
-                    console.error("Usuario no disponible al cargar listas")
                     error.value = "No se pudo acceder a la información del usuario"
                     tripLists.value = []
                     isLoading.value = false
@@ -49,7 +47,6 @@ export function useTripLists() {
                 const userId = usuario.id || usuario.id_usuario
 
                 if (!userId) {
-                    console.error("ID de usuario no disponible al cargar listas", usuario)
                     error.value = "ID de usuario no disponible"
                     tripLists.value = []
                     isLoading.value = false
@@ -58,7 +55,6 @@ export function useTripLists() {
                 }
 
                 const key = `tripLists_${userId}`
-                console.log("Cargando listas con clave:", key)
 
                 try {
                     const storedLists = localStorage.getItem(key)
@@ -68,25 +64,19 @@ export function useTripLists() {
                             const parsedLists = JSON.parse(storedLists)
                             if (Array.isArray(parsedLists)) {
                                 tripLists.value = parsedLists
-                                console.log(`Listas cargadas correctamente: ${parsedLists.length} listas encontradas`)
                             } else {
-                                console.error("El valor almacenado no es un array", parsedLists)
                                 tripLists.value = []
                             }
                         } catch (parseError) {
-                            console.error("Error al parsear las listas almacenadas:", parseError)
                             tripLists.value = []
                         }
                     } else {
-                        console.log("No se encontraron listas guardadas para el usuario", userId)
                         tripLists.value = []
                     }
                 } catch (storageError) {
-                    console.error("Error al acceder a localStorage:", storageError)
                     tripLists.value = []
                 }
             } catch (err) {
-                console.error("Error al cargar las listas de viaje:", err)
                 error.value = "No se pudieron cargar las listas de viaje"
                 tripLists.value = []
             } finally {
@@ -99,7 +89,6 @@ export function useTripLists() {
     // Guardar listas en localStorage
     const guardarListas = () => {
         if (!isUserAuthenticated()) {
-            console.log("Usuario no autenticado, no se guardarán listas")
             return false
         }
 
@@ -107,7 +96,6 @@ export function useTripLists() {
             const usuario = getUsuarioActual()
 
             if (!usuario) {
-                console.error("Usuario no disponible al guardar listas")
                 error.value = "No se pudo acceder a la información del usuario"
                 return false
             }
@@ -116,7 +104,6 @@ export function useTripLists() {
             const userId = usuario.id || usuario.id_usuario
 
             if (!userId) {
-                console.error("ID de usuario no disponible al guardar listas", usuario)
                 error.value = "ID de usuario no disponible"
                 return false
             }
@@ -126,22 +113,18 @@ export function useTripLists() {
             try {
                 // Verificar que tripLists.value sea un array
                 if (!Array.isArray(tripLists.value)) {
-                    console.error("tripLists.value no es un array", tripLists.value)
                     error.value = "Error al guardar: formato de datos incorrecto"
                     return false
                 }
 
                 // Guardar en localStorage
                 localStorage.setItem(key, JSON.stringify(tripLists.value))
-                console.log(`Listas guardadas correctamente: ${tripLists.value.length} listas guardadas con clave ${key}`)
                 return true
             } catch (storageError) {
-                console.error("Error al acceder a localStorage:", storageError)
                 error.value = "Error al guardar en almacenamiento local"
                 return false
             }
         } catch (err) {
-            console.error("Error al guardar las listas de viaje:", err)
             error.value = "No se pudieron guardar los cambios"
             return false
         }
@@ -166,7 +149,6 @@ export function useTripLists() {
         const usuario = getUsuarioActual()
 
         if (!usuario) {
-            console.error("Usuario no disponible al crear lista")
             error.value = "No se pudo acceder a la información del usuario"
             return null
         }
@@ -175,7 +157,6 @@ export function useTripLists() {
         const userId = usuario.id || usuario.id_usuario
 
         if (!userId) {
-            console.error("ID de usuario no disponible al crear lista", usuario)
             error.value = "ID de usuario no disponible"
             return null
         }
@@ -198,13 +179,11 @@ export function useTripLists() {
     // Obtener una lista por su ID
     const obtenerLista = (id) => {
         if (!Array.isArray(tripLists.value)) {
-            console.error("tripLists.value no es un array al obtener lista", tripLists.value)
             return null
         }
 
         const lista = tripLists.value.find((lista) => lista.id === id)
         if (!lista) {
-            console.error(`No se encontró lista con ID: ${id}`)
         }
         return lista || null
     }
@@ -212,14 +191,12 @@ export function useTripLists() {
     // Actualizar una lista existente
     const actualizarLista = (id, datos) => {
         if (!Array.isArray(tripLists.value)) {
-            console.error("tripLists.value no es un array al actualizar lista", tripLists.value)
             error.value = "Error al actualizar: formato de datos incorrecto"
             return false
         }
 
         const index = tripLists.value.findIndex((lista) => lista.id === id)
         if (index === -1) {
-            console.error(`No se encontró lista con ID: ${id} para actualizar`)
             error.value = "Lista no encontrada"
             return false
         }
@@ -236,14 +213,12 @@ export function useTripLists() {
     // Eliminar una lista
     const eliminarLista = (id) => {
         if (!Array.isArray(tripLists.value)) {
-            console.error("tripLists.value no es un array al eliminar lista", tripLists.value)
             error.value = "Error al eliminar: formato de datos incorrecto"
             return false
         }
 
         const index = tripLists.value.findIndex((lista) => lista.id === id)
         if (index === -1) {
-            console.error(`No se encontró lista con ID: ${id} para eliminar`)
             error.value = "Lista no encontrada"
             return false
         }
@@ -257,7 +232,6 @@ export function useTripLists() {
     const agregarItem = (listaId, texto, categoria = "otros", prioridad = 2, notas = "") => {
         const lista = obtenerLista(listaId)
         if (!lista) {
-            console.error(`No se encontró lista con ID: ${listaId} para agregar item`)
             error.value = "Lista no encontrada"
             return false
         }
@@ -286,21 +260,18 @@ export function useTripLists() {
     const actualizarItem = (listaId, itemId, datos) => {
         const lista = obtenerLista(listaId)
         if (!lista) {
-            console.error(`No se encontró lista con ID: ${listaId} para actualizar item`)
             error.value = "Lista no encontrada"
             return false
         }
 
         // Asegurarse de que lista.items sea un array
         if (!Array.isArray(lista.items)) {
-            console.error("lista.items no es un array", lista)
             error.value = "Formato de datos incorrecto"
             return false
         }
 
         const index = lista.items.findIndex((item) => item.id === itemId)
         if (index === -1) {
-            console.error(`No se encontró item con ID: ${itemId} en lista ${listaId}`)
             error.value = "Elemento no encontrado"
             return false
         }
@@ -318,21 +289,18 @@ export function useTripLists() {
     const eliminarItem = (listaId, itemId) => {
         const lista = obtenerLista(listaId)
         if (!lista) {
-            console.error(`No se encontró lista con ID: ${listaId} para eliminar item`)
             error.value = "Lista no encontrada"
             return false
         }
 
         // Asegurarse de que lista.items sea un array
         if (!Array.isArray(lista.items)) {
-            console.error("lista.items no es un array", lista)
             error.value = "Formato de datos incorrecto"
             return false
         }
 
         const index = lista.items.findIndex((item) => item.id === itemId)
         if (index === -1) {
-            console.error(`No se encontró item con ID: ${itemId} en lista ${listaId}`)
             error.value = "Elemento no encontrado"
             return false
         }
@@ -346,21 +314,18 @@ export function useTripLists() {
     const toggleCompletado = (listaId, itemId) => {
         const lista = obtenerLista(listaId)
         if (!lista) {
-            console.error(`No se encontró lista con ID: ${listaId} para toggle item`)
             error.value = "Lista no encontrada"
             return false
         }
 
         // Asegurarse de que lista.items sea un array
         if (!Array.isArray(lista.items)) {
-            console.error("lista.items no es un array", lista)
             error.value = "Formato de datos incorrecto"
             return false
         }
 
         const item = lista.items.find((item) => item.id === itemId)
         if (!item) {
-            console.error(`No se encontró item con ID: ${itemId} en lista ${listaId}`)
             error.value = "Elemento no encontrado"
             return false
         }
@@ -373,7 +338,6 @@ export function useTripLists() {
     // Obtener listas ordenadas por fecha de inicio (más próximas primero)
     const listasOrdenadas = computed(() => {
         if (!Array.isArray(tripLists.value)) {
-            console.error("tripLists.value no es un array en computed listasOrdenadas", tripLists.value)
             return []
         }
 
@@ -385,7 +349,6 @@ export function useTripLists() {
     // Obtener listas próximas (en los próximos 30 días)
     const listasProximas = computed(() => {
         if (!Array.isArray(tripLists.value)) {
-            console.error("tripLists.value no es un array en computed listasProximas", tripLists.value)
             return []
         }
 

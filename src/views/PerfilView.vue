@@ -384,7 +384,6 @@ const validateUsername = async () => {
             formErrors.nombre_usuario = '';
         }
     } catch (error) {
-        console.error('Error al verificar nombre de usuario:', error);
         formErrors.nombre_usuario = 'Error al verificar disponibilidad';
     } finally {
         isCheckingUsername.value = false;
@@ -433,7 +432,6 @@ const loadUserPreferences = (userId) => {
         // Simular fecha de registro
         fechaRegistro.value = formatDate(new Date());
     } catch (error) {
-        console.error('Error al cargar preferencias:', error);
     }
 };
 
@@ -445,7 +443,6 @@ const loadUserStats = () => {
         favoritos.value = [];
         tripLists.value = [];
     } catch (error) {
-        console.error('Error al cargar estadísticas:', error);
     }
 };
 
@@ -505,9 +502,6 @@ const handleFileUpload = (event) => {
                 usuario.value.foto_perfil = e.target.result;
                 successMessage.value = 'Foto de perfil actualizada correctamente.';
             }
-
-            // Aquí se implementaría la subida real del archivo al servidor
-            console.log('Archivo seleccionado:', file.name);
         };
         reader.readAsDataURL(file);
     }
@@ -548,7 +542,6 @@ const updateProfile = async () => {
 
         successMessage.value = 'Perfil actualizado con éxito.';
     } catch (error) {
-        console.error('Error al actualizar perfil:', error);
         errorMessage.value = 'Error al actualizar el perfil. Inténtalo de nuevo.';
     } finally {
         isUpdating.value = false;
@@ -582,7 +575,6 @@ const updatePreferences = async () => {
 
         successMessage.value = 'Preferencias actualizadas con éxito.';
     } catch (error) {
-        console.error('Error al actualizar preferencias:', error);
         errorMessage.value = 'Error al actualizar las preferencias. Inténtalo de nuevo.';
     } finally {
         isUpdating.value = false;
@@ -622,7 +614,6 @@ const loadUserData = async () => {
             loadUserStats();
         }
     } catch (error) {
-        console.error('Error al cargar datos del usuario:', error);
     } finally {
         isLoading.value = false;
     }

@@ -309,18 +309,14 @@ const cargarLista = async () => {
       throw new Error('Trip ID not provided');
     }
 
-    console.log("Loading trip with ID:", id);
-
     // Obtener la lista
     const resultado = obtenerLista(id);
 
     if (!resultado) {
-      console.error("Trip not found with ID:", id);
       throw new Error('Trip not found');
     }
 
     lista.value = resultado;
-    console.log("Trip loaded:", lista.value);
 
     // Asegurarse de que items sea un array
     if (!lista.value.items) {
@@ -328,7 +324,6 @@ const cargarLista = async () => {
     }
 
   } catch (err) {
-    console.error('Error loading trip:', err);
     error.value = 'Could not load trip details. Please try again.';
   } finally {
     cargando.value = false;
@@ -467,7 +462,6 @@ async function guardarItem() {
 
     if (modoEdicion.value && itemActual.value.id) {
       // Actualizar item existente
-      console.log("Updating item:", itemActual.value);
       const resultado = actualizarItem(lista.value.id, itemActual.value.id, itemActual.value);
       if (!resultado) {
         throw new Error("Could not update item");
@@ -481,8 +475,6 @@ async function guardarItem() {
         message: 'Item has been updated successfully'
       });
     } else {
-      // Crear nuevo item
-      console.log("Creating new item:", itemActual.value);
       const resultado = agregarItem(
         lista.value.id,
         itemActual.value.texto,
@@ -506,7 +498,6 @@ async function guardarItem() {
     cerrarModal();
     await cargarLista();
   } catch (err) {
-    console.error('Error saving item:', err);
 
     // Mostrar notificación de error
     showNotification({
@@ -527,7 +518,6 @@ async function eliminarItem(item) {
   }
 
   try {
-    console.log("Deleting item:", item.id);
     const resultado = eliminarItemLista(lista.value.id, item.id);
     if (!resultado) {
       throw new Error("Could not delete item");
@@ -543,8 +533,6 @@ async function eliminarItem(item) {
 
     await cargarLista();
   } catch (err) {
-    console.error('Error deleting item:', err);
-
     // Mostrar notificación de error
     showNotification({
       type: 'error',
@@ -560,7 +548,6 @@ async function toggleItemCompletado(item) {
   if (!lista.value) return;
 
   try {
-    console.log("Toggling item status:", item.id);
     const resultado = toggleCompletado(lista.value.id, item.id);
     if (!resultado) {
       throw new Error("Could not change item status");
@@ -576,7 +563,6 @@ async function toggleItemCompletado(item) {
 
     await cargarLista();
   } catch (err) {
-    console.error('Error updating item status:', err);
 
     // Mostrar notificación de error
     showNotification({
@@ -634,7 +620,7 @@ async function guardarLista() {
       return;
     }
 
-    console.log("Updating trip:", listaEditada.value);
+
     const resultado = actualizarLista(lista.value.id, listaEditada.value);
     if (!resultado) {
       throw new Error("Could not update trip");
@@ -651,7 +637,7 @@ async function guardarLista() {
     cerrarModalLista();
     await cargarLista();
   } catch (err) {
-    console.error('Error saving trip:', err);
+
 
     // Mostrar notificación de error
     showNotification({

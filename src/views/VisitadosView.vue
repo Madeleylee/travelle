@@ -409,7 +409,6 @@ const removeVisitedPlaceItem = async () => {
             selectedLugar.value = null;
         }
     } catch (error) {
-        console.error('Error removing visited place:', error);
     } finally {
         isRemoving.value = false;
     }

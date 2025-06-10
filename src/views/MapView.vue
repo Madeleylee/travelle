@@ -31,7 +31,6 @@ const checkIfMobile = () => {
             isMobile.value = window.innerWidth < 768;
         }
     } catch (err) {
-        console.error('Error checking if mobile:', err);
         isMobile.value = false;
     }
 };
@@ -43,13 +42,10 @@ const loadCountries = async () => {
         try {
             const { getPaises } = await import('@/composables/useDatabase');
             countries.value = await getPaises();
-            console.log('Countries loaded from database:', countries.value);
         } catch (err) {
-            console.error('Error loading countries from database:', err);
             countries.value = [];
         }
     } catch (err) {
-        console.error('Error in loadCountries:', err);
         countries.value = [];
     }
 };
@@ -62,15 +58,12 @@ const placesToShow = computed(() => {
         switch (viewMode.value) {
             case 'nearby':
                 result = places.value || [];
-                console.log(`Showing ${result.length} nearby places`);
                 break;
             case 'country':
                 if (selectedCountry.value) {
                     result = (allPlaces.value || []).filter(place => place.id_pais === selectedCountry.value);
-                    console.log(`Showing ${result.length} places in country ID: ${selectedCountry.value}`);
                 } else {
                     result = [];
-                    console.log('No country selected, showing 0 places');
                 }
                 break;
             default:
@@ -79,7 +72,6 @@ const placesToShow = computed(() => {
 
         return result;
     } catch (err) {
-        console.error('Error in computed placesToShow:', err);
         return [];
     }
 });
@@ -106,7 +98,6 @@ const setViewMode = (mode, countryId = null) => {
             addPlacesToMap();
         }
     } catch (err) {
-        console.error('Error setting view mode:', err);
     }
 };
 
@@ -134,7 +125,6 @@ const fitMapToPlaces = () => {
             map.value.fitBounds(bounds, { padding: [50, 50] });
         }
     } catch (err) {
-        console.error('Error fitting map to places:', err);
     }
 };
 
@@ -144,10 +134,8 @@ const loadLeaflet = async () => {
         // Import Leaflet dynamically to avoid SSR problems
         const leaflet = await import('leaflet');
         L.value = leaflet.default || leaflet;
-        console.log('Leaflet loaded correctly');
         return true;
     } catch (err) {
-        console.error('Error loading Leaflet:', err);
         error.value = 'Error loading map library: ' + err.message;
         return false;
     }
@@ -160,7 +148,6 @@ const initMap = async (lat, lng) => {
         await nextTick();
 
         if (!mapContainer.value) {
-            console.error('Map container is not available');
             return;
         }
 
@@ -175,7 +162,6 @@ const initMap = async (lat, lng) => {
         const containerHeight = mapContainer.value.offsetHeight;
 
         if (containerWidth === 0 || containerHeight === 0) {
-            console.error('Map container has zero dimensions');
             await new Promise(resolve => setTimeout(resolve, 500)); // Wait a bit more
         }
 
@@ -184,7 +170,6 @@ const initMap = async (lat, lng) => {
             try {
                 // Clean any previous instance
                 if (mapContainer.value._leaflet_id) {
-                    console.log('Cleaning previous map instance');
                     mapContainer.value._leaflet_id = null;
                 }
 
@@ -225,9 +210,7 @@ const initMap = async (lat, lng) => {
 
                 // Mark the map as initialized
                 mapInitialized.value = true;
-                console.log('Map initialized correctly');
             } catch (err) {
-                console.error('Error initializing map:', err);
                 error.value = 'Error initializing map: ' + err.message;
             }
         } else {
@@ -236,11 +219,9 @@ const initMap = async (lat, lng) => {
                 map.value.setView([lat, lng], 13);
                 map.value.invalidateSize();
             } catch (err) {
-                console.error('Error updating map view:', err);
             }
         }
     } catch (err) {
-        console.error('General error in initMap:', err);
         error.value = 'Error initializing map: ' + err.message;
     }
 };
@@ -260,16 +241,13 @@ const checkLocationPermission = async () => {
             // Listen for changes in permission state
             permissionStatus.onchange = () => {
                 locationPermissionStatus.value = permissionStatus.state;
-                console.log('Location permission state changed to:', permissionStatus.state);
             };
 
             return permissionStatus.state;
         } catch (err) {
-            console.error('Error checking location permission:', err);
             return 'prompt'; // Assume we can request if there's an error
         }
     } catch (err) {
-        console.error('General error in checkLocationPermission:', err);
         return 'prompt';
     }
 };
@@ -287,7 +265,6 @@ const retryGetLocation = () => {
         error.value = null;
         getUserLocation();
     } catch (err) {
-        console.error('Error in retryGetLocation:', err);
         error.value = 'Error retrying to get location: ' + err.message;
     }
 };
@@ -301,7 +278,6 @@ const getUserLocation = async () => {
 
         // Check location permission status
         const permissionState = await checkLocationPermission();
-        console.log('Location permission status:', permissionState);
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -327,7 +303,6 @@ const getUserLocation = async () => {
 
                                 userMarker.bindPopup('<div class="custom-popup"><strong>Your current location</strong></div>').openPopup();
                             } catch (err) {
-                                console.error('Error adding user marker:', err);
                             }
                         }
 
@@ -335,11 +310,9 @@ const getUserLocation = async () => {
                         try {
                             // Load all places first (needed for country filtering)
                             allPlaces.value = await getTodosLosLugares();
-                            console.log(`Loaded ${allPlaces.value ? allPlaces.value.length : 0} places in total`);
 
                             // Then get nearby places
                             places.value = await getLugaresCercanos(latitude, longitude, radiusKm.value);
-                            console.log(`Loaded ${places.value ? places.value.length : 0} nearby places`);
 
                             // Set view mode to nearby
                             setViewMode('nearby');
@@ -349,18 +322,15 @@ const getUserLocation = async () => {
                                 addPlacesToMap();
                             }
                         } catch (err) {
-                            console.error('Error getting places:', err);
                             error.value = 'Could not load places: ' + err.message;
                         }
                     } catch (err) {
-                        console.error('Error processing user position:', err);
                         error.value = 'Error processing your location: ' + err.message;
                     } finally {
                         isLoading.value = false;
                     }
                 },
                 (err) => {
-                    console.error('Error getting location:', err);
 
                     // Update permission state if denied
                     if (err.code === 1) { // PERMISSION_DENIED
@@ -384,7 +354,6 @@ const getUserLocation = async () => {
             loadAllPlacesForCountryView();
         }
     } catch (err) {
-        console.error('General error in getUserLocation:', err);
         error.value = 'Error getting your location: ' + err.message;
         isLoading.value = false;
         loadAllPlacesForCountryView();
@@ -401,7 +370,6 @@ const loadAllPlacesForCountryView = async () => {
 
         // Load all places for country filtering
         allPlaces.value = await getTodosLosLugares();
-        console.log(`Loaded ${allPlaces.value ? allPlaces.value.length : 0} places in total for country view`);
 
         // Set view mode to country
         setViewMode('country');
@@ -409,7 +377,6 @@ const loadAllPlacesForCountryView = async () => {
         // If there are countries, select the first one by default
         if (countries.value && countries.value.length > 0) {
             selectedCountry.value = countries.value[0].id_pais;
-            console.log(`Auto-selected country: ${countries.value[0].nombre}`);
         }
 
         // Show places on the map if initialized
@@ -417,7 +384,6 @@ const loadAllPlacesForCountryView = async () => {
             addPlacesToMap();
         }
     } catch (err) {
-        console.error('Error loading places for country view:', err);
         error.value = 'Could not load places: ' + err.message;
     } finally {
         isLoading.value = false;
@@ -428,7 +394,6 @@ const loadAllPlacesForCountryView = async () => {
 const addPlacesToMap = () => {
     try {
         if (!mapInitialized.value || !map.value || !L.value) {
-            console.error('Cannot add places because the map is not initialized');
             return;
         }
 
@@ -440,11 +405,9 @@ const addPlacesToMap = () => {
         const visiblePlaces = placesToShow.value;
 
         if (!visiblePlaces || visiblePlaces.length === 0) {
-            console.log('No places to show on the map');
             return;
         }
 
-        console.log(`Adding ${visiblePlaces.length} places to the map`);
 
         try {
             // Add markers for each place
@@ -488,14 +451,11 @@ const addPlacesToMap = () => {
                         maxWidth: 300
                     });
                 } catch (err) {
-                    console.error('Error adding marker for place:', place, err);
                 }
             });
         } catch (err) {
-            console.error('Error adding places to map:', err);
         }
     } catch (err) {
-        console.error('General error in addPlacesToMap:', err);
     }
 };
 
@@ -511,20 +471,17 @@ const changeRadius = async () => {
                 userLocation.value.lng,
                 radiusKm.value
             );
-            console.log(`Loaded ${places.value ? places.value.length : 0} nearby places after changing radius`);
 
             // Update markers if map is initialized and in nearby mode
             if (mapInitialized.value && viewMode.value === 'nearby') {
                 addPlacesToMap();
             }
         } catch (err) {
-            console.error('Error getting nearby places:', err);
             error.value = 'Could not load nearby places: ' + err.message;
         } finally {
             isLoading.value = false;
         }
     } catch (err) {
-        console.error('General error in changeRadius:', err);
         isLoading.value = false;
     }
 };
@@ -541,7 +498,6 @@ const viewPlaceDetails = (place) => {
             }
         });
     } catch (err) {
-        console.error('Error in viewPlaceDetails:', err);
     }
 };
 
@@ -551,7 +507,6 @@ const goToHome = () => {
         router.push({ name: 'Home' });
         closeLocationInstructions();
     } catch (err) {
-        console.error('Error navigating to home:', err);
     }
 };
 
@@ -561,7 +516,6 @@ const goToCountries = () => {
         router.push({ name: 'Paises' });
         closeLocationInstructions();
     } catch (err) {
-        console.error('Error navigating to countries page:', err);
     }
 };
 
@@ -572,7 +526,6 @@ watch(radiusKm, () => {
             changeRadius();
         }
     } catch (err) {
-        console.error('Error in watch of radiusKm:', err);
     }
 });
 
@@ -580,7 +533,6 @@ watch(radiusKm, () => {
 const cleanupMap = () => {
     try {
         if (map.value) {
-            console.log('Cleaning up map...');
             map.value.remove();
             map.value = null;
             mapInitialized.value = false;
@@ -591,7 +543,6 @@ const cleanupMap = () => {
             window.removeEventListener('resize', checkIfMobile);
         }
     } catch (err) {
-        console.error('Error in cleanupMap:', err);
     }
 };
 
@@ -626,7 +577,6 @@ onMounted(async () => {
         // Get user location
         getUserLocation();
     } catch (err) {
-        console.error('Error in onMounted:', err);
         error.value = 'Error initializing map: ' + err.message;
     }
 });

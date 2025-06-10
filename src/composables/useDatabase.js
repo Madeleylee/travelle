@@ -3,7 +3,6 @@ import { turso } from "../services/tursoClient"
 // Obtener todos los países junto con sus ciudades
 export async function getPaisesConCiudades() {
     try {
-        console.log("Ejecutando getPaisesConCiudades")
         const result = await turso.execute(`
             SELECT p.id_pais, p.nombre AS pais, p.bandera, c.id_ciudad, c.nombre AS ciudad
             FROM Paises p
@@ -11,7 +10,7 @@ export async function getPaisesConCiudades() {
             ORDER BY p.nombre, c.nombre
         `)
 
-        console.log("Resultado de la consulta:", result)
+
 
         const paises = {}
         for (const row of result.rows) {
@@ -33,10 +32,8 @@ export async function getPaisesConCiudades() {
         }
 
         const paisesArray = Object.values(paises)
-        console.log("Países procesados:", paisesArray)
         return paisesArray
     } catch (error) {
-        console.error("Error en getPaisesConCiudades:", error)
         throw error
     }
 }
@@ -47,7 +44,6 @@ export async function getCiudades() {
         const result = await turso.execute(`SELECT id_ciudad, nombre, id_pais FROM Ciudades ORDER BY nombre`)
         return result.rows
     } catch (error) {
-        console.error("Error en getCiudades:", error)
         throw error
     }
 }
@@ -55,10 +51,7 @@ export async function getCiudades() {
 // Obtener lugares por ciudad
 export async function getLugaresPorCiudad(idCiudad) {
     try {
-        console.log(`Ejecutando getLugaresPorCiudad con id_ciudad: ${idCiudad}`)
-
         if (!idCiudad) {
-            console.error("ID de ciudad no válido:", idCiudad)
             return []
         }
 
@@ -70,10 +63,8 @@ export async function getLugaresPorCiudad(idCiudad) {
             args: [idCiudad],
         })
 
-        console.log(`Lugares encontrados para ciudad ${idCiudad}:`, result.rows)
         return result.rows
     } catch (error) {
-        console.error(`Error en getLugaresPorCiudad para id_ciudad ${idCiudad}:`, error)
         throw error
     }
 }
@@ -230,7 +221,6 @@ export async function getPaises() {
 
         return result.rows
     } catch (error) {
-        console.error("Error en getPaises:", error)
         throw error
     }
 }
@@ -238,8 +228,6 @@ export async function getPaises() {
 // Obtener lugares cercanos a una ubicación
 export async function getLugaresCercanos(latitud, longitud, distanciaKm = 50) {
     try {
-        console.log(`Ejecutando getLugaresCercanos con lat: ${latitud}, lng: ${longitud}, distancia: ${distanciaKm}km`)
-
         // Convertir coordenadas a radianes para el cálculo
         const latRad = (latitud * Math.PI) / 180
         const lonRad = (longitud * Math.PI) / 180
@@ -293,10 +281,8 @@ export async function getLugaresCercanos(latitud, longitud, distanciaKm = 50) {
         // Filtrar los resultados por la distancia exacta
         const lugaresEnRango = result.rows.filter((lugar) => lugar.distancia <= distanciaKm)
 
-        console.log(`Lugares cercanos encontrados: ${lugaresEnRango.length}`)
         return lugaresEnRango
     } catch (error) {
-        console.error("Error en getLugaresCercanos:", error)
         throw error
     }
 }
@@ -304,7 +290,6 @@ export async function getLugaresCercanos(latitud, longitud, distanciaKm = 50) {
 // Obtener todos los lugares con información de ciudad y país
 export async function getTodosLosLugares() {
     try {
-        console.log("Ejecutando getTodosLosLugares")
 
         const result = await turso.execute(`
       SELECT 
@@ -329,10 +314,8 @@ export async function getTodosLosLugares() {
       ORDER BY p.nombre, c.nombre, l.nombre
     `)
 
-        console.log(`Total de lugares encontrados: ${result.rows.length}`)
         return result.rows
     } catch (error) {
-        console.error("Error en getTodosLosLugares:", error)
         throw error
     }
 }

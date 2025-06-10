@@ -29,31 +29,24 @@ async function cargarCiudadesConLugares(paisActual) {
         error.value = null; // Limpiar errores previos
         ciudadesConLugares.value = []; // Reiniciar el array de ciudades
 
-        console.log('Cargando ciudades para país:', paisActual);
 
         // Verificar si el país tiene ciudades
         if (!paisActual.ciudades || !Array.isArray(paisActual.ciudades)) {
-            console.error('El país no tiene ciudades o no es un array:', paisActual);
             error.value = 'No cities found for this country';
             return;
         }
 
         // Iterar sobre cada ciudad del país
         for (const ciudad of paisActual.ciudades) {
-            console.log('Procesando ciudad:', ciudad);
-
             // Obtener el ID de la ciudad
             const ciudadId = ciudad.id_ciudad;
 
-            if (!ciudadId) {
-                console.error('Ciudad sin ID:', ciudad);
+            if (!ciudadId) { 
                 continue; // Saltar esta ciudad si no tiene ID
             }
 
             // Obtener los lugares para esta ciudad
-            console.log(`Obteniendo lugares para ciudad ID: ${ciudadId}`);
             const lugares = await getLugaresPorCiudad(ciudadId);
-            console.log(`Lugares obtenidos para ${ciudad.nombre}:`, lugares);
 
             // Añadir la ciudad con sus lugares al array
             ciudadesConLugares.value.push({
@@ -62,10 +55,8 @@ async function cargarCiudadesConLugares(paisActual) {
             });
         }
 
-        console.log('Ciudades con lugares cargadas:', ciudadesConLugares.value);
     } catch (err) {
         // Manejar errores
-        console.error('Error al cargar ciudades con lugares:', err);
         error.value = 'Error loading destinations';
     } finally {
         // Desactivar indicador de carga al finalizar
@@ -188,11 +179,9 @@ onMounted(async () => {
     try {
         // Obtener todos los países con sus ciudades
         const paises = await getPaisesConCiudades();
-        console.log('Países obtenidos:', paises);
 
         // Encontrar el país actual por su nombre
         pais.value = paises.find(p => p.nombre === nombrePais.value);
-        console.log('País seleccionado:', pais.value);
 
         if (pais.value) {
             // Cargar ciudades y lugares para el país
@@ -207,7 +196,6 @@ onMounted(async () => {
         }
     } catch (err) {
         // Manejar errores
-        console.error('Error al cargar datos iniciales:', err);
         error.value = 'Error loading data';
     } finally {
         // Desactivar indicador de carga
@@ -241,7 +229,6 @@ watch(() => route.params.nombrePais, async () => {
         }
     } catch (err) {
         // Manejar errores
-        console.error('Error al cambiar de país:', err);
         error.value = 'Error loading data';
         ciudadesConLugares.value = [];
     } finally {

@@ -44,15 +44,12 @@ const favoritosPorPais = computed(() => {
 // Load favorites from localStorage
 const loadFavorites = () => {
     isLoading.value = true;
-    console.log('Starting to load favorites...');
 
     try {
         const storedFavorites = localStorage.getItem('favoritos');
-        console.log('Data in localStorage:', storedFavorites);
 
         if (storedFavorites) {
             const parsedFavorites = JSON.parse(storedFavorites);
-            console.log('Parsed favorites:', parsedFavorites);
 
             // Verify that each favorite has the necessary fields
             favoritos.value = parsedFavorites.map(fav => {
@@ -71,12 +68,8 @@ const loadFavorites = () => {
                     imagen1: fav.imagen1 || '/placeholder.jpg'
                 };
             });
-
-            console.log('Processed favorites:', favoritos.value);
-            console.log('Favorites grouped by country:', favoritosPorPais.value);
         } else {
             favoritos.value = [];
-            console.log('No favorites in localStorage');
         }
     } catch (error) {
         console.error('Error loading favorites:', error);
@@ -88,7 +81,6 @@ const loadFavorites = () => {
 
 // Remove a favorite by ID
 const removeFavorite = (id) => {
-    console.log(`Removing favorite with ID: ${id}`);
 
     try {
         // Get current favorites from localStorage
@@ -107,8 +99,6 @@ const removeFavorite = (id) => {
                 // Save back to localStorage
                 localStorage.setItem('favoritos', JSON.stringify(favorites));
 
-                console.log(`Favorite with ID ${id} removed successfully`);
-
                 // Update the local state
                 loadFavorites();
 
@@ -119,13 +109,13 @@ const removeFavorite = (id) => {
             }
         }
     } catch (error) {
-        console.error('Error removing favorite:', error);
+
     }
 };
 
 // Handle favorite toggle
 const handleFavoriteToggle = (isNowFavorite) => {
-    console.log('Favorite toggled, is now favorite:', isNowFavorite);
+
     // Force reload favorites after a short delay to ensure localStorage is updated
     setTimeout(() => {
         loadFavorites();
@@ -134,14 +124,13 @@ const handleFavoriteToggle = (isNowFavorite) => {
 
 // Handle favorites updated event
 const handleFavoritesUpdated = () => {
-    console.log('Favorites updated event received');
+
     loadFavorites();
 };
 
 // Function to handle localStorage changes
 const handleStorageChange = (event) => {
     if (event.key === 'favoritos') {
-        console.log('localStorage change detected for favoritos');
         loadFavorites();
     }
 };

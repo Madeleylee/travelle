@@ -17,7 +17,6 @@ export function useVisitados() {
 
         try {
             if (!isUserAuthenticated()) {
-                console.log("Usuario no autenticado. No se pueden cargar lugares visitados.")
                 visitados.value = []
                 isLoading.value = false
                 return
@@ -25,13 +24,10 @@ export function useVisitados() {
 
             const usuario = getUsuarioActual()
             if (!usuario || !usuario.id_usuario) {
-                console.log("No se encontró ID de usuario.")
                 visitados.value = []
                 isLoading.value = false
                 return
             }
-
-            console.log("Cargando lugares visitados para usuario ID:", usuario.id_usuario)
 
             const result = await turso.execute({
                 sql: `
@@ -49,11 +45,8 @@ export function useVisitados() {
                 args: [usuario.id_usuario],
             })
 
-            console.log("Resultado de la consulta:", result)
             visitados.value = result.rows
-            console.log("Lugares visitados cargados:", visitados.value)
         } catch (err) {
-            console.error("Error al cargar lugares visitados:", err)
             error.value = "Error al cargar lugares visitados. Por favor, intenta nuevamente."
             visitados.value = []
         } finally {
@@ -78,7 +71,6 @@ export function useVisitados() {
 
             return result.rows.length > 0
         } catch (err) {
-            console.error("Error al verificar lugar visitado:", err)
             return false
         }
     }
@@ -86,13 +78,11 @@ export function useVisitados() {
     // Marcar un lugar como visitado
     const addVisitedPlace = async (lugarId, fecha = null, notas = "") => {
         if (!isUserAuthenticated()) {
-            console.log("Usuario no autenticado. No se puede marcar como visitado.")
             return { success: false, requiresAuth: true }
         }
 
         const usuario = getUsuarioActual()
         if (!usuario || !usuario.id_usuario) {
-            console.log("No se encontró ID de usuario.")
             return { success: false }
         }
 
@@ -100,7 +90,6 @@ export function useVisitados() {
             // Si no se proporciona fecha, usar la fecha actual
             const fechaVisita = fecha || new Date().toISOString().split("T")[0]
 
-            console.log(`Marcando lugar ID ${lugarId} como visitado para usuario ID ${usuario.id_usuario}`)
 
             // Verificar si ya existe
             const checkResult = await turso.execute({
@@ -122,10 +111,8 @@ export function useVisitados() {
                 })
             }
 
-            console.log("Lugar marcado como visitado correctamente")
             return { success: true }
         } catch (err) {
-            console.error("Error al marcar lugar como visitado:", err)
             error.value = "Error al marcar lugar como visitado"
             return { success: false, error: err.message }
         }
@@ -143,17 +130,13 @@ export function useVisitados() {
         }
 
         try {
-            console.log(`Eliminando lugar ID ${lugarId} de visitados para usuario ID ${usuario.id_usuario}`)
-
             await turso.execute({
                 sql: `DELETE FROM Visitas_Manual WHERE id_usuario = ? AND id_lugar = ?`,
                 args: [usuario.id_usuario, lugarId],
             })
 
-            console.log("Lugar eliminado de visitados correctamente")
             return { success: true }
         } catch (err) {
-            console.error("Error al eliminar lugar visitado:", err)
             error.value = "Error al eliminar lugar visitado"
             return { success: false, error: err.message }
         }
@@ -162,7 +145,6 @@ export function useVisitados() {
     // Toggle visitado (marcar o desmarcar)
     const toggleVisitedPlace = async (lugarId, fecha = null, notas = "") => {
         const esVisitado = await isVisited(lugarId)
-        console.log(`Toggle visitado: ${lugarId}, es visitado: ${esVisitado}`)
 
         if (esVisitado) {
             const result = await removeVisitedPlace(lugarId)

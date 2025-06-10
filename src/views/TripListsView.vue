@@ -155,7 +155,6 @@ async function crearNuevaLista() {
     if (!validarFormulario()) return;
 
     try {
-        console.log("Creando nueva lista con datos:", nuevaLista.value);
 
         const lista = crearLista(
             nuevaLista.value.nombre,
@@ -165,7 +164,6 @@ async function crearNuevaLista() {
         );
 
         if (lista) {
-            console.log("Lista creada exitosamente:", lista);
             showNewListModal.value = false;
 
             // Esperar un momento para asegurar que la lista se guarde
@@ -173,11 +171,9 @@ async function crearNuevaLista() {
                 router.push({ name: 'TripListDetail', params: { id: lista.id } });
             }, 100);
         } else {
-            console.error("Error al crear lista: la función crearLista devolvió null o undefined");
             alert("Could not create the trip. Please try again.");
         }
     } catch (error) {
-        console.error("Error al crear nueva lista:", error);
         alert("An error occurred while creating the trip. Please try again.");
     }
 }
@@ -189,15 +185,11 @@ function verLista(id) {
         // Verificar que la lista existe antes de navegar
         const listaExistente = listasOrdenadas.value.find(l => l.id === id);
         if (!listaExistente) {
-            console.error('Lista no encontrada:', id);
             alert("The selected list was not found.");
             return;
         }
-
-        console.log("Navegando a lista:", id);
         router.push({ name: 'TripListDetail', params: { id } });
     } catch (error) {
-        console.error("Error al navegar a la lista:", error);
         alert("An error occurred while opening the list. Please try again.");
     }
 }
@@ -227,9 +219,7 @@ async function verificarViajesYNotificar() {
             // correos de recordatorio o felicitación según corresponda
             await checkTripsAndNotify();
             // No mostramos notificación en la UI para no interrumpir la experiencia del usuario
-            console.log('Verificación de viajes completada');
         } catch (error) {
-            console.error('Error al verificar viajes:', error);
         }
     }
 }
@@ -240,9 +230,7 @@ async function recargarListas() {
     try {
         isLoading.value = true;
         await cargarListas();
-        console.log("Listas recargadas:", tripLists.value.length);
     } catch (error) {
-        console.error("Error al recargar listas:", error);
     } finally {
         isLoading.value = false;
     }

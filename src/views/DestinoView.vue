@@ -33,7 +33,6 @@ onMounted(async () => {
       router.push({ name: "Home" });
     }
   } catch (error) {
-    console.error("Error fetching destination:", error);
     router.push({ name: "Home" }); // Redirect to home on error
   }
 });
@@ -145,6 +144,7 @@ function goBack() {
       <div class="destination-info">
         <div class="info-section">
           <h2>Information</h2>
+          <p>{{ destination.descripcion }}</p>
           <p><strong>City:</strong> {{ nombreCiudad }}</p>
           <p><strong>Country:</strong> {{ nombrePais }}</p>
           <p><strong>Price:</strong> {{ destination.precio === 0 ? 'Free' : `${destination.precio} €` }}</p>

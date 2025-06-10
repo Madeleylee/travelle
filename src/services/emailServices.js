@@ -18,9 +18,6 @@ export async function enviarCorreoRecuperacion(email, token) {
 
     // In development, create a mock response instead of making an API call
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-      console.log("Development environment detected - using mock email service")
-      console.log("Would send email to:", email)
-      console.log("With reset URL:", resetUrl)
 
       // Remove sending notification after a delay to simulate network request
       setTimeout(() => {
@@ -124,8 +121,6 @@ export async function enviarCorreoRecuperacion(email, token) {
 
     return { success: true, data: result }
   } catch (error) {
-    console.error("Error sending recovery email:", error)
-
     // Show error notification
     showNotification("Error", `Failed to send email: ${error.message}`, "error", 10000)
 
@@ -144,10 +139,6 @@ export async function enviarCorreoNotificacion(email, subject, message) {
   try {
     // In development, create a mock response instead of making an API call
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-      console.log("Development environment detected - using mock email service")
-      console.log("Would send email to:", email)
-      console.log("With subject:", subject)
-      console.log("With message:", message)
 
       // Return mock success response
       return {
@@ -211,7 +202,6 @@ export async function enviarCorreoNotificacion(email, subject, message) {
 
     return { success: true, data: result }
   } catch (error) {
-    console.error("Error sending notification email:", error)
     return { success: false, error: error.message }
   }
 }
