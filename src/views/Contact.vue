@@ -24,34 +24,6 @@
                             <span>Adriainnee Madeley Lee Navas Briceño</span>
                         </div>
                     </div>
-
-                    <div class="info-item">
-                        <i class="icon-location"></i>
-                        <div>
-                            <strong>Ubicación:</strong>
-                            <span>España</span>
-                        </div>
-                    </div>
-
-                    <div class="info-item">
-                        <i class="icon-web"></i>
-                        <div>
-                            <strong>Proyecto:</strong>
-                            <span>2º DAM - IES El Pla</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="info-section">
-                    <h3>Sobre Travelle</h3>
-                    <p>
-                        Travelle es una plataforma web integral para la planificación de viajes,
-                        desarrollada como proyecto final del ciclo de Desarrollo de Aplicaciones Multiplataforma.
-                    </p>
-                    <p>
-                        Nuestro objetivo es simplificar la vida del viajero digital, centralizando
-                        toda la planificación de forma intuitiva y segura.
-                    </p>
                 </div>
             </div>
 
@@ -204,7 +176,7 @@ export default {
     font-weight: 600;
     color: #2c3e50;
     margin-bottom: 1rem;
-    border-bottom: 2px solid #3498db;
+    border-bottom: 2px solid var(--color-accent);
     padding-bottom: 0.5rem;
 }
 
@@ -216,13 +188,13 @@ export default {
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
-    border-left: 4px solid #3498db;
+    border-left: 4px solid var(--color-accent);
 }
 
 .info-item i {
     width: 20px;
     height: 20px;
-    background: #3498db;
+    background: var(--color-accent);
     border-radius: 50%;
     flex-shrink: 0;
     margin-top: 2px;
@@ -235,7 +207,7 @@ export default {
 }
 
 .info-item a {
-    color: #3498db;
+    color: var(--color-primary);
     text-decoration: none;
 }
 
@@ -291,7 +263,7 @@ export default {
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
@@ -303,7 +275,7 @@ export default {
 .submit-btn {
     width: 100%;
     padding: 1rem;
-    background: #3498db;
+    background: var(--color-primary);
     color: white;
     border: none;
     border-radius: 6px;
@@ -314,7 +286,7 @@ export default {
 }
 
 .submit-btn:hover:not(:disabled) {
-    background: #2980b9;
+    background: var(--color-primary);
 }
 
 .submit-btn:disabled {
